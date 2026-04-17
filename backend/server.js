@@ -24,7 +24,16 @@ const AVATARS = {
   bear:         { name: 'Grizzly Bear', animal: 'grizzly bear',     base: 'massive frame, thick dark fur, commanding presence' },
   tiger:        { name: 'White Tiger',  animal: 'white tiger',      base: 'white fur with black stripes, intense gaze, raw power' },
   owl:          { name: 'Great Owl',    animal: 'great horned owl', base: 'huge amber eyes, mottled feathers, ancient wisdom' },
-  human:        { name: 'Human Warrior', animal: 'warrior human',  base: 'intense face, strong features, battle-worn expression' },
+  pirate:     { name: 'Pirate',     animal: 'pirate',               base: 'weathered face, eye patch or scar, wild hair, sea-worn skin' },
+  lawyer:     { name: 'Lawyer',     animal: 'sharp lawyer',         base: 'intense gaze, sharp suit, confident jaw, courthouse background' },
+  president:  { name: 'President',  animal: 'powerful president',   base: 'commanding presence, distinguished features, formal attire, flag background' },
+  inmate:     { name: 'Inmate',     animal: 'prison inmate',        base: 'hardened face, shaved head or rough hair, prison uniform, raw expression' },
+  doctor:     { name: 'Doctor',     animal: 'surgeon doctor',       base: 'focused eyes, surgical mask pulled down, scrubs, OR background' },
+  detective:  { name: 'Detective',  animal: 'noir detective',       base: 'sharp eyes, trench coat, rain-soaked city background, cigarette smoke' },
+  boxer:      { name: 'Boxer',      animal: 'champion boxer',       base: 'bruised face, gloves up, sweat glistening, arena lights background' },
+  rockstar:   { name: 'Rock Star',  animal: 'rock star musician',   base: 'wild hair, stage makeup, guitar strap, concert light background' },
+  soldier:    { name: 'Soldier',    animal: 'elite soldier',        base: 'battle gear, intense eyes, camouflage, war zone background' },
+  wizard:     { name: 'Wizard',     animal: 'ancient wizard',       base: 'long beard, glowing eyes, mystical robes, magical aura background' },
 };
 
 async function analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey) {

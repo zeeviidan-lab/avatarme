@@ -127,6 +127,7 @@
   .av-card.sel { border-color:var(--accent); }
   .av-card.sel::after { content:'✓'; position:absolute; top:8px; right:8px; width:22px; height:22px; background:var(--accent); color:#050805; border-radius:50%; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; text-align:center; line-height:22px; }
   .av-card img { width:100%; height:130px; object-fit:cover; display:block; }
+  .av-placeholder { width:100%; height:130px; display:flex; align-items:center; justify-content:center; font-size:52px; }
   .av-info { padding:10px 12px 12px; }
   .av-info h3 { font-size:13px; font-weight:600; }
   .av-tag { font-size:10px; color:var(--muted); margin-top:2px; font-weight:300; }
@@ -248,9 +249,17 @@
       <div class="pad">
         <div class="label">Choose</div>
         <h2>PICK YOUR<br/>AVATAR</h2>
-        <p class="hint" style="margin-bottom:20px">Claude will match it to your personality.</p>
+        <p class="hint" style="margin-bottom:16px">Your personality shapes every detail. No two results are the same.</p>
       </div>
-      <div class="avatar-grid">
+
+      <!-- Category tabs -->
+      <div style="display:flex;gap:8px;padding:0 24px 16px;overflow-x:auto;scrollbar-width:none">
+        <div class="cat-tab active" onclick="setTab(this,'animals')" style="flex-shrink:0;padding:7px 18px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--accent);background:rgba(124,255,107,0.1);color:var(--accent)">🐾 Animals</div>
+        <div class="cat-tab" onclick="setTab(this,'humans')" style="flex-shrink:0;padding:7px 18px;border-radius:100px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted)">🧑 Humans</div>
+      </div>
+
+      <!-- Animals -->
+      <div id="tab-animals" class="avatar-grid">
         <div class="av-card" onclick="pickAv(this,'wolf')">
           <img src="https://replicate.delivery/xezq/qxPrP7eOk31TZaGJvluj0xO0xt11BgXJQDW5JfBF2pv4CBcWA/out-0.jpg"/>
           <div class="av-info"><h3>Arctic Wolf</h3><div class="av-tag">Fierce · Loyal</div></div>
@@ -271,11 +280,52 @@
           <img src="https://replicate.delivery/xezq/uZqiy5Qhd962GduHVbtmWFwPIf1C4WAhUWTNucekD9TrDBcWA/out-0.jpg"/>
           <div class="av-info"><h3>Void Fox</h3><div class="av-tag">Cunning · Sharp</div></div>
         </div>
-        <div class="av-card" onclick="pickAv(this,'human')" style="grid-column:1/-1">
-          <div style="height:130px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:60px">🧑‍⚔️</div>
-          <div class="av-info"><h3>Human Warrior</h3><div class="av-tag">Intense · Battle-worn · Unique</div></div>
+      </div>
+
+      <!-- Humans -->
+      <div id="tab-humans" class="avatar-grid" style="display:none">
+        <div class="av-card" onclick="pickAv(this,'pirate')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#1a0f0a,#2d1810)">🏴‍☠️</div>
+          <div class="av-info"><h3>Pirate</h3><div class="av-tag">Wild · Fearless</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'lawyer')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#0a0f1a,#101828)">⚖️</div>
+          <div class="av-info"><h3>Lawyer</h3><div class="av-tag">Sharp · Relentless</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'president')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#0a0e1a,#0d1533)">🇺🇸</div>
+          <div class="av-info"><h3>President</h3><div class="av-tag">Commanding · Powerful</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'inmate')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#141414,#1f1f1f)">🔒</div>
+          <div class="av-info"><h3>Inmate</h3><div class="av-tag">Hardened · Raw</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'detective')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#0f0f1a,#1a1a2e)">🕵️</div>
+          <div class="av-info"><h3>Detective</h3><div class="av-tag">Cold · Precise</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'boxer')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#1a0a0a,#2d0f0f)">🥊</div>
+          <div class="av-info"><h3>Boxer</h3><div class="av-tag">Fierce · Gritty</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'rockstar')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#1a0a1a,#2d0a2d)">🎸</div>
+          <div class="av-info"><h3>Rock Star</h3><div class="av-tag">Wild · Electric</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'soldier')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#0a1a0a,#0f2010)">🪖</div>
+          <div class="av-info"><h3>Soldier</h3><div class="av-tag">Elite · Disciplined</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'doctor')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#0a1218,#0d1f2d)">👨‍⚕️</div>
+          <div class="av-info"><h3>Doctor</h3><div class="av-tag">Focused · Brilliant</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'wizard')">
+          <div class="av-placeholder" style="background:linear-gradient(135deg,#12081a,#1e0a2d)">🧙</div>
+          <div class="av-info"><h3>Wizard</h3><div class="av-tag">Ancient · Mystical</div></div>
         </div>
       </div>
+
       <button class="cta" id="bcta" onclick="generate()" disabled>GENERATE MY AVATAR ✦</button>
     </div>
 
@@ -479,6 +529,20 @@ function touchEnd(e) {
   touchItem.classList.remove('dragging');
   items.forEach(i => i.classList.remove('drag-over'));
   renderRank();
+}
+
+// ── CATEGORY TABS ──
+function setTab(el, tab) {
+  document.querySelectorAll('.cat-tab').forEach(t => {
+    t.style.borderColor = 'var(--border)';
+    t.style.background = 'transparent';
+    t.style.color = 'var(--muted)';
+  });
+  el.style.borderColor = 'var(--accent)';
+  el.style.background = 'rgba(124,255,107,0.1)';
+  el.style.color = 'var(--accent)';
+  document.getElementById('tab-animals').style.display = tab === 'animals' ? 'grid' : 'none';
+  document.getElementById('tab-humans').style.display = tab === 'humans' ? 'grid' : 'none';
 }
 
 // ── AVATAR BANK ──
