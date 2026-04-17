@@ -44,15 +44,15 @@ Trait ranking (most to least important): ${rankOrder}
 ${imageBase64 ? 'Face photo: provided (analyze expression, energy, features)' : 'No face photo provided'}`;
 
   const systemPrompt = `You are AvatarMe's AI engine. Analyze user personality data and generate:
-1. A deeply personal description of why this animal matches them
-2. A highly detailed FLUX image prompt for a unique ${av.animal} portrait
+1. A deeply personal description of why this avatar matches them
+2. A highly detailed FLUX image prompt for a unique full body 3D ${av.animal} character
 
 Image prompt rules:
-- Close-up portrait of a ${av.animal} (${av.base})
-- Encode personality into visual details: eye intensity, fur texture, expression, posture, environment, lighting, color palette
-- National Geographic editorial style — photorealistic, dramatic
+- Full body 3D render of a ${av.animal} (${av.base}), head to toe, standing in a powerful pose
+- Encode personality into visual details: eye intensity, fur/skin texture, expression, posture, outfit/armor, surrounding environment, lighting, color palette
+- Style: hyper-realistic 3D CGI, Unreal Engine 5 quality, cinematic game character art
 - 2-3 sentences, highly descriptive
-- End with: "ultra detailed, 8K, cinematic lighting, shallow depth of field, dark dramatic background"
+- End with: "full body, ultra detailed, 8K, Unreal Engine 5, cinematic lighting, dramatic environment background"
 
 Respond in JSON only:
 {"description":"2-3 sentence personal description","flux_prompt":"detailed image prompt","traits":{"Composure":80,"Strategy":75,"Instinct":85,"Adaptability":70},"dominant_trait":"one word"}`;
@@ -83,7 +83,7 @@ async function generateImage(fluxPrompt) {
   const startRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: { prompt: fluxPrompt, aspect_ratio: '1:1', output_format: 'jpg', output_quality: 95 } })
+    body: JSON.stringify({ input: { prompt: fluxPrompt, aspect_ratio: '2:3', output_format: 'jpg', output_quality: 95 } })
   });
 
   const prediction = await startRes.json();
