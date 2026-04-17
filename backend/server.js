@@ -12,11 +12,11 @@ const upload = multer({ dest: 'uploads/' });
 
 // Avatar bank
 const AVATAR_BANK = {
-  wolf:         { emoji: '🐺', name: 'Arctic Wolf',    url: 'https://replicate.delivery/xezq/87tdXtPJtioHFhyKXbajUle09ejtkQSe1ywZbBHAGRZJP93sA/out-0.jpg', traits: ['Loyal', 'Fierce', 'Tactical'] },
-  snow_leopard: { emoji: '🐆', name: 'Snow Leopard',   url: 'https://replicate.delivery/xezq/KeSYrPXMQ8SaHC8WLGY7eaAM65VfIyqrwOX7rtzsDlgjP93sA/out-0.jpg', traits: ['Composed', 'Precise', 'Rare'] },
-  monkey:       { emoji: '🐒', name: 'Wise Monkey',    url: 'https://replicate.delivery/xezq/R6cUDIgegSW1aiHMIdNWhpksbfQIlzek1fQcnkvPH9o2f0fmF/out-0.jpg', traits: ['Curious', 'Playful', 'Clever'] },
-  eagle:        { emoji: '🦅', name: 'Golden Eagle',   url: 'https://replicate.delivery/xezq/risIzwm2EkJ3PZy9Q1r1r00jLSGkFo2kjHmnYtU2rXmCqfNLA/out-0.jpg', traits: ['Visionary', 'Bold', 'Free'] },
-  fox:          { emoji: '🦊', name: 'Void Fox',       url: 'https://replicate.delivery/xezq/MMTh2f20crTEWKgkUkmzPefBCb8Y8vEIOJ6x8Q4ddEBwQ93sA/out-0.jpg', traits: ['Cunning', 'Adaptable', 'Sharp'] },
+  wolf:         { emoji: '🐺', name: 'Arctic Wolf',    url: 'https://replicate.delivery/xezq/qxPrP7eOk31TZaGJvluj0xO0xt11BgXJQDW5JfBF2pv4CBcWA/out-0.jpg', traits: ['Loyal', 'Fierce', 'Tactical'] },
+  snow_leopard: { emoji: '🐆', name: 'Snow Leopard',   url: 'https://replicate.delivery/xezq/U8OezzvNfLlWDEZnGqSgxvC6IOG1FyEWRY3wUJQjGt8FDBcWA/out-0.jpg', traits: ['Composed', 'Precise', 'Rare'] },
+  monkey:       { emoji: '🐒', name: 'Wise Monkey',    url: 'https://replicate.delivery/xezq/FzDFebpA7CUKXKmFaMWf20WDgfmyDZHA1as9b2JyuDFkGC4sA/out-0.jpg', traits: ['Curious', 'Playful', 'Clever'] },
+  eagle:        { emoji: '🦅', name: 'Golden Eagle',   url: 'https://replicate.delivery/xezq/QMHVobFHUcrjMZ2l0aYBwycDAlZfQsbk8LO1kDHVVv3vhAOLA/out-0.jpg', traits: ['Visionary', 'Bold', 'Free'] },
+  fox:          { emoji: '🦊', name: 'Void Fox',       url: 'https://replicate.delivery/xezq/uZqiy5Qhd962GduHVbtmWFwPIf1C4WAhUWTNucekD9TrDBcWA/out-0.jpg', traits: ['Cunning', 'Adaptable', 'Sharp'] },
 };
 
 // Analyze face + quiz with Claude
