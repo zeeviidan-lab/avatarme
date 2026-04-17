@@ -16,24 +16,24 @@ const jobs = {};
 
 // Avatar definitions
 const AVATARS = {
-  wolf:         { name: 'Arctic Wolf',  animal: 'arctic wolf',      base: 'thick white and grey fur, piercing eyes, powerful jaw' },
-  snow_leopard: { name: 'Snow Leopard', animal: 'snow leopard',     base: 'spotted fur, elegant build, mountain predator' },
-  monkey:       { name: 'Wise Monkey',  animal: 'monkey',           base: 'expressive face, golden brown fur, intelligent eyes' },
-  eagle:        { name: 'Golden Eagle', animal: 'golden eagle',     base: 'sharp talons, brown and gold feathers, fierce beak' },
-  fox:          { name: 'Red Fox',      animal: 'red fox',          base: 'fiery red fur, cunning eyes, sleek build' },
-  bear:         { name: 'Grizzly Bear', animal: 'grizzly bear',     base: 'massive frame, thick dark fur, commanding presence' },
-  tiger:        { name: 'White Tiger',  animal: 'white tiger',      base: 'white fur with black stripes, intense gaze, raw power' },
-  owl:          { name: 'Great Owl',    animal: 'great horned owl', base: 'huge amber eyes, mottled feathers, ancient wisdom' },
-  pirate:     { name: 'Pirate',     animal: 'pirate',               base: 'weathered face, eye patch or scar, wild hair, sea-worn skin' },
-  lawyer:     { name: 'Lawyer',     animal: 'sharp lawyer',         base: 'intense gaze, sharp suit, confident jaw, courthouse background' },
-  president:  { name: 'President',  animal: 'powerful president',   base: 'commanding presence, distinguished features, formal attire, flag background' },
-  inmate:     { name: 'Inmate',     animal: 'prison inmate',        base: 'hardened face, shaved head or rough hair, prison uniform, raw expression' },
-  doctor:     { name: 'Doctor',     animal: 'surgeon doctor',       base: 'focused eyes, surgical mask pulled down, scrubs, OR background' },
-  detective:  { name: 'Detective',  animal: 'noir detective',       base: 'sharp eyes, trench coat, rain-soaked city background, cigarette smoke' },
-  boxer:      { name: 'Boxer',      animal: 'champion boxer',       base: 'bruised face, gloves up, sweat glistening, arena lights background' },
-  rockstar:   { name: 'Rock Star',  animal: 'rock star musician',   base: 'wild hair, stage makeup, guitar strap, concert light background' },
-  soldier:    { name: 'Soldier',    animal: 'elite soldier',        base: 'battle gear, intense eyes, camouflage, war zone background' },
-  wizard:     { name: 'Wizard',     animal: 'ancient wizard',       base: 'long beard, glowing eyes, mystical robes, magical aura background' },
+  wolf:         { name: 'Arctic Wolf',  animal: 'arctic wolf',      base: 'thick white and grey fur, piercing blue eyes, powerful jaw, muscular build',           env: 'vast frozen tundra at twilight, aurora borealis rippling across a deep purple sky, snow-dusted pine forest stretching to the horizon, icy breath visible in the cold air' },
+  snow_leopard: { name: 'Snow Leopard', animal: 'snow leopard',     base: 'rosette-spotted pale fur, sleek elegant build, pale green eyes, mountain predator',    env: 'dramatic Himalayan mountain cliff at golden hour, jagged snow-capped peaks behind, swirling mist below, warm orange light hitting the rock face' },
+  monkey:       { name: 'Wise Monkey',  animal: 'monkey',           base: 'expressive face, rich golden-brown fur, intelligent deep eyes, nimble hands',          env: 'dense ancient jungle canopy, shafts of sunlight piercing through enormous tropical leaves, hanging vines, distant waterfall visible through the mist' },
+  eagle:        { name: 'Golden Eagle', animal: 'golden eagle',     base: 'sharp curved talons, rich brown and gold feathers, fierce amber eyes, broad wingspan',  env: 'standing on a rocky mountain peak above the clouds, vast open sky, distant mountain range bathed in golden sunrise light, wind-swept environment' },
+  fox:          { name: 'Red Fox',      animal: 'red fox',          base: 'vibrant fiery red and white fur, cunning amber eyes, sleek slender build, bushy tail',  env: 'misty autumn forest at dawn, golden and crimson fallen leaves on the ground, soft morning fog between ancient oak trees, dew on the grass' },
+  bear:         { name: 'Grizzly Bear', animal: 'grizzly bear',     base: 'enormous powerful frame, thick dark-brown fur, commanding presence, small dark eyes',   env: 'rushing salmon river in the Pacific Northwest, dense green pine forest, dramatic overcast sky, water splashing around massive rocks' },
+  tiger:        { name: 'White Tiger',  animal: 'white tiger',      base: 'pure white fur with charcoal black stripes, intense ice-blue eyes, raw muscular power',  env: 'ancient bamboo forest in morning fog, shafts of pale green light filtering through tall bamboo, scattered white flower petals on the ground' },
+  owl:          { name: 'Great Owl',    animal: 'great horned owl', base: 'huge luminous amber eyes, mottled brown-grey feathers, broad silent wings, wise expression', env: 'old-growth forest at night, full moon visible through dark twisted branches, fireflies glowing in the darkness, thick ancient tree trunk' },
+  pirate:     { name: 'Pirate',     animal: 'pirate',               base: 'weathered sun-beaten face, eye patch, wild sea-tangled hair, worn leather coat, gold tooth', env: 'wooden ship deck during a tropical storm, crashing dark ocean waves, storm clouds lit by lightning, distant island silhouette on the horizon' },
+  lawyer:     { name: 'Lawyer',     animal: 'sharp lawyer',         base: 'sharp intense gaze, tailored charcoal suit, confident jaw, power tie, cufflinks',          env: 'grand marble courthouse interior, tall stone columns, dramatic shafts of light through high windows, polished floor reflecting the ceiling' },
+  president:  { name: 'President',  animal: 'powerful president',   base: 'commanding distinguished presence, strong jaw, formal dark suit, American flag pin',        env: 'White House South Lawn at sunset, American flags flanking the entrance, manicured grounds, warm golden light on the columned facade' },
+  inmate:     { name: 'Inmate',     animal: 'prison inmate',        base: 'hardened scarred face, close-shaved head, orange prison uniform, raw intense expression',   env: 'concrete prison yard under harsh midday sun, high razor-wire fences, stark grey walls casting hard shadows, single patch of blue sky above' },
+  doctor:     { name: 'Doctor',     animal: 'surgeon doctor',       base: 'sharp focused eyes above a surgical mask, blue surgical scrubs, stethoscope, steady hands', env: 'modern hospital operating room, gleaming stainless steel surgical lights overhead, sterile white and blue environment, heart monitor in background' },
+  detective:  { name: 'Detective',  animal: 'noir detective',       base: 'sharp observant eyes, wool trench coat, fedora hat, cigarette, stubbled jaw',               env: 'rain-soaked 1940s city street at night, neon signs reflecting in puddles, misty streetlights, dark alley entrance, wet cobblestone pavement' },
+  boxer:      { name: 'Boxer',      animal: 'champion boxer',       base: 'bruised jaw, gloves raised in guard stance, sweat-glistening skin, athletic muscular frame',  env: 'professional boxing ring under blinding arena lights, roaring crowd blurred in background, corner of the ring, canvas floor, ropes visible' },
+  rockstar:   { name: 'Rock Star',  animal: 'rock star musician',   base: 'wild electric hair, dark stage makeup, leather jacket, guitar strap, intense performance face', env: 'massive stadium concert stage, blinding spotlights and laser beams cutting through smoke, thousands of fans visible below, giant speaker stacks' },
+  soldier:    { name: 'Soldier',    animal: 'elite soldier',        base: 'battle-worn face, full tactical gear and camouflage, intense determined eyes, dog tags',       env: 'urban war zone at dusk, bombed-out city street, dust particles in golden-red light, collapsed buildings in background, smoke rising' },
+  wizard:     { name: 'Wizard',     animal: 'ancient wizard',       base: 'long silver beard, glowing ancient eyes, ornate mystical robes, carved wooden staff',         env: 'ancient stone tower library at night, floor-to-ceiling bookshelves, floating magical orbs of light, swirling arcane energy, moonlit window' },
 };
 
 async function analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey) {
@@ -45,14 +45,15 @@ ${imageBase64 ? 'Face photo: provided (analyze expression, energy, features)' : 
 
   const systemPrompt = `You are AvatarMe's AI engine. Analyze user personality data and generate:
 1. A deeply personal description of why this avatar matches them
-2. A highly detailed FLUX image prompt for a unique full body 3D ${av.animal} character
+2. A highly detailed FLUX image prompt for a unique full body photorealistic ${av.animal} character
 
 Image prompt rules:
-- Full body 3D render of a ${av.animal} (${av.base}), head to toe, standing in a powerful pose
-- Encode personality into visual details: eye intensity, fur/skin texture, expression, posture, outfit/armor, surrounding environment, lighting, color palette
-- Style: hyper-realistic 3D CGI, Unreal Engine 5 quality, cinematic game character art
+- Full body portrait of a ${av.animal} (${av.base}), head to toe, standing in a powerful confident pose
+- Background environment: ${av.env} — describe it in rich detail, it must look like a real photograph or film still
+- Encode personality into visual details: eye intensity, expression, posture, outfit/armor, lighting direction, color palette
+- Style: photorealistic, shot on RED cinema camera, National Geographic meets Hollywood cinematography, physically accurate lighting, real-world textures, no cartoon or CGI look
 - 2-3 sentences, highly descriptive
-- End with: "full body, ultra detailed, 8K, Unreal Engine 5, cinematic lighting, dramatic environment background"
+- End with: "full body, photorealistic, 8K resolution, cinematic photography, real environment, physically accurate lighting, sharp detail"
 
 Respond in JSON only:
 {"description":"2-3 sentence personal description","flux_prompt":"detailed image prompt","traits":{"Composure":80,"Strategy":75,"Instinct":85,"Adaptability":70},"dominant_trait":"one word"}`;
