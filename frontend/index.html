@@ -157,12 +157,27 @@
   .btn-pri { flex:2; padding:15px; background:var(--accent); border:none; border-radius:12px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:#050805; }
 
   /* LOADER */
-  .loader { position:absolute; inset:0; background:rgba(8,12,10,0.95); display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:500; }
+  /* LOADER */
+  .loader { position:absolute; inset:0; background:var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
   .loader.on { display:flex; }
-  .spin { width:44px; height:44px; border:2px solid rgba(124,255,107,0.15); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  .loader p { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; }
-  .loader span { font-size:12px; color:var(--muted); font-weight:300; }
+  .loader-icon { font-size:72px; margin-bottom:28px; animation:pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 10px rgba(124,255,107,0.3))} 50%{transform:scale(1.08);filter:drop-shadow(0 0 25px rgba(124,255,107,0.6))} }
+  .loader-steps { display:flex; flex-direction:column; gap:12px; width:100%; margin-bottom:32px; }
+  .lstep { display:flex; align-items:center; gap:12px; opacity:0.3; transition:opacity 0.4s; }
+  .lstep.active { opacity:1; }
+  .lstep.done { opacity:0.5; }
+  .lstep-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); flex-shrink:0; transition:background 0.3s; }
+  .lstep.active .lstep-dot { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+  .lstep.done .lstep-dot { background:var(--accent); }
+  .lstep-txt { font-size:13px; font-weight:400; color:var(--text); }
+  .lstep.done .lstep-txt::after { content:' ✓'; color:var(--accent); }
+  .loader-bar { width:100%; height:2px; background:var(--surface2); border-radius:99px; overflow:hidden; }
+  .loader-bar-fill { height:100%; background:var(--accent); border-radius:99px; width:0%; transition:width 1s ease; box-shadow:0 0 8px var(--accent); }
+  .loader p { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; margin-top:16px; color:var(--muted); }
+
+  /* RESULT REVEAL */
+  .result-reveal { animation:revealUp 0.6s ease forwards; }
+  @keyframes revealUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
 </style>
 </head>
 <body>
@@ -172,9 +187,15 @@
 
   <div class="screen-wrap">
     <div class="loader" id="loader">
-      <div class="spin"></div>
-      <p id="loader-title">FINDING YOUR AVATAR</p>
-      <span id="loader-sub">Claude is analyzing your instincts</span>
+      <div class="loader-icon" id="loader-icon">🧬</div>
+      <div class="loader-steps">
+        <div class="lstep" id="ls1"><div class="lstep-dot"></div><span class="lstep-txt">Reading your personality</span></div>
+        <div class="lstep" id="ls2"><div class="lstep-dot"></div><span class="lstep-txt">Building your unique prompt</span></div>
+        <div class="lstep" id="ls3"><div class="lstep-dot"></div><span class="lstep-txt">Generating your avatar</span></div>
+        <div class="lstep" id="ls4"><div class="lstep-dot"></div><span class="lstep-txt">Rendering final details</span></div>
+      </div>
+      <div class="loader-bar"><div class="loader-bar-fill" id="loader-bar-fill"></div></div>
+      <p id="loader-sub">THIS TAKES ABOUT 30 SECONDS</p>
     </div>
 
     <!-- SPLASH -->
@@ -554,25 +575,22 @@ function pickAv(card, name) {
 }
 
 // ── GENERATE ──
+function setLoaderStep(step, barPct, icon) {
+  ['ls1','ls2','ls3','ls4'].forEach((id, i) => {
+    var el = document.getElementById(id);
+    el.classList.remove('active','done');
+    if (i + 1 < step) el.classList.add('done');
+    if (i + 1 === step) el.classList.add('active');
+  });
+  document.getElementById('loader-bar-fill').style.width = barPct + '%';
+  if (icon) document.getElementById('loader-icon').textContent = icon;
+}
+
 async function generate() {
   if (!chosenAv) return;
   var loader = document.getElementById('loader');
   loader.classList.add('on');
-  document.getElementById('loader-title').textContent = 'CREATING YOUR AVATAR';
-
-  var messages = [
-    'Claude is reading your personality...',
-    'Building your unique prompt...',
-    'Generating your avatar image...',
-    'Painting the details...',
-    'Almost there...'
-  ];
-  var msgIdx = 0;
-  document.getElementById('loader-sub').textContent = messages[0];
-  var msgTimer = setInterval(() => {
-    msgIdx = Math.min(msgIdx + 1, messages.length - 1);
-    document.getElementById('loader-sub').textContent = messages[msgIdx];
-  }, 8000);
+  setLoaderStep(1, 10, '🧬');
 
   try {
     var formData = new FormData();
@@ -586,25 +604,43 @@ async function generate() {
     var startData = await startRes.json();
     if (!startData.jobId) throw new Error('Failed to start job');
 
-    // Poll for result
+    // Poll with step updates
     var result = null;
     for (var i = 0; i < 60; i++) {
       await new Promise(r => setTimeout(r, 3000));
       var pollRes = await fetch(BACKEND + '/status/' + startData.jobId);
       var pollData = await pollRes.json();
+
+      if (pollData.status === 'analyzing') setLoaderStep(2, 30, '🧠');
+      if (pollData.status === 'generating') setLoaderStep(3, 60, '🎨');
+      if (i > 10) setLoaderStep(4, 85, '✨');
+
       if (pollData.status === 'done') { result = pollData; break; }
       if (pollData.status === 'error') throw new Error(pollData.error);
     }
     if (!result) throw new Error('Timed out');
 
-    clearInterval(msgTimer);
+    setLoaderStep(5, 100, '🐾');
+    await new Promise(r => setTimeout(r, 600));
 
+    // Populate result
     document.getElementById('rname').textContent = result.avatar_name;
     document.getElementById('rdesc').textContent = result.description;
-    document.getElementById('ravatar-img').src = result.image_url;
+
+    // Preload image before showing
+    await new Promise((resolve, reject) => {
+      var img = new Image();
+      img.onload = resolve;
+      img.onerror = resolve;
+      img.src = result.image_url;
+      document.getElementById('ravatar-img').src = result.image_url;
+    });
 
     loader.classList.remove('on');
     goTo('result');
+
+    // Add reveal animation
+    document.getElementById('result').classList.add('result-reveal');
 
     setTimeout(() => {
       var keys = ['Composure','Strategy','Instinct','Adaptability'];
@@ -613,12 +649,12 @@ async function generate() {
         document.getElementById(id).style.width = val + '%';
         document.getElementById('tv' + (i+1)).textContent = val;
       });
-    }, 300);
+    }, 400);
 
   } catch(err) {
-    clearInterval(msgTimer);
     loader.classList.remove('on');
-    alert('Error: ' + err.message);
+    alert('Something went wrong. Please try again.');
+    console.error(err);
   }
 }
 
