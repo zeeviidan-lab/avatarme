@@ -3,6 +3,7 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 app.use(cors());
@@ -10,53 +11,59 @@ app.use(express.json());
 
 const upload = multer({ dest: 'uploads/' });
 
-// Avatar bank
-const AVATAR_BANK = {
-  wolf:         { emoji: '🐺', name: 'Arctic Wolf',    url: 'https://replicate.delivery/xezq/qxPrP7eOk31TZaGJvluj0xO0xt11BgXJQDW5JfBF2pv4CBcWA/out-0.jpg', traits: ['Loyal', 'Fierce', 'Tactical'] },
-  snow_leopard: { emoji: '🐆', name: 'Snow Leopard',   url: 'https://replicate.delivery/xezq/U8OezzvNfLlWDEZnGqSgxvC6IOG1FyEWRY3wUJQjGt8FDBcWA/out-0.jpg', traits: ['Composed', 'Precise', 'Rare'] },
-  monkey:       { emoji: '🐒', name: 'Wise Monkey',    url: 'https://replicate.delivery/xezq/FzDFebpA7CUKXKmFaMWf20WDgfmyDZHA1as9b2JyuDFkGC4sA/out-0.jpg', traits: ['Curious', 'Playful', 'Clever'] },
-  eagle:        { emoji: '🦅', name: 'Golden Eagle',   url: 'https://replicate.delivery/xezq/QMHVobFHUcrjMZ2l0aYBwycDAlZfQsbk8LO1kDHVVv3vhAOLA/out-0.jpg', traits: ['Visionary', 'Bold', 'Free'] },
-  fox:          { emoji: '🦊', name: 'Void Fox',       url: 'https://replicate.delivery/xezq/uZqiy5Qhd962GduHVbtmWFwPIf1C4WAhUWTNucekD9TrDBcWA/out-0.jpg', traits: ['Cunning', 'Adaptable', 'Sharp'] },
+// Avatar definitions — name + base style guide for FLUX
+const AVATARS = {
+  wolf:         { name: 'Arctic Wolf',  animal: 'arctic wolf',    base: 'thick white and grey fur, piercing eyes, powerful jaw' },
+  snow_leopard: { name: 'Snow Leopard', animal: 'snow leopard',   base: 'spotted fur, elegant build, mountain predator' },
+  monkey:       { name: 'Wise Monkey',  animal: 'monkey',         base: 'expressive face, golden brown fur, intelligent eyes' },
+  eagle:        { name: 'Golden Eagle', animal: 'golden eagle',   base: 'sharp talons, brown and gold feathers, fierce beak' },
+  fox:          { name: 'Red Fox',      animal: 'red fox',        base: 'fiery red fur, cunning eyes, sleek build' },
+  bear:         { name: 'Grizzly Bear', animal: 'grizzly bear',   base: 'massive frame, thick dark fur, commanding presence' },
+  tiger:        { name: 'White Tiger',  animal: 'white tiger',    base: 'white fur with black stripes, intense gaze, raw power' },
+  owl:          { name: 'Great Owl',    animal: 'great horned owl', base: 'huge amber eyes, mottled feathers, ancient wisdom' },
 };
 
-// Analyze face + quiz with Claude
-async function analyzeWithClaude(imageBase64, imageMime, quizAnswers) {
-  const prompt = `You are AvatarMe's personality engine. Analyze this face photo and the quiz answers below.
+// Step 1: Ask Claude to analyze user + build a FLUX prompt
+async function analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey) {
+  const av = AVATARS[avatarKey];
 
-Quiz answers:
-- Challenge response: ${quizAnswers.q1 || 'not answered'}
-- Group energy: ${quizAnswers.q2 || 'not answered'}
+  const userContext = `
+Avatar chosen: ${av.animal}
+Reaction game answers: ${gameAnswers}
+Trait ranking (most to least important): ${rankOrder}
+${imageBase64 ? 'Face photo: provided (analyze expression, energy, features)' : 'No face photo provided'}
+  `.trim();
 
-Available avatars: wolf, snow_leopard, monkey, eagle, fox
+  const systemPrompt = `You are AvatarMe's AI engine. You analyze a user's personality data and generate two things:
+1. A deeply personal description of why this animal matches them
+2. A highly detailed, cinematic image generation prompt for FLUX that creates a unique ${av.animal} portrait shaped by their specific personality
+
+The image prompt must:
+- Be a close-up portrait of a ${av.animal} (${av.base})
+- Encode the user's personality into visual details: eye intensity, fur/feather texture, expression, posture, environment, lighting, color palette
+- Feel like a National Geographic editorial portrait — photorealistic, dramatic, ultra detailed
+- Be 2-3 sentences long, highly descriptive
+- End with: "ultra detailed, 8K, cinematic lighting, shallow depth of field, dark dramatic background"
 
 Respond in JSON only, no markdown:
 {
-  "avatar_match": "wolf/snow_leopard/monkey/eagle/fox",
-  "description": "2-3 sentence personalized description of why this avatar matches them — make it feel deeply personal",
-  "traits": {
-    "Composure": 85,
-    "Strategy": 80,
-    "Instinct": 75,
-    "Adaptability": 70
-  },
+  "description": "2-3 sentence personal description of why this avatar matches the user, deeply specific to their answers",
+  "flux_prompt": "your detailed image generation prompt here",
+  "traits": {"Composure": 80, "Strategy": 75, "Instinct": 85, "Adaptability": 70},
   "dominant_trait": "one word"
 }
-Trait scores must be integers between 40-98. Make it unique to their answers.`;
+Trait scores: integers 40-98, varied, reflecting their personality.`;
 
-  const body = JSON.stringify({
-    model: 'claude-opus-4-5',
-    max_tokens: 600,
-    messages: [{
-      role: 'user',
-      content: [
-        {
-          type: 'image',
-          source: { type: 'base64', media_type: imageMime, data: imageBase64 }
-        },
-        { type: 'text', text: prompt }
-      ]
-    }]
-  });
+  const messages = imageBase64 ? [{
+    role: 'user',
+    content: [
+      { type: 'image', source: { type: 'base64', media_type: imageMime, data: imageBase64 } },
+      { type: 'text', text: `${systemPrompt}\n\nUser data:\n${userContext}` }
+    ]
+  }] : [{
+    role: 'user',
+    content: `${systemPrompt}\n\nUser data:\n${userContext}`
+  }];
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -65,81 +72,81 @@ Trait scores must be integers between 40-98. Make it unique to their answers.`;
       'anthropic-version': '2023-06-01',
       'Content-Type': 'application/json'
     },
-    body
+    body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 800, messages })
   });
 
   const data = await response.json();
   if (!data.content || !data.content[0]) throw new Error('Claude error: ' + JSON.stringify(data));
   const raw = data.content[0].text.replace(/```json|```/g, '').trim();
-  // extract JSON object from response
   const match = raw.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('No JSON in Claude response: ' + raw);
   return JSON.parse(match[0]);
 }
 
+// Step 2: Generate unique avatar image with FLUX
+async function generateImage(fluxPrompt) {
+  const payload = JSON.stringify({
+    input: {
+      prompt: fluxPrompt,
+      aspect_ratio: '1:1',
+      output_format: 'jpg',
+      output_quality: 95,
+      num_inference_steps: 4
+    }
+  });
+
+  const startRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: payload
+  });
+
+  const prediction = await startRes.json();
+  const predId = prediction.id;
+  if (!predId) throw new Error('Replicate error: ' + JSON.stringify(prediction));
+
+  // Poll until done
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${predId}`, {
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
+    });
+    const result = await pollRes.json();
+    if (result.status === 'succeeded') return result.output[0];
+    if (result.status === 'failed') throw new Error('Image generation failed: ' + result.error);
+  }
+  throw new Error('Image generation timed out');
+}
+
 // Main endpoint
 app.post('/analyze', upload.single('face'), async (req, res) => {
   try {
-    const quizAnswers = {
-      q1: req.body.q1 || '',
-      q2: req.body.q2 || ''
-    };
+    const avatarKey = req.body.avatar || 'wolf';
+    const gameAnswers = req.body.q1 || '';
+    const rankOrder = req.body.q2 || '';
 
-    let claudeResult;
-
+    let imageBase64 = null, imageMime = null;
     if (req.file) {
-      // With face photo
-      const imageBuffer = fs.readFileSync(req.file.path);
-      const imageBase64 = imageBuffer.toString('base64');
-      const imageMime = req.file.mimetype;
-      claudeResult = await analyzeWithClaude(imageBase64, imageMime, quizAnswers);
-      fs.unlinkSync(req.file.path); // cleanup
-    } else {
-      // Quiz only fallback
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: 'claude-opus-4-5',
-          max_tokens: 600,
-          messages: [{
-            role: 'user',
-            content: `You are AvatarMe's personality engine. Based on these quiz answers, match the user to an avatar.
-
-Quiz answers:
-- Challenge response: ${quizAnswers.q1 || 'not answered'}
-- Group energy: ${quizAnswers.q2 || 'not answered'}
-
-Available avatars: wolf, snow_leopard, monkey, eagle, fox
-
-Respond in JSON only, no markdown:
-{"avatar_match":"wolf/snow_leopard/monkey/eagle/fox","description":"2-3 sentence personalized description","traits":{"Composure":85,"Strategy":80,"Instinct":75,"Adaptability":70},"dominant_trait":"one word"}`
-          }]
-        })
-      });
-      const data = await response.json();
-      if (!data.content || !data.content[0]) throw new Error('Claude error: ' + JSON.stringify(data));
-      const raw = data.content[0].text.replace(/```json|```/g, '').trim();
-      const match = raw.match(/\{[\s\S]*\}/);
-      if (!match) throw new Error('No JSON in Claude response: ' + raw);
-      claudeResult = JSON.parse(match[0]);
+      imageBase64 = fs.readFileSync(req.file.path).toString('base64');
+      imageMime = req.file.mimetype;
+      fs.unlinkSync(req.file.path);
     }
 
-    const avatar = AVATAR_BANK[claudeResult.avatar_match] || AVATAR_BANK.fox;
+    // Step 1: Claude analyzes + builds prompt
+    const claudeResult = await analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey);
 
+    // Step 2: FLUX generates unique image
+    const imageUrl = await generateImage(claudeResult.flux_prompt);
+
+    const av = AVATARS[avatarKey];
     res.json({
       success: true,
-      avatar: {
-        key: claudeResult.avatar_match,
-        name: avatar.name,
-        emoji: avatar.emoji,
-        image_url: avatar.url,
-        traits: avatar.traits
-      },
+      avatar: { key: avatarKey, name: av.name },
+      image_url: imageUrl,
+      flux_prompt: claudeResult.flux_prompt,
       description: claudeResult.description,
       trait_scores: claudeResult.traits,
       dominant_trait: claudeResult.dominant_trait
@@ -152,9 +159,7 @@ Respond in JSON only, no markdown:
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
-
-// Serve frontend
-app.use(express.static(require('path').join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 const PORT = 3001;
-app.listen(PORT, () => console.log(`✅ AvatarMe backend running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`✅ AvatarMe running on http://localhost:${PORT}`));

@@ -486,13 +486,17 @@ async function generate() {
   if (!chosenAv) return;
   var loader = document.getElementById('loader');
   loader.classList.add('on');
-  document.getElementById('loader-title').textContent = 'FINDING YOUR AVATAR';
-  document.getElementById('loader-sub').textContent = 'Claude is analyzing your instincts';
+  document.getElementById('loader-title').textContent = 'CREATING YOUR AVATAR';
+  document.getElementById('loader-sub').textContent = 'Claude is reading your personality...';
+  setTimeout(() => { if (loader.classList.contains('on')) document.getElementById('loader-sub').textContent = 'Building your unique prompt...'; }, 4000);
+  setTimeout(() => { if (loader.classList.contains('on')) document.getElementById('loader-sub').textContent = 'Generating your avatar image...'; }, 8000);
+  setTimeout(() => { if (loader.classList.contains('on')) document.getElementById('loader-sub').textContent = 'Almost there...'; }, 20000);
 
   try {
     var formData = new FormData();
-    formData.append('q1', gameAnswers.map(a => a.choice).join(', '));
+    formData.append('q1', gameAnswers.map(a => a.scenario + ': ' + a.choice).join(' | '));
     formData.append('q2', rankOrder.map(t => t.name).join(' > '));
+    formData.append('avatar', chosenAv);
     if (uploads.face) formData.append('face', uploads.face);
 
     var response = await fetch(BACKEND + '/analyze', { method: 'POST', body: formData });
@@ -501,7 +505,7 @@ async function generate() {
 
     document.getElementById('rname').textContent = data.avatar.name;
     document.getElementById('rdesc').textContent = data.description;
-    document.getElementById('ravatar-img').src = data.avatar.image_url;
+    document.getElementById('ravatar-img').src = data.image_url;
 
     loader.classList.remove('on');
     goTo('result');
