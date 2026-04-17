@@ -271,6 +271,10 @@
           <img src="https://replicate.delivery/xezq/uZqiy5Qhd962GduHVbtmWFwPIf1C4WAhUWTNucekD9TrDBcWA/out-0.jpg"/>
           <div class="av-info"><h3>Void Fox</h3><div class="av-tag">Cunning · Sharp</div></div>
         </div>
+        <div class="av-card" onclick="pickAv(this,'human')" style="grid-column:1/-1">
+          <div style="height:130px;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;font-size:60px">🧑‍⚔️</div>
+          <div class="av-info"><h3>Human Warrior</h3><div class="av-tag">Intense · Battle-worn · Unique</div></div>
+        </div>
       </div>
       <button class="cta" id="bcta" onclick="generate()" disabled>GENERATE MY AVATAR ✦</button>
     </div>
@@ -295,8 +299,12 @@
       </div>
       <div class="result-actions">
         <button class="btn-sec" onclick="goTo('bank')">REDO</button>
-        <button class="btn-pri" onclick="shareAvatar()">SHARE 📤</button>
+        <button class="btn-pri" onclick="saveAvatar()">SAVE 💾</button>
       </div>
+      <div class="result-actions" style="margin-top:-8px">
+        <button class="btn-sec" style="flex:3" onclick="shareAvatar()">SHARE 📤</button>
+      </div>
+      <div id="save-confirm" style="display:none;text-align:center;padding:8px 24px 16px;font-size:13px;color:var(--accent)">✓ Saved to your device!</div>
     </div>
   </div>
 
@@ -487,10 +495,20 @@ async function generate() {
   var loader = document.getElementById('loader');
   loader.classList.add('on');
   document.getElementById('loader-title').textContent = 'CREATING YOUR AVATAR';
-  document.getElementById('loader-sub').textContent = 'Claude is reading your personality...';
-  setTimeout(() => { if (loader.classList.contains('on')) document.getElementById('loader-sub').textContent = 'Building your unique prompt...'; }, 4000);
-  setTimeout(() => { if (loader.classList.contains('on')) document.getElementById('loader-sub').textContent = 'Generating your avatar image...'; }, 8000);
-  setTimeout(() => { if (loader.classList.contains('on')) document.getElementById('loader-sub').textContent = 'Almost there...'; }, 20000);
+
+  var messages = [
+    'Claude is reading your personality...',
+    'Building your unique prompt...',
+    'Generating your avatar image...',
+    'Painting the details...',
+    'Almost there...'
+  ];
+  var msgIdx = 0;
+  document.getElementById('loader-sub').textContent = messages[0];
+  var msgTimer = setInterval(() => {
+    msgIdx = Math.min(msgIdx + 1, messages.length - 1);
+    document.getElementById('loader-sub').textContent = messages[msgIdx];
+  }, 8000);
 
   try {
     var formData = new FormData();
@@ -499,13 +517,27 @@ async function generate() {
     formData.append('avatar', chosenAv);
     if (uploads.face) formData.append('face', uploads.face);
 
-    var response = await fetch(BACKEND + '/analyze', { method: 'POST', body: formData });
-    var data = await response.json();
-    if (!data.success) throw new Error(data.error);
+    // Start job
+    var startRes = await fetch(BACKEND + '/start', { method: 'POST', body: formData });
+    var startData = await startRes.json();
+    if (!startData.jobId) throw new Error('Failed to start job');
 
-    document.getElementById('rname').textContent = data.avatar.name;
-    document.getElementById('rdesc').textContent = data.description;
-    document.getElementById('ravatar-img').src = data.image_url;
+    // Poll for result
+    var result = null;
+    for (var i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      var pollRes = await fetch(BACKEND + '/status/' + startData.jobId);
+      var pollData = await pollRes.json();
+      if (pollData.status === 'done') { result = pollData; break; }
+      if (pollData.status === 'error') throw new Error(pollData.error);
+    }
+    if (!result) throw new Error('Timed out');
+
+    clearInterval(msgTimer);
+
+    document.getElementById('rname').textContent = result.avatar_name;
+    document.getElementById('rdesc').textContent = result.description;
+    document.getElementById('ravatar-img').src = result.image_url;
 
     loader.classList.remove('on');
     goTo('result');
@@ -513,16 +545,31 @@ async function generate() {
     setTimeout(() => {
       var keys = ['Composure','Strategy','Instinct','Adaptability'];
       ['t1','t2','t3','t4'].forEach((id, i) => {
-        var val = data.trait_scores[keys[i]] || 70;
+        var val = result.traits[keys[i]] || 70;
         document.getElementById(id).style.width = val + '%';
         document.getElementById('tv' + (i+1)).textContent = val;
       });
     }, 300);
 
   } catch(err) {
+    clearInterval(msgTimer);
     loader.classList.remove('on');
     alert('Error: ' + err.message);
   }
+}
+
+// ── SAVE ──
+function saveAvatar() {
+  var img = document.getElementById('ravatar-img');
+  var name = document.getElementById('rname').textContent;
+  if (!img.src) return;
+  var a = document.createElement('a');
+  a.href = img.src;
+  a.download = 'AvatarMe-' + name.replace(/\s/g,'-') + '.jpg';
+  a.target = '_blank';
+  a.click();
+  document.getElementById('save-confirm').style.display = 'block';
+  setTimeout(() => { document.getElementById('save-confirm').style.display = 'none'; }, 3000);
 }
 
 // ── SHARE ──
