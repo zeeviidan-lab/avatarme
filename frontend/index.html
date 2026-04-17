@@ -6,147 +6,191 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="AvatarMe"/>
-<meta name="theme-color" content="#0A0A0F"/>
+<meta name="theme-color" content="#080C0A"/>
 <title>AvatarMe</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
 <style>
   :root {
-    --bg: #0A0A0F; --surface: #13131A; --surface2: #1C1C26;
-    --border: rgba(255,255,255,0.08); --accent: #C8FF57;
-    --accent2: #FF6B6B; --accent3: #57C8FF; --gold: #FFD166;
-    --purple: #C957FF; --text: #F0F0F5; --muted: #6B6B80;
+    --bg: #080C0A;
+    --surface: #111714;
+    --surface2: #1A2118;
+    --border: rgba(255,255,255,0.07);
+    --accent: #7CFF6B;
+    --accent2: #FF6B4A;
+    --accent3: #4AABFF;
+    --gold: #FFD166;
+    --text: #EFF5EE;
+    --muted: #5A7060;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  body { background:#050508; font-family:'DM Sans',sans-serif; color:var(--text); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; }
-  .phone { width:375px; height:812px; background:var(--bg); border-radius:48px; border:1.5px solid rgba(255,255,255,0.1); box-shadow:0 0 0 8px rgba(0,0,0,0.6),0 40px 80px rgba(0,0,0,0.7); overflow:hidden; position:relative; display:flex; flex-direction:column; }
-  .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:30px; background:#050508; border-radius:0 0 18px 18px; z-index:999; }
-  .statusbar { height:44px; display:flex; align-items:flex-end; justify-content:space-between; padding:0 24px 6px; font-size:12px; font-weight:600; color:rgba(255,255,255,0.6); flex-shrink:0; z-index:10; position:relative; }
+  html, body { height:100%; overflow:hidden; }
+  body { background:var(--bg); font-family:'Inter',sans-serif; color:var(--text); display:flex; align-items:center; justify-content:center; }
 
-  /* MOBILE FULL SCREEN */
-  @media (max-width: 480px) {
-    body { padding:0; background:var(--bg); align-items:flex-start; }
-    .phone { width:100%; height:100vh; height:100dvh; border-radius:0; border:none; box-shadow:none; }
+  .phone { width:390px; height:844px; background:var(--bg); border-radius:50px; border:1px solid rgba(255,255,255,0.08); box-shadow:0 0 0 8px #030503,0 40px 100px rgba(0,0,0,0.8); overflow:hidden; position:relative; display:flex; flex-direction:column; }
+
+  @media (max-width:480px) {
+    body { align-items:flex-start; }
+    .phone { width:100%; height:100dvh; border-radius:0; border:none; box-shadow:none; }
     .notch { display:none; }
-    .statusbar { display:none; }
-    .bottom-nav { padding-bottom:env(safe-area-inset-bottom); height:calc(72px + env(safe-area-inset-bottom)); }
+    .sbar { display:none; }
     .screen-wrap { padding-top:env(safe-area-inset-top); }
+    .bottom-nav { padding-bottom:env(safe-area-inset-bottom); }
   }
+
+  .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:126px; height:34px; background:#030503; border-radius:0 0 20px 20px; z-index:99; }
+  .sbar { height:50px; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 8px; font-size:11px; font-weight:600; color:rgba(255,255,255,0.4); flex-shrink:0; }
   .screen-wrap { flex:1; overflow:hidden; position:relative; }
   .screen { position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; display:none; flex-direction:column; }
   .screen::-webkit-scrollbar { display:none; }
   .screen.active { display:flex; }
-  .bottom-nav { height:72px; background:rgba(13,13,20,0.98); border-top:1px solid var(--border); display:none; align-items:flex-start; justify-content:space-around; padding-top:10px; flex-shrink:0; }
+  .bottom-nav { height:70px; background:rgba(8,12,10,0.97); border-top:1px solid var(--border); display:none; align-items:flex-start; justify-content:space-around; padding-top:10px; flex-shrink:0; }
   .bottom-nav.visible { display:flex; }
-  .nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:4px 20px; opacity:0.35; transition:opacity 0.2s; }
+  .nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:4px 22px; opacity:0.3; transition:opacity 0.2s; }
   .nav-item.active { opacity:1; }
-  .nav-icon { font-size:18px; }
-  .nav-label { font-size:10px; font-weight:600; }
+  .nav-icon { font-size:19px; }
+  .nav-label { font-size:9px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; }
   .nav-item.active .nav-label { color:var(--accent); }
 
   /* SPLASH */
-  #splash { align-items:center; justify-content:center; background:radial-gradient(ellipse 70% 50% at 50% 35%,rgba(200,255,87,0.09) 0%,transparent 70%),var(--bg); }
-  .logo-mark { width:88px; height:88px; background:var(--accent); border-radius:26px; display:flex; align-items:center; justify-content:center; font-size:42px; margin-bottom:24px; box-shadow:0 0 50px rgba(200,255,87,0.35); animation:glow 2.5s ease-in-out infinite; }
-  @keyframes glow { 0%,100% { box-shadow:0 0 40px rgba(200,255,87,0.3); } 50% { box-shadow:0 0 70px rgba(200,255,87,0.55); } }
-  #splash h1 { font-family:'Syne',sans-serif; font-size:52px; font-weight:800; letter-spacing:-2px; margin-bottom:10px; }
-  #splash p { color:var(--muted); font-size:15px; text-align:center; line-height:1.5; padding:0 40px; margin-bottom:48px; }
-  .splash-btn { background:var(--accent); color:var(--bg); border:none; cursor:pointer; padding:18px 60px; border-radius:100px; font-family:'Syne',sans-serif; font-size:16px; font-weight:700; transition:transform 0.15s; margin-bottom:14px; }
+  #splash {
+    align-items:center; justify-content:center;
+    background:radial-gradient(ellipse 80% 60% at 50% 30%, rgba(124,255,107,0.07) 0%, transparent 65%), var(--bg);
+  }
+  .splash-icon { font-size:80px; margin-bottom:20px; filter:drop-shadow(0 0 30px rgba(124,255,107,0.4)); animation:float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .splash-title { font-family:'Bebas Neue',sans-serif; font-size:72px; letter-spacing:4px; color:var(--text); line-height:1; margin-bottom:8px; }
+  .splash-tag { color:var(--muted); font-size:14px; font-weight:300; letter-spacing:1px; text-align:center; margin-bottom:56px; padding:0 40px; line-height:1.6; }
+  .splash-btn { background:var(--accent); color:#050805; border:none; cursor:pointer; padding:18px 64px; border-radius:100px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 0 30px rgba(124,255,107,0.3); margin-bottom:16px; }
   .splash-btn:active { transform:scale(0.96); }
-  .splash-sub { color:var(--muted); font-size:13px; }
+  .splash-priv { color:var(--muted); font-size:12px; letter-spacing:0.5px; }
 
   /* SHARED */
-  .sp { padding:20px 24px; }
-  .chip { display:inline-block; background:rgba(200,255,87,0.1); color:var(--accent); font-size:10px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:4px 12px; border-radius:100px; margin-bottom:12px; }
-  .screen h2 { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; line-height:1.15; letter-spacing:-0.5px; margin-bottom:8px; }
-  .sub { color:var(--muted); font-size:13px; line-height:1.5; margin-bottom:24px; }
+  .pad { padding:24px 24px 0; }
+  .label { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  .screen h2 { font-family:'Bebas Neue',sans-serif; font-size:38px; letter-spacing:2px; line-height:1.1; margin-bottom:8px; }
+  .hint { color:var(--muted); font-size:13px; line-height:1.55; margin-bottom:24px; font-weight:300; }
 
   /* UPLOAD */
-  .ucard { background:var(--surface2); border:1.5px solid var(--border); border-radius:18px; padding:16px 18px; display:flex; align-items:center; gap:14px; cursor:pointer; transition:border-color 0.2s; margin-bottom:10px; user-select:none; }
-  .ucard.done { border-color:rgba(200,255,87,0.4); background:rgba(200,255,87,0.04); }
-  .uicon { width:48px; height:48px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
-  .ucard:nth-child(1) .uicon { background:rgba(200,255,87,0.1); }
-  .ucard:nth-child(2) .uicon { background:rgba(87,200,255,0.1); }
-  .ucard:nth-child(3) .uicon { background:rgba(255,107,107,0.1); }
-  .utxt h3 { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
-  .utxt p { color:var(--muted); font-size:12px; margin-top:2px; }
-  .uchk { margin-left:auto; width:24px; height:24px; border-radius:50%; border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; transition:all 0.2s; color:transparent; }
-  .ucard.done .uchk { background:var(--accent); border-color:var(--accent); color:var(--bg); font-weight:800; }
+  .ucard { background:var(--surface2); border:1px solid var(--border); border-radius:16px; padding:16px 18px; display:flex; align-items:center; gap:14px; cursor:pointer; margin-bottom:10px; transition:border-color 0.2s; }
+  .ucard.done { border-color:rgba(124,255,107,0.3); }
+  .uicon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; background:rgba(255,255,255,0.04); }
+  .utxt h3 { font-size:14px; font-weight:600; }
+  .utxt p { color:var(--muted); font-size:12px; margin-top:2px; font-weight:300; }
+  .uchk { margin-left:auto; width:22px; height:22px; border-radius:50%; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:11px; color:transparent; flex-shrink:0; transition:all 0.2s; }
+  .ucard.done .uchk { background:var(--accent); border-color:var(--accent); color:#050805; font-weight:700; }
 
-  /* PROGRESS */
-  .pbar-wrap { margin-bottom:20px; }
-  .pbar { height:3px; background:var(--surface2); border-radius:99px; overflow:hidden; margin-bottom:6px; }
-  .pfill { height:100%; background:var(--accent); border-radius:99px; transition:width 0.4s ease; width:0%; }
-  .plabel { font-size:12px; color:var(--muted); display:flex; justify-content:space-between; }
+  /* REACTION GAME */
+  #game { background:var(--bg); }
+  .game-progress { display:flex; gap:6px; padding:16px 24px 0; }
+  .gp-dot { flex:1; height:3px; border-radius:99px; background:var(--surface2); transition:background 0.3s; }
+  .gp-dot.done { background:var(--accent); }
+  .gp-dot.active { background:rgba(124,255,107,0.5); }
 
-  /* QUIZ */
-  .qblock { margin-bottom:16px; }
-  .qq { font-size:13px; font-weight:500; margin-bottom:8px; }
-  .qopts { display:flex; flex-wrap:wrap; gap:7px; }
-  .qo { background:var(--surface2); border:1.5px solid var(--border); border-radius:100px; padding:7px 14px; font-size:12px; cursor:pointer; transition:all 0.15s; user-select:none; }
-  .qo.sel { background:rgba(200,255,87,0.1); border-color:var(--accent); color:var(--accent); }
+  .scenario-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 24px; }
+  .scenario-emoji { font-size:80px; margin-bottom:20px; transition:transform 0.3s; }
+  .scenario-q { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:1px; text-align:center; margin-bottom:12px; line-height:1.1; }
+  .scenario-sub { color:var(--muted); font-size:13px; text-align:center; margin-bottom:36px; font-weight:300; }
+  .timer-bar { width:100%; height:4px; background:var(--surface2); border-radius:99px; overflow:hidden; margin-bottom:32px; }
+  .timer-fill { height:100%; background:var(--accent); border-radius:99px; transition:width linear; }
+
+  .choices { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+  .choice-btn {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:14px; padding:16px 12px; cursor:pointer;
+    font-size:13px; font-weight:500; color:var(--text);
+    transition:all 0.15s; text-align:center; line-height:1.4;
+  }
+  .choice-btn:active, .choice-btn.picked { background:rgba(124,255,107,0.12); border-color:var(--accent); color:var(--accent); transform:scale(0.97); }
+
+  /* DRAG & RANK */
+  #rank { background:var(--bg); }
+  .rank-list { padding:0 24px; display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+  .rank-item {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:14px; padding:16px 18px;
+    display:flex; align-items:center; gap:14px;
+    cursor:grab; user-select:none; transition:all 0.2s;
+  }
+  .rank-item:active { cursor:grabbing; transform:scale(0.98); border-color:rgba(124,255,107,0.3); }
+  .rank-item.dragging { opacity:0.5; border-color:var(--accent); }
+  .rank-item.drag-over { border-color:var(--accent); background:rgba(124,255,107,0.05); }
+  .rank-num { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--accent); width:24px; flex-shrink:0; }
+  .rank-emoji { font-size:24px; }
+  .rank-txt h3 { font-size:14px; font-weight:600; }
+  .rank-txt p { color:var(--muted); font-size:12px; font-weight:300; margin-top:2px; }
+  .rank-handle { margin-left:auto; color:var(--muted); font-size:18px; }
+
+  /* AVATAR BANK */
+  #bank { background:var(--bg); }
+  .avatar-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 24px 24px; }
+  .av-card { border-radius:18px; overflow:hidden; border:1.5px solid var(--border); cursor:pointer; transition:all 0.2s; position:relative; background:var(--surface); }
+  .av-card.sel { border-color:var(--accent); }
+  .av-card.sel::after { content:'✓'; position:absolute; top:8px; right:8px; width:22px; height:22px; background:var(--accent); color:#050805; border-radius:50%; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; text-align:center; line-height:22px; }
+  .av-card img { width:100%; height:130px; object-fit:cover; display:block; }
+  .av-info { padding:10px 12px 12px; }
+  .av-info h3 { font-size:13px; font-weight:600; }
+  .av-tag { font-size:10px; color:var(--muted); margin-top:2px; font-weight:300; }
 
   /* CTA */
-  .cta { width:100%; background:var(--accent); color:var(--bg); border:none; cursor:pointer; padding:17px; border-radius:14px; font-family:'Syne',sans-serif; font-size:15px; font-weight:700; transition:transform 0.15s,opacity 0.2s; margin-top:20px; margin-bottom:10px; }
+  .cta { width:calc(100% - 48px); margin:0 24px 20px; background:var(--accent); color:#050805; border:none; cursor:pointer; padding:18px; border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; transition:transform 0.15s,opacity 0.2s; }
   .cta:active { transform:scale(0.98); }
-  .cta:disabled { opacity:0.25; cursor:not-allowed; transform:none; }
+  .cta:disabled { opacity:0.2; cursor:not-allowed; }
 
   /* RESULT */
-  #result { background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(200,255,87,0.07) 0%,transparent 60%),var(--bg); }
-  .rcard { margin:0 24px 16px; background:var(--surface2); border:1.5px solid rgba(200,255,87,0.12); border-radius:28px; overflow:hidden; box-shadow:0 0 40px rgba(200,255,87,0.06); }
-  .rvis { height:220px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; background:#0f1a0e; }
-  .rvis img { width:100%; height:100%; object-fit:cover; }
-  .rvis::after { content:''; position:absolute; bottom:0; left:0; right:0; height:60px; background:linear-gradient(transparent, var(--surface2)); }
-  .rbody { padding:18px 20px 20px; }
-  .rname { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-  .ubadge { font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase; background:rgba(200,255,87,0.1); color:var(--accent); padding:3px 9px; border-radius:100px; }
-  .rdesc { font-size:13px; color:var(--muted); line-height:1.55; margin-bottom:16px; }
-  .tmap h4 { font-family:'Syne',sans-serif; font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
-  .trow { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-  .tlb { font-size:12px; color:var(--muted); width:82px; flex-shrink:0; }
-  .tbar { flex:1; height:4px; background:rgba(255,255,255,0.05); border-radius:99px; overflow:hidden; }
-  .tf { height:100%; border-radius:99px; transition:width 0.8s ease; width:0%; }
+  #result { background:radial-gradient(ellipse 80% 40% at 50% 0%,rgba(124,255,107,0.05) 0%,transparent 60%), var(--bg); }
+  .result-img { width:calc(100% - 48px); height:240px; margin:0 24px 20px; border-radius:22px; overflow:hidden; position:relative; }
+  .result-img img { width:100%; height:100%; object-fit:cover; }
+  .result-img::after { content:''; position:absolute; bottom:0; left:0; right:0; height:80px; background:linear-gradient(transparent,var(--bg)); }
+  .result-body { padding:0 24px 8px; }
+  .result-name { font-family:'Bebas Neue',sans-serif; font-size:42px; letter-spacing:2px; line-height:1; margin-bottom:4px; display:flex; align-items:center; gap:12px; }
+  .uniq { font-size:10px; font-weight:600; letter-spacing:1.5px; background:rgba(124,255,107,0.1); color:var(--accent); padding:4px 10px; border-radius:100px; font-family:'Inter',sans-serif; }
+  .result-desc { color:var(--muted); font-size:13px; line-height:1.6; margin-bottom:20px; font-weight:300; }
+  .trait-map h4 { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .trow { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .tlb { font-size:12px; color:var(--muted); width:88px; flex-shrink:0; font-weight:300; }
+  .tbar { flex:1; height:3px; background:rgba(255,255,255,0.04); border-radius:99px; overflow:hidden; }
+  .tf { height:100%; border-radius:99px; transition:width 1s ease; width:0%; }
   .tvl { font-size:12px; font-weight:600; width:28px; text-align:right; }
-  .pchips { display:flex; flex-wrap:wrap; gap:8px; padding:0 24px; margin-bottom:16px; }
-  .pchip { background:var(--surface2); border:1.5px solid var(--border); border-radius:100px; padding:7px 13px; font-size:11px; display:flex; align-items:center; gap:5px; }
-  .arow { display:flex; gap:10px; padding:0 24px; margin-bottom:16px; }
-  .bsec { flex:1; padding:15px; background:var(--surface2); border:1.5px solid var(--border); border-radius:12px; cursor:pointer; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--text); }
-  .bpri { flex:2; padding:15px; background:var(--accent); border:none; border-radius:12px; cursor:pointer; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--bg); }
+  .result-actions { display:flex; gap:10px; padding:0 24px 24px; margin-top:8px; }
+  .btn-sec { flex:1; padding:15px; background:var(--surface2); border:1px solid var(--border); border-radius:12px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:var(--text); }
+  .btn-pri { flex:2; padding:15px; background:var(--accent); border:none; border-radius:12px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:#050805; }
 
   /* LOADER */
-  .loader { position:absolute; inset:0; background:rgba(10,10,15,0.94); display:none; align-items:center; justify-content:center; flex-direction:column; gap:16px; z-index:500; }
+  .loader { position:absolute; inset:0; background:rgba(8,12,10,0.95); display:none; align-items:center; justify-content:center; flex-direction:column; gap:14px; z-index:500; }
   .loader.on { display:flex; }
-  .spin { width:48px; height:48px; border:3px solid rgba(200,255,87,0.15); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-  .loader p { font-family:'Syne',sans-serif; font-size:14px; font-weight:700; }
-  .loader span { font-size:12px; color:var(--muted); }
+  .spin { width:44px; height:44px; border:2px solid rgba(124,255,107,0.15); border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .loader p { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:2px; }
+  .loader span { font-size:12px; color:var(--muted); font-weight:300; }
 </style>
 </head>
 <body>
 <div class="phone">
   <div class="notch"></div>
-  <div class="statusbar"><span>9:41</span><span>●●● ▲ 🔋</span></div>
+  <div class="sbar"><span>9:41</span><span>●●● 🔋</span></div>
 
   <div class="screen-wrap">
     <div class="loader" id="loader">
       <div class="spin"></div>
-      <p id="loader-title">Building your avatar...</p>
-      <span id="loader-sub">Analyzing your traits</span>
+      <p id="loader-title">FINDING YOUR AVATAR</p>
+      <span id="loader-sub">Claude is analyzing your instincts</span>
     </div>
 
     <!-- SPLASH -->
     <div class="screen active" id="splash">
-      <div class="logo-mark">🐾</div>
-      <h1>AvatarMe</h1>
-      <p>Upload your data. Pick your style.<br/>We build an avatar that's truly you.</p>
-      <button class="splash-btn" onclick="goTo('upload')">Get Started</button>
-      <p class="splash-sub">🔒 Your data stays private</p>
+      <div class="splash-icon">🐾</div>
+      <div class="splash-title">AVATARME</div>
+      <p class="splash-tag">Answer with your instincts.<br/>Discover the animal inside you.</p>
+      <button class="splash-btn" onclick="goTo('upload')">BEGIN</button>
+      <p class="splash-priv">🔒 Your data stays private</p>
     </div>
 
     <!-- UPLOAD -->
     <div class="screen" id="upload">
-      <div class="sp">
-        <div class="chip">Step 1 of 2</div>
-        <h2>Tell us who you are</h2>
-        <p class="sub">Upload a photo and answer 2 questions. More data = more personal avatar.</p>
+      <div class="pad">
+        <div class="label">Optional</div>
+        <h2>ADD YOUR DATA</h2>
+        <p class="hint">Upload a photo for a more personal result. Or skip straight to the game.</p>
 
         <input type="file" id="input-face" accept="image/*" capture="user" style="display:none" onchange="fileSelected('face',this)"/>
         <input type="file" id="input-body" accept="image/*" style="display:none" onchange="fileSelected('body',this)"/>
@@ -154,238 +198,340 @@
 
         <div class="ucard" id="uc-face" onclick="document.getElementById('input-face').click()">
           <div class="uicon">📸</div>
-          <div class="utxt"><h3>Face Photo</h3><p id="fp-face">Tap to take or upload a photo</p></div>
+          <div class="utxt"><h3>Face Photo</h3><p id="fp-face">Most accurate result</p></div>
           <div class="uchk">✓</div>
         </div>
         <div class="ucard" id="uc-body" onclick="document.getElementById('input-body').click()">
           <div class="uicon">🧍</div>
-          <div class="utxt"><h3>Body Photo</h3><p id="fp-body">Optional — full body photo</p></div>
+          <div class="utxt"><h3>Body Photo</h3><p id="fp-body">Optional</p></div>
           <div class="uchk">✓</div>
         </div>
         <div class="ucard" id="uc-voice" onclick="document.getElementById('input-voice').click()">
           <div class="uicon">🎙️</div>
-          <div class="utxt"><h3>Voice Recording</h3><p id="fp-voice">Optional — record your voice</p></div>
+          <div class="utxt"><h3>Voice</h3><p id="fp-voice">Optional</p></div>
           <div class="uchk">✓</div>
         </div>
+      </div>
+      <button class="cta" style="margin-top:24px" onclick="goTo('game')">PLAY THE GAME →</button>
+    </div>
 
-        <div class="pbar-wrap">
-          <div class="pbar"><div class="pfill" id="pfill"></div></div>
-          <div class="plabel"><span id="ptxt">Tap the cards above to start</span><span id="ppct">0%</span></div>
-        </div>
-
-        <div class="qblock">
-          <div class="qq">When facing a challenge, you...</div>
-          <div class="qopts" id="qg1">
-            <div class="qo" onclick="pickQ(this,'qg1')">Attack it</div>
-            <div class="qo" onclick="pickQ(this,'qg1')">Observe first</div>
-            <div class="qo" onclick="pickQ(this,'qg1')">Find allies</div>
-            <div class="qo" onclick="pickQ(this,'qg1')">Adapt quietly</div>
-          </div>
-        </div>
-        <div class="qblock">
-          <div class="qq">Your energy in a group is...</div>
-          <div class="qopts" id="qg2">
-            <div class="qo" onclick="pickQ(this,'qg2')">The leader</div>
-            <div class="qo" onclick="pickQ(this,'qg2')">The thinker</div>
-            <div class="qo" onclick="pickQ(this,'qg2')">The wildcard</div>
-            <div class="qo" onclick="pickQ(this,'qg2')">The protector</div>
-          </div>
-        </div>
-
-        <button class="cta" id="ucta" onclick="goTo('bank')" disabled>Continue to Avatar Bank →</button>
+    <!-- REACTION GAME -->
+    <div class="screen" id="game">
+      <div class="pad" style="padding-bottom:0">
+        <div class="label">Round 1 — React Fast</div>
+        <h2>TRUST YOUR<br/>INSTINCTS</h2>
+        <p class="hint">No overthinking. Just tap what feels right.</p>
+      </div>
+      <div class="game-progress" id="game-progress"></div>
+      <div class="scenario-wrap">
+        <div class="scenario-emoji" id="sc-emoji">🌊</div>
+        <div class="scenario-q" id="sc-q">LOADING...</div>
+        <p class="scenario-sub" id="sc-sub"></p>
+        <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+        <div class="choices" id="choices"></div>
       </div>
     </div>
 
-    <!-- BANK -->
-    <div class="screen" id="bank">
-      <div class="sp">
-        <div class="chip">Step 2 of 2</div>
-        <h2>Choose your avatar</h2>
-        <p class="sub">Pick the one that calls to you. Claude will match it to your personality.</p>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-          <div class="acard" onclick="pickAv(this,'wolf')" style="border-radius:18px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:border-color 0.2s;position:relative;background:var(--surface2)">
-            <img src="https://replicate.delivery/xezq/qxPrP7eOk31TZaGJvluj0xO0xt11BgXJQDW5JfBF2pv4CBcWA/out-0.jpg" style="width:100%;height:120px;object-fit:cover"/>
-            <div style="padding:10px 12px 12px"><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700">Arctic Wolf</div><div style="font-size:10px;color:var(--accent3);margin-top:3px">Realistic</div></div>
-          </div>
-          <div class="acard" onclick="pickAv(this,'snow_leopard')" style="border-radius:18px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:border-color 0.2s;position:relative;background:var(--surface2)">
-            <img src="https://replicate.delivery/xezq/U8OezzvNfLlWDEZnGqSgxvC6IOG1FyEWRY3wUJQjGt8FDBcWA/out-0.jpg" style="width:100%;height:120px;object-fit:cover"/>
-            <div style="padding:10px 12px 12px"><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700">Snow Leopard</div><div style="font-size:10px;color:var(--accent);margin-top:3px">Realistic</div></div>
-          </div>
-          <div class="acard" onclick="pickAv(this,'monkey')" style="border-radius:18px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:border-color 0.2s;position:relative;background:var(--surface2)">
-            <img src="https://replicate.delivery/xezq/FzDFebpA7CUKXKmFaMWf20WDgfmyDZHA1as9b2JyuDFkGC4sA/out-0.jpg" style="width:100%;height:120px;object-fit:cover"/>
-            <div style="padding:10px 12px 12px"><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700">Wise Monkey</div><div style="font-size:10px;color:var(--gold);margin-top:3px">Realistic</div></div>
-          </div>
-          <div class="acard" onclick="pickAv(this,'eagle')" style="border-radius:18px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:border-color 0.2s;position:relative;background:var(--surface2)">
-            <img src="https://replicate.delivery/xezq/QMHVobFHUcrjMZ2l0aYBwycDAlZfQsbk8LO1kDHVVv3vhAOLA/out-0.jpg" style="width:100%;height:120px;object-fit:cover"/>
-            <div style="padding:10px 12px 12px"><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700">Golden Eagle</div><div style="font-size:10px;color:var(--accent2);margin-top:3px">Realistic</div></div>
-          </div>
-          <div class="acard" onclick="pickAv(this,'fox')" style="border-radius:18px;overflow:hidden;border:1.5px solid var(--border);cursor:pointer;transition:border-color 0.2s;position:relative;background:var(--surface2)">
-            <img src="https://replicate.delivery/xezq/uZqiy5Qhd962GduHVbtmWFwPIf1C4WAhUWTNucekD9TrDBcWA/out-0.jpg" style="width:100%;height:120px;object-fit:cover"/>
-            <div style="padding:10px 12px 12px"><div style="font-family:Syne,sans-serif;font-size:13px;font-weight:700">Void Fox</div><div style="font-size:10px;color:var(--purple);margin-top:3px">Realistic</div></div>
-          </div>
-        </div>
-
-        <button class="cta" id="bcta" onclick="generate()" disabled>Generate My Avatar ✦</button>
+    <!-- DRAG & RANK -->
+    <div class="screen" id="rank">
+      <div class="pad">
+        <div class="label">Round 2 — Rank It</div>
+        <h2>WHAT DRIVES<br/>YOU MOST?</h2>
+        <p class="hint">Drag to reorder. #1 is your strongest trait.</p>
       </div>
+      <div class="rank-list" id="rank-list"></div>
+      <button class="cta" onclick="goTo('bank')">CHOOSE YOUR AVATAR →</button>
+    </div>
+
+    <!-- AVATAR BANK -->
+    <div class="screen" id="bank">
+      <div class="pad">
+        <div class="label">Choose</div>
+        <h2>PICK YOUR<br/>AVATAR</h2>
+        <p class="hint" style="margin-bottom:20px">Claude will match it to your personality.</p>
+      </div>
+      <div class="avatar-grid">
+        <div class="av-card" onclick="pickAv(this,'wolf')">
+          <img src="https://replicate.delivery/xezq/qxPrP7eOk31TZaGJvluj0xO0xt11BgXJQDW5JfBF2pv4CBcWA/out-0.jpg"/>
+          <div class="av-info"><h3>Arctic Wolf</h3><div class="av-tag">Fierce · Loyal</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'snow_leopard')">
+          <img src="https://replicate.delivery/xezq/U8OezzvNfLlWDEZnGqSgxvC6IOG1FyEWRY3wUJQjGt8FDBcWA/out-0.jpg"/>
+          <div class="av-info"><h3>Snow Leopard</h3><div class="av-tag">Rare · Precise</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'monkey')">
+          <img src="https://replicate.delivery/xezq/FzDFebpA7CUKXKmFaMWf20WDgfmyDZHA1as9b2JyuDFkGC4sA/out-0.jpg"/>
+          <div class="av-info"><h3>Wise Monkey</h3><div class="av-tag">Clever · Playful</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'eagle')">
+          <img src="https://replicate.delivery/xezq/QMHVobFHUcrjMZ2l0aYBwycDAlZfQsbk8LO1kDHVVv3vhAOLA/out-0.jpg"/>
+          <div class="av-info"><h3>Golden Eagle</h3><div class="av-tag">Visionary · Bold</div></div>
+        </div>
+        <div class="av-card" onclick="pickAv(this,'fox')">
+          <img src="https://replicate.delivery/xezq/uZqiy5Qhd962GduHVbtmWFwPIf1C4WAhUWTNucekD9TrDBcWA/out-0.jpg"/>
+          <div class="av-info"><h3>Void Fox</h3><div class="av-tag">Cunning · Sharp</div></div>
+        </div>
+      </div>
+      <button class="cta" id="bcta" onclick="generate()" disabled>GENERATE MY AVATAR ✦</button>
     </div>
 
     <!-- RESULT -->
     <div class="screen" id="result">
-      <div class="sp" style="padding-bottom:8px">
-        <div class="chip">Your Avatar</div>
-        <h2 id="rtitle">Meet your Avatar</h2>
-        <p class="sub">Built from your data. Unique to you.</p>
+      <div class="pad" style="padding-bottom:12px">
+        <div class="label">Your Avatar</div>
+        <p class="hint" style="margin-bottom:0">Built from your instincts. Unique to you.</p>
       </div>
-      <div class="rcard">
-        <div class="rvis"><img id="ravatar-img" src="" alt="avatar"/></div>
-        <div class="rbody">
-          <div class="rname"><span id="rname">—</span><span class="ubadge">Unique</span></div>
-          <div class="rdesc" id="rdesc">—</div>
-          <div class="tmap">
-            <h4>Your Trait Map</h4>
-            <div class="trow"><span class="tlb">Composure</span><div class="tbar"><div class="tf" id="t1" style="background:var(--accent)"></div></div><span class="tvl" id="tv1">—</span></div>
-            <div class="trow"><span class="tlb">Strategy</span><div class="tbar"><div class="tf" id="t2" style="background:var(--accent3)"></div></div><span class="tvl" id="tv2">—</span></div>
-            <div class="trow"><span class="tlb">Instinct</span><div class="tbar"><div class="tf" id="t3" style="background:var(--accent2)"></div></div><span class="tvl" id="tv3">—</span></div>
-            <div class="trow"><span class="tlb">Adaptability</span><div class="tbar"><div class="tf" id="t4" style="background:var(--gold)"></div></div><span class="tvl" id="tv4">—</span></div>
-          </div>
+      <div class="result-img"><img id="ravatar-img" src="" alt="avatar"/></div>
+      <div class="result-body">
+        <div class="result-name"><span id="rname">—</span><span class="uniq">UNIQUE</span></div>
+        <p class="result-desc" id="rdesc">—</p>
+        <div class="trait-map">
+          <h4>Trait Map</h4>
+          <div class="trow"><span class="tlb">Composure</span><div class="tbar"><div class="tf" id="t1" style="background:var(--accent)"></div></div><span class="tvl" id="tv1">—</span></div>
+          <div class="trow"><span class="tlb">Strategy</span><div class="tbar"><div class="tf" id="t2" style="background:var(--accent3)"></div></div><span class="tvl" id="tv2">—</span></div>
+          <div class="trow"><span class="tlb">Instinct</span><div class="tbar"><div class="tf" id="t3" style="background:var(--accent2)"></div></div><span class="tvl" id="tv3">—</span></div>
+          <div class="trow"><span class="tlb">Adaptability</span><div class="tbar"><div class="tf" id="t4" style="background:var(--gold)"></div></div><span class="tvl" id="tv4">—</span></div>
         </div>
       </div>
-      <div class="pchips">
-        <div class="pchip" id="chip-face" style="display:none">📸 Face analyzed</div>
-        <div class="pchip">🧠 Personality encoded</div>
-        <div class="pchip">✨ 100% unique</div>
-      </div>
-      <div class="arow">
-        <button class="bsec" onclick="goTo('bank')">← Redo</button>
-        <button class="bpri" onclick="shareAvatar()">📤 Share</button>
+      <div class="result-actions">
+        <button class="btn-sec" onclick="goTo('bank')">REDO</button>
+        <button class="btn-pri" onclick="shareAvatar()">SHARE 📤</button>
       </div>
     </div>
   </div>
 
   <div class="bottom-nav" id="bnav">
-    <div class="nav-item active" id="ni-upload" onclick="goTo('upload')"><span class="nav-icon">⬆️</span><span class="nav-label">Upload</span></div>
-    <div class="nav-item" id="ni-bank" onclick="goTo('bank')"><span class="nav-icon">🎭</span><span class="nav-label">Avatar Bank</span></div>
-    <div class="nav-item" id="ni-result" onclick="goTo('result')"><span class="nav-icon">✨</span><span class="nav-label">My Avatar</span></div>
+    <div class="nav-item" id="ni-upload" onclick="goTo('upload')"><span class="nav-icon">📸</span><span class="nav-label">Data</span></div>
+    <div class="nav-item" id="ni-game" onclick="goTo('game')"><span class="nav-icon">⚡</span><span class="nav-label">Game</span></div>
+    <div class="nav-item" id="ni-bank" onclick="goTo('bank')"><span class="nav-icon">🎭</span><span class="nav-label">Avatars</span></div>
+    <div class="nav-item" id="ni-result" onclick="goTo('result')"><span class="nav-icon">✨</span><span class="nav-label">Result</span></div>
   </div>
 </div>
 
 <script>
-  const BACKEND = window.location.origin;
-  var uploads = { face: null, body: false, voice: false };
-  var quizDone = { qg1: false, qg2: false };
-  var quizAnswers = {};
-  var chosenAv = null;
+const BACKEND = window.location.origin;
+var uploads = { face: null, body: false, voice: false };
+var gameAnswers = [];
+var rankOrder = [];
+var chosenAv = null;
 
-  function goTo(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    var sc = document.getElementById(id);
-    sc.classList.add('active');
-    sc.scrollTop = 0;
-    var nav = document.getElementById('bnav');
-    if (id === 'splash') { nav.classList.remove('visible'); return; }
-    nav.classList.add('visible');
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    var ni = document.getElementById('ni-' + id);
-    if (ni) ni.classList.add('active');
+// ── NAVIGATION ──
+function goTo(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  var sc = document.getElementById(id);
+  sc.classList.add('active');
+  sc.scrollTop = 0;
+  var nav = document.getElementById('bnav');
+  if (id === 'splash') { nav.classList.remove('visible'); return; }
+  nav.classList.add('visible');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  var ni = document.getElementById('ni-' + id);
+  if (ni) ni.classList.add('active');
+  if (id === 'game') initGame();
+  if (id === 'rank') initRank();
+}
+
+// ── UPLOAD ──
+function fileSelected(type, input) {
+  if (!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  var name = file.name.length > 22 ? file.name.substring(0,20)+'…' : file.name;
+  if (type === 'face') uploads.face = file;
+  else uploads[type] = true;
+  document.getElementById('uc-' + type).classList.add('done');
+  document.getElementById('fp-' + type).textContent = '✓ ' + name;
+}
+
+// ── REACTION GAME ──
+var scenarios = [
+  { emoji:'🌊', q:'You see a massive wave.', sub:'What do you do?', choices:['Dive straight in','Watch from shore','Surf it','Run away'] },
+  { emoji:'🔥', q:'A fire breaks out nearby.', sub:'Your first move?', choices:['Fight the fire','Call for help','Grab your things','Warn others'] },
+  { emoji:'🌙', q:'Alone at midnight.', sub:'What do you feel?', choices:['Power','Peace','Fear','Excitement'] },
+  { emoji:'🦁', q:'A lion appears.', sub:'Your reaction?', choices:['Hold eye contact','Back away slowly','Freeze','Make noise'] },
+  { emoji:'⚡', q:'A storm is coming.', sub:'You...', choices:['Chase it','Find shelter','Ignore it','Prepare carefully'] },
+];
+var currentScenario = 0;
+var timer = null;
+
+function initGame() {
+  currentScenario = 0;
+  gameAnswers = [];
+  renderScenario();
+}
+
+function renderScenario() {
+  if (currentScenario >= scenarios.length) { goTo('rank'); return; }
+  var s = scenarios[currentScenario];
+  var dots = document.getElementById('game-progress');
+  dots.innerHTML = scenarios.map((_, i) =>
+    `<div class="gp-dot ${i < currentScenario ? 'done' : i === currentScenario ? 'active' : ''}"></div>`
+  ).join('');
+  document.getElementById('sc-emoji').textContent = s.emoji;
+  document.getElementById('sc-q').textContent = s.q;
+  document.getElementById('sc-sub').textContent = s.sub;
+  var ch = document.getElementById('choices');
+  ch.innerHTML = s.choices.map(c =>
+    `<button class="choice-btn" onclick="pickChoice('${c}')">${c}</button>`
+  ).join('');
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timer);
+  var fill = document.getElementById('timer-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  setTimeout(() => {
+    fill.style.transition = 'width 5s linear';
+    fill.style.width = '0%';
+  }, 50);
+  timer = setTimeout(() => {
+    pickChoice('—');
+  }, 5000);
+}
+
+function pickChoice(choice) {
+  clearTimeout(timer);
+  gameAnswers.push({ scenario: scenarios[currentScenario].q, choice });
+  var btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => { if (b.textContent === choice) b.classList.add('picked'); b.onclick = null; });
+  setTimeout(() => { currentScenario++; renderScenario(); }, 400);
+}
+
+// ── DRAG & RANK ──
+var traits = [
+  { id:'power',   emoji:'⚡', name:'Power',       desc:'Strength & dominance' },
+  { id:'wisdom',  emoji:'🧠', name:'Wisdom',      desc:'Insight & strategy' },
+  { id:'speed',   emoji:'💨', name:'Speed',        desc:'Agility & reaction' },
+  { id:'stealth', emoji:'🌑', name:'Stealth',      desc:'Patience & precision' },
+  { id:'loyalty', emoji:'🤝', name:'Loyalty',      desc:'Connection & trust' },
+];
+var dragSrc = null;
+
+function initRank() {
+  rankOrder = [...traits];
+  renderRank();
+}
+
+function renderRank() {
+  var list = document.getElementById('rank-list');
+  list.innerHTML = rankOrder.map((t, i) => `
+    <div class="rank-item" draggable="true" data-id="${t.id}"
+      ondragstart="dragStart(event)" ondragover="dragOver(event)"
+      ondrop="dragDrop(event)" ondragend="dragEnd(event)"
+      ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-emoji">${t.emoji}</span>
+      <div class="rank-txt"><h3>${t.name}</h3><p>${t.desc}</p></div>
+      <span class="rank-handle">⋮⋮</span>
+    </div>
+  `).join('');
+}
+
+function dragStart(e) { dragSrc = e.currentTarget; e.currentTarget.classList.add('dragging'); }
+function dragOver(e) { e.preventDefault(); document.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over')); e.currentTarget.classList.add('drag-over'); }
+function dragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over')); }
+function dragDrop(e) {
+  e.preventDefault();
+  var srcId = dragSrc.dataset.id, tgtId = e.currentTarget.dataset.id;
+  if (srcId === tgtId) return;
+  var si = rankOrder.findIndex(t => t.id === srcId), ti = rankOrder.findIndex(t => t.id === tgtId);
+  var tmp = rankOrder[si]; rankOrder[si] = rankOrder[ti]; rankOrder[ti] = tmp;
+  renderRank();
+}
+
+// Touch drag support
+var touchItem = null, touchClone = null, touchStartY = 0;
+function touchStart(e) {
+  touchItem = e.currentTarget;
+  touchStartY = e.touches[0].clientY;
+  touchItem.classList.add('dragging');
+}
+function touchMove(e) {
+  e.preventDefault();
+  var y = e.touches[0].clientY;
+  var items = document.querySelectorAll('.rank-item');
+  items.forEach(item => {
+    var rect = item.getBoundingClientRect();
+    if (y > rect.top && y < rect.bottom && item !== touchItem) {
+      item.classList.add('drag-over');
+    } else { item.classList.remove('drag-over'); }
+  });
+}
+function touchEnd(e) {
+  var y = e.changedTouches[0].clientY;
+  var items = document.querySelectorAll('.rank-item');
+  var target = null;
+  items.forEach(item => { var rect = item.getBoundingClientRect(); if (y > rect.top && y < rect.bottom && item !== touchItem) target = item; });
+  if (target) {
+    var srcId = touchItem.dataset.id, tgtId = target.dataset.id;
+    var si = rankOrder.findIndex(t => t.id === srcId), ti = rankOrder.findIndex(t => t.id === tgtId);
+    var tmp = rankOrder[si]; rankOrder[si] = rankOrder[ti]; rankOrder[ti] = tmp;
   }
+  touchItem.classList.remove('dragging');
+  items.forEach(i => i.classList.remove('drag-over'));
+  renderRank();
+}
 
-  function fileSelected(type, input) {
-    if (!input.files || !input.files[0]) return;
-    var file = input.files[0];
-    var name = file.name.length > 22 ? file.name.substring(0, 20) + '…' : file.name;
-    if (type === 'face') uploads.face = file;
-    else uploads[type] = true;
-    document.getElementById('uc-' + type).classList.add('done');
-    document.getElementById('fp-' + type).textContent = '✓ ' + name;
-    updateProg();
+// ── AVATAR BANK ──
+function pickAv(card, name) {
+  document.querySelectorAll('.av-card').forEach(c => c.classList.remove('sel'));
+  card.classList.add('sel');
+  chosenAv = name;
+  document.getElementById('bcta').disabled = false;
+}
+
+// ── GENERATE ──
+async function generate() {
+  if (!chosenAv) return;
+  var loader = document.getElementById('loader');
+  loader.classList.add('on');
+  document.getElementById('loader-title').textContent = 'FINDING YOUR AVATAR';
+  document.getElementById('loader-sub').textContent = 'Claude is analyzing your instincts';
+
+  try {
+    var formData = new FormData();
+    formData.append('q1', gameAnswers.map(a => a.choice).join(', '));
+    formData.append('q2', rankOrder.map(t => t.name).join(' > '));
+    if (uploads.face) formData.append('face', uploads.face);
+
+    var response = await fetch(BACKEND + '/analyze', { method: 'POST', body: formData });
+    var data = await response.json();
+    if (!data.success) throw new Error(data.error);
+
+    document.getElementById('rname').textContent = data.avatar.name;
+    document.getElementById('rdesc').textContent = data.description;
+    document.getElementById('ravatar-img').src = data.avatar.image_url;
+
+    loader.classList.remove('on');
+    goTo('result');
+
+    setTimeout(() => {
+      var keys = ['Composure','Strategy','Instinct','Adaptability'];
+      ['t1','t2','t3','t4'].forEach((id, i) => {
+        var val = data.trait_scores[keys[i]] || 70;
+        document.getElementById(id).style.width = val + '%';
+        document.getElementById('tv' + (i+1)).textContent = val;
+      });
+    }, 300);
+
+  } catch(err) {
+    loader.classList.remove('on');
+    alert('Error: ' + err.message);
   }
+}
 
-  function updateProg() {
-    var u = (uploads.face ? 1 : 0) + (uploads.body ? 1 : 0) + (uploads.voice ? 1 : 0);
-    var q = Object.values(quizDone).filter(Boolean).length;
-    var pct = Math.round(((u + q) / 5) * 100);
-    document.getElementById('pfill').style.width = pct + '%';
-    document.getElementById('ppct').textContent = pct + '%';
-    document.getElementById('ptxt').textContent = u > 0 ? (u + ' upload' + (u > 1 ? 's' : '') + ' · ' + q + ' quiz answer' + (q !== 1 ? 's' : '')) : 'Tap the cards above to start';
-    document.getElementById('ucta').disabled = !(q >= 1);
+// ── SHARE ──
+function shareAvatar() {
+  var name = document.getElementById('rname').textContent;
+  var desc = document.getElementById('rdesc').textContent;
+  if (navigator.share) {
+    navigator.share({ title: 'My AvatarMe — ' + name, text: desc, url: window.location.href });
+  } else {
+    navigator.clipboard.writeText('My AvatarMe: ' + name + '\n' + desc + '\n' + window.location.href)
+      .then(() => alert('Copied to clipboard!'));
   }
-
-  function pickQ(el, gid) {
-    document.querySelectorAll('#' + gid + ' .qo').forEach(o => o.classList.remove('sel'));
-    el.classList.add('sel');
-    quizAnswers[gid] = el.textContent.trim();
-    quizDone[gid] = true;
-    updateProg();
-  }
-
-  function pickAv(card, name) {
-    document.querySelectorAll('.acard').forEach(c => {
-      c.style.borderColor = 'var(--border)';
-    });
-    card.style.borderColor = 'var(--accent)';
-    chosenAv = name;
-    document.getElementById('bcta').disabled = false;
-  }
-
-  async function generate() {
-    if (!chosenAv) return;
-    var loader = document.getElementById('loader');
-    var loaderTitle = document.getElementById('loader-title');
-    var loaderSub = document.getElementById('loader-sub');
-    loader.classList.add('on');
-    loaderTitle.textContent = 'Analyzing your personality...';
-    loaderSub.textContent = 'Claude is reading your data';
-
-    try {
-      var formData = new FormData();
-      formData.append('q1', quizAnswers['qg1'] || '');
-      formData.append('q2', quizAnswers['qg2'] || '');
-      if (uploads.face) formData.append('face', uploads.face);
-
-      loaderSub.textContent = 'Matching your avatar...';
-      var response = await fetch(BACKEND + '/analyze', { method: 'POST', body: formData });
-      var data = await response.json();
-
-      if (!data.success) throw new Error(data.error);
-
-      // Populate result screen
-      document.getElementById('rtitle').innerHTML = 'Meet your<br/>' + data.avatar.name;
-      document.getElementById('rname').textContent = data.avatar.name;
-      document.getElementById('rdesc').textContent = data.description;
-      document.getElementById('ravatar-img').src = data.avatar.image_url;
-
-      if (uploads.face) document.getElementById('chip-face').style.display = 'flex';
-
-      loader.classList.remove('on');
-      goTo('result');
-
-      setTimeout(() => {
-        var keys = ['Composure', 'Strategy', 'Instinct', 'Adaptability'];
-        var ids = ['t1', 't2', 't3', 't4'], vids = ['tv1', 'tv2', 'tv3', 'tv4'];
-        keys.forEach((k, i) => {
-          var val = data.trait_scores[k] || 70;
-          document.getElementById(ids[i]).style.width = val + '%';
-          document.getElementById(vids[i]).textContent = val;
-        });
-      }, 300);
-
-    } catch (err) {
-      loader.classList.remove('on');
-      alert('Something went wrong: ' + err.message);
-    }
-  }
-
-  function shareAvatar() {
-    var name = document.getElementById('rname').textContent;
-    var desc = document.getElementById('rdesc').textContent;
-    if (navigator.share) {
-      navigator.share({ title: 'My AvatarMe — ' + name, text: desc });
-    } else {
-      navigator.clipboard.writeText('My AvatarMe Avatar: ' + name + '\n' + desc)
-        .then(() => alert('Copied to clipboard!'));
-    }
-  }
+}
 </script>
 </body>
 </html>
