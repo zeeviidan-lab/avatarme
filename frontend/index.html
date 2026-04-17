@@ -282,35 +282,35 @@
       <!-- Animals -->
       <div id="tab-animals" class="avatar-grid">
         <div class="av-card" onclick="pickAv(this,'wolf')">
-          <div class="av-placeholder" style="background:linear-gradient(135deg,#0d1a1a,#0a1f1f)">🐺</div>
+          <img src="https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
           <div class="av-info"><h3>Arctic Wolf</h3><div class="av-tag">Fierce · Loyal</div></div>
         </div>
         <div class="av-card" onclick="pickAv(this,'snow_leopard')">
-          <div class="av-placeholder" style="background:linear-gradient(135deg,#1a1a0d,#1f1f0a)">🐆</div>
+          <img src="https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
           <div class="av-info"><h3>Snow Leopard</h3><div class="av-tag">Rare · Precise</div></div>
         </div>
         <div class="av-card" onclick="pickAv(this,'monkey')">
-          <div class="av-placeholder" style="background:linear-gradient(135deg,#1a0f0a,#2a1a0a)">🐒</div>
+          <img src="https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
           <div class="av-info"><h3>Wise Monkey</h3><div class="av-tag">Clever · Playful</div></div>
         </div>
         <div class="av-card" onclick="pickAv(this,'eagle')">
-          <div class="av-placeholder" style="background:linear-gradient(135deg,#1a1000,#2a1a00)">🦅</div>
+          <img src="https://images.unsplash.com/photo-1611270629569-8b357cb88da9?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
           <div class="av-info"><h3>Golden Eagle</h3><div class="av-tag">Visionary · Bold</div></div>
         </div>
         <div class="av-card" onclick="pickAv(this,'fox')">
-          <div class="av-placeholder" style="background:linear-gradient(135deg,#1a0a00,#2d1200)">🦊</div>
+          <img src="https://images.unsplash.com/photo-1516934024742-b461fba47600?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
           <div class="av-info"><h3>Red Fox</h3><div class="av-tag">Cunning · Sharp</div></div>
         </div>
         <div class="av-card" onclick="pickAv(this,'bear')">
-          <div class="av-placeholder" style="background:linear-gradient(135deg,#100a08,#1e1008)">🐻</div>
+          <img src="https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
           <div class="av-info"><h3>Grizzly Bear</h3><div class="av-tag">Dominant · Raw</div></div>
         </div>
         <div class="av-card" onclick="pickAv(this,'tiger')">
-          <div class="av-placeholder" style="background:linear-gradient(135deg,#1a1a1a,#0d1a1a)">🐯</div>
+          <img src="https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
           <div class="av-info"><h3>White Tiger</h3><div class="av-tag">Intense · Powerful</div></div>
         </div>
         <div class="av-card" onclick="pickAv(this,'owl')">
-          <div class="av-placeholder" style="background:linear-gradient(135deg,#0f0a1a,#1a1000)">🦉</div>
+          <img src="https://images.unsplash.com/photo-1543549049-9fbda2a4bc31?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
           <div class="av-info"><h3>Great Owl</h3><div class="av-tag">Wise · Ancient</div></div>
         </div>
       </div>
@@ -370,7 +370,10 @@
       </div>
       <div class="result-img"><img id="ravatar-img" src="" alt="avatar"/></div>
       <div class="result-body">
-        <div class="result-name"><span id="rname">—</span><span class="uniq">UNIQUE</span></div>
+        <div class="result-name">
+          <img id="rav-thumb" src="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0"/>
+          <span id="rname">—</span><span class="uniq">UNIQUE</span>
+        </div>
         <p class="result-desc" id="rdesc">—</p>
         <div class="trait-map">
           <h4>Trait Map</h4>
@@ -405,6 +408,17 @@ var uploads = { face: null, body: false, voice: false };
 var gameAnswers = [];
 var rankOrder = [];
 var chosenAv = null;
+
+const AV_PHOTOS = {
+  wolf:         'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=80&h=80&fit=crop&crop=face',
+  snow_leopard: 'https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=80&h=80&fit=crop&crop=face',
+  monkey:       'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=80&h=80&fit=crop&crop=face',
+  eagle:        'https://images.unsplash.com/photo-1611270629569-8b357cb88da9?w=80&h=80&fit=crop&crop=face',
+  fox:          'https://images.unsplash.com/photo-1516934024742-b461fba47600?w=80&h=80&fit=crop&crop=face',
+  bear:         'https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=80&h=80&fit=crop&crop=face',
+  tiger:        'https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=80&h=80&fit=crop&crop=face',
+  owl:          'https://images.unsplash.com/photo-1543549049-9fbda2a4bc31?w=80&h=80&fit=crop&crop=face',
+};
 
 // ── NAVIGATION ──
 function goTo(id) {
@@ -584,6 +598,9 @@ function pickAv(card, name) {
   card.classList.add('sel');
   chosenAv = name;
   document.getElementById('bcta').disabled = false;
+  var thumb = document.getElementById('rav-thumb');
+  if (AV_PHOTOS[name]) { thumb.src = AV_PHOTOS[name]; thumb.style.display = 'block'; }
+  else { thumb.style.display = 'none'; }
 }
 
 // ── GENERATE ──

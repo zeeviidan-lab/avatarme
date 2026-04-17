@@ -50,7 +50,8 @@ ${imageBase64 ? 'Face photo: provided (analyze expression, energy, features)' : 
 Image prompt rules:
 - Full body portrait of a ${av.animal} (${av.base}), head to toe, standing in a powerful confident pose
 - Background environment: ${av.env} — describe it in rich detail, it must look like a real photograph or film still
-- Encode personality into visual details: eye intensity, expression, posture, outfit/armor, lighting direction, color palette
+- Encode personality into visual details: eye intensity, expression, posture, lighting direction, color palette
+- ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? 'IMPORTANT: This is a REAL ANIMAL — absolutely no clothing, no outfit, no accessories, no armor — pure natural animal body only' : 'HUMAN CHARACTER: include the full iconic costume and outfit for this character type' }
 - Style: photorealistic, shot on RED cinema camera, National Geographic meets Hollywood cinematography, physically accurate lighting, real-world textures, no cartoon or CGI look
 - 2-3 sentences, highly descriptive
 - End with: "full body, photorealistic, 8K resolution, cinematic photography, real environment, physically accurate lighting, sharp detail"
