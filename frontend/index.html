@@ -317,6 +317,10 @@
 
       <!-- Humans -->
       <div id="tab-humans" class="avatar-grid" style="display:none">
+        <div class="av-card" onclick="pickAv(this,'yourself')" style="grid-column:1/-1">
+          <img src="https://replicate.delivery/xezq/sYoZVb5LVk5qIhNHtJtROeDffVzvOew6EhzQ3giPfjLEf6DnF/out-0.jpg" loading="lazy" style="height:170px"/>
+          <div class="av-info"><h3>Just Me ✨</h3><div class="av-tag">A real human shaped by your personality</div></div>
+        </div>
         <div class="av-card" onclick="pickAv(this,'pirate')">
           <img src="https://replicate.delivery/xezq/5IezaMeUbGkJ8k0FVfSelEdPlWsTkkNODLCN9zAt51NY5QwZB/out-0.jpg" loading="lazy"/>
           <div class="av-info"><h3>Pirate</h3><div class="av-tag">Wild · Fearless</div></div>
@@ -410,6 +414,7 @@ var rankOrder = [];
 var chosenAv = null;
 
 const AV_PHOTOS = {
+  yourself:     'https://replicate.delivery/xezq/sYoZVb5LVk5qIhNHtJtROeDffVzvOew6EhzQ3giPfjLEf6DnF/out-0.jpg',
   wolf:         'https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=80&h=80&fit=crop&crop=face',
   snow_leopard: 'https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=80&h=80&fit=crop&crop=face',
   monkey:       'https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=80&h=80&fit=crop&crop=face',
