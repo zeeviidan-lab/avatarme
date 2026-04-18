@@ -401,7 +401,8 @@
         <button class="btn-pri" onclick="saveAvatar()">SAVE 💾</button>
       </div>
       <div class="result-actions" style="margin-top:-8px">
-        <button class="btn-sec" style="flex:3" onclick="shareAvatar()">SHARE 📤</button>
+        <button class="btn-sec" style="flex:1" onclick="shareAvatar()">SHARE 📤</button>
+        <button class="btn-sec" style="flex:1;background:rgba(255,209,102,0.1);border-color:rgba(255,209,102,0.3);color:var(--gold)" onclick="generateAnimated()">🎬 ANIMATED</button>
       </div>
       <div id="save-confirm" style="display:none;text-align:center;padding:8px 24px 16px;font-size:13px;color:var(--accent)">✓ Saved to your device!</div>
     </div>
@@ -701,6 +702,13 @@ async function generate() {
     alert('Something went wrong. Please try again.');
     console.error(err);
   }
+}
+
+// ── ANIMATED REGENERATE ──
+function generateAnimated() {
+  var prev = chosenAv;
+  chosenAv = 'animated';
+  generate().finally(() => { chosenAv = prev; });
 }
 
 // ── SAVE ──

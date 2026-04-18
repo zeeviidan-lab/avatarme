@@ -105,6 +105,30 @@ async function generateImage(fluxPrompt) {
   throw new Error('Timed out');
 }
 
+const HUMAN_AVATARS = new Set(['yourself','animated','pirate','lawyer','president','inmate','detective','boxer','rockstar','soldier','doctor','wizard']);
+
+async function faceSwap(targetUrl, faceBase64, faceMime) {
+  const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
+  const startRes = await fetch('https://api.replicate.com/v1/models/cdingram/face-swap/predictions', {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input: { swap_image: faceDataUrl, input_image: targetUrl } })
+  });
+  const prediction = await startRes.json();
+  if (!prediction.id) { console.error('Face swap start error:', JSON.stringify(prediction)); return null; }
+
+  for (let i = 0; i < 25; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
+    });
+    const result = await pollRes.json();
+    if (result.status === 'succeeded') return result.output;
+    if (result.status === 'failed') { console.error('Face swap failed:', result.error); return null; }
+  }
+  return null;
+}
+
 // Run the full pipeline in background
 async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey) {
   try {
@@ -116,7 +140,14 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     jobs[jobId].traits = claudeResult.traits;
     jobs[jobId].dominant_trait = claudeResult.dominant_trait;
 
-    const imageUrl = await generateImage(claudeResult.flux_prompt);
+    let imageUrl = await generateImage(claudeResult.flux_prompt);
+
+    // Face integration — only for human avatars with an uploaded face
+    if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
+      jobs[jobId].status = 'swapping';
+      const swapped = await faceSwap(imageUrl, imageBase64, imageMime);
+      if (swapped) imageUrl = swapped;
+    }
 
     jobs[jobId].status = 'done';
     jobs[jobId].image_url = imageUrl;
