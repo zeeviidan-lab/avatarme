@@ -214,14 +214,19 @@
         <h2>ADD YOUR DATA</h2>
         <p class="hint">Upload a photo for a more personal result. Or skip straight to the game.</p>
 
-        <input type="file" id="input-face" accept="image/*" style="display:none" onchange="fileSelected('face',this)"/>
+        <input type="file" id="input-face-cam" accept="image/*" capture="user" style="display:none" onchange="fileSelected('face',this)"/>
+        <input type="file" id="input-face-lib" accept="image/*" style="display:none" onchange="fileSelected('face',this)"/>
         <input type="file" id="input-body" accept="image/*" style="display:none" onchange="fileSelected('body',this)"/>
         <input type="file" id="input-voice" accept="audio/*" capture="microphone" style="display:none" onchange="fileSelected('voice',this)"/>
 
-        <div class="ucard" id="uc-face" onclick="document.getElementById('input-face').click()">
+        <div class="ucard" id="uc-face">
           <div class="uicon">📸</div>
           <div class="utxt"><h3>Face Photo</h3><p id="fp-face">Most accurate result</p></div>
           <div class="uchk">✓</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <button onclick="document.getElementById('input-face-cam').click()" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-weight:500;cursor:pointer">📷 Take Photo</button>
+          <button onclick="document.getElementById('input-face-lib').click()" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-weight:500;cursor:pointer">🖼️ From Library</button>
         </div>
         <div class="ucard" id="uc-body" onclick="document.getElementById('input-body').click()">
           <div class="uicon">🧍</div>
