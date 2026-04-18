@@ -533,12 +533,12 @@ function renderRank() {
   list.innerHTML = rankOrder.map((t, i) => `
     <div class="rank-item" draggable="true" data-id="${t.id}"
       ondragstart="dragStart(event)" ondragover="dragOver(event)"
-      ondrop="dragDrop(event)" ondragend="dragEnd(event)"
-      ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)">
+      ondrop="dragDrop(event)" ondragend="dragEnd(event)">
       <span class="rank-num">${i+1}</span>
       <span class="rank-emoji">${t.emoji}</span>
       <div class="rank-txt"><h3>${t.name}</h3><p>${t.desc}</p></div>
-      <span class="rank-handle">⋮⋮</span>
+      <span class="rank-handle" style="padding:8px 4px;touch-action:none"
+        ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)">⋮⋮</span>
     </div>
   `).join('');
 }
@@ -558,7 +558,8 @@ function dragDrop(e) {
 // Touch drag support
 var touchItem = null, touchClone = null, touchStartY = 0;
 function touchStart(e) {
-  touchItem = e.currentTarget;
+  e.preventDefault();
+  touchItem = e.currentTarget.closest('.rank-item');
   touchStartY = e.touches[0].clientY;
   touchItem.classList.add('dragging');
 }
