@@ -107,28 +107,42 @@ async function generateImage(fluxPrompt) {
 
 const HUMAN_AVATARS = new Set(['yourself','animated','pirate','lawyer','president','inmate','detective','boxer','rockstar','soldier','doctor','wizard']);
 
-async function faceSwap(targetUrl, faceBase64, faceMime) {
+// InstantID — generates image WITH the user's face identity preserved
+async function generateWithFace(prompt, faceBase64, faceMime) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
-  const FACE_SWAP_VERSION = 'd1d6ea8c8be89d664a07a457526f7128109dee7030fdac424788d762c71ed111';
+  const INSTANT_ID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ version: FACE_SWAP_VERSION, input: { swap_image: faceDataUrl, input_image: targetUrl } })
+    body: JSON.stringify({ version: INSTANT_ID_VERSION, input: {
+      image: faceDataUrl,
+      prompt,
+      negative_prompt: 'low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs',
+      num_inference_steps: 30,
+      guidance_scale: 5,
+      ip_adapter_scale: 0.8,
+      controlnet_conditioning_scale: 0.8,
+      output_format: 'jpg',
+      output_quality: 95,
+    } })
   });
   const prediction = await startRes.json();
-  if (!prediction.id) { console.error('Face swap start error:', JSON.stringify(prediction)); return null; }
-  console.log('Face swap started:', prediction.id);
+  if (!prediction.id) { console.error('InstantID start error:', JSON.stringify(prediction)); return null; }
+  console.log('InstantID started:', prediction.id);
 
-  for (let i = 0; i < 25; i++) {
+  for (let i = 0; i < 40; i++) {
     await new Promise(r => setTimeout(r, 3000));
     const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
       headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
     });
     const result = await pollRes.json();
-    if (result.status === 'succeeded') { console.log('Face swap succeeded'); return result.output; }
-    if (result.status === 'failed') { console.error('Face swap failed:', result.error); return null; }
+    if (result.status === 'succeeded') {
+      console.log('InstantID succeeded');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
+    if (result.status === 'failed') { console.error('InstantID failed:', result.error); return null; }
   }
-  console.error('Face swap timed out');
+  console.error('InstantID timed out');
   return null;
 }
 
@@ -143,13 +157,16 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     jobs[jobId].traits = claudeResult.traits;
     jobs[jobId].dominant_trait = claudeResult.dominant_trait;
 
-    let imageUrl = await generateImage(claudeResult.flux_prompt);
+    let imageUrl = null;
 
-    // Face integration — only for human avatars with an uploaded face
+    // If face uploaded AND human avatar → use InstantID for true identity preservation
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      jobs[jobId].status = 'swapping';
-      const swapped = await faceSwap(imageUrl, imageBase64, imageMime);
-      if (swapped) imageUrl = swapped;
+      imageUrl = await generateWithFace(claudeResult.flux_prompt, imageBase64, imageMime);
+    }
+
+    // Fallback (or animal/no-face) → regular FLUX
+    if (!imageUrl) {
+      imageUrl = await generateImage(claudeResult.flux_prompt);
     }
 
     jobs[jobId].status = 'done';
