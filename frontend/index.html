@@ -11,16 +11,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
   :root {
-    --bg: #080C0A;
-    --surface: #111714;
-    --surface2: #1A2118;
+    --bg: #0c0907;
+    --surface: #181410;
+    --surface2: #221c16;
     --border: rgba(255,255,255,0.07);
-    --accent: #7CFF6B;
-    --accent2: #FF6B4A;
-    --accent3: #4AABFF;
-    --gold: #FFD166;
-    --text: #EFF5EE;
-    --muted: #5A7060;
+    --accent: #c8966a;
+    --accent2: #a85c3a;
+    --accent3: #7a6a52;
+    --gold: #c8966a;
+    --text: #e8ddc8;
+    --muted: #6b6051;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; overflow:hidden; }
@@ -54,13 +54,13 @@
   /* SPLASH */
   #splash {
     align-items:center; justify-content:center;
-    background:radial-gradient(ellipse 80% 60% at 50% 30%, rgba(124,255,107,0.07) 0%, transparent 65%), var(--bg);
+    background:radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,150,106,0.07) 0%, transparent 65%), var(--bg);
   }
-  .splash-icon { font-size:80px; margin-bottom:20px; filter:drop-shadow(0 0 30px rgba(124,255,107,0.4)); animation:float 3s ease-in-out infinite; }
+  .splash-icon { font-size:80px; margin-bottom:20px; filter:drop-shadow(0 0 30px rgba(200,150,106,0.4)); animation:float 3s ease-in-out infinite; }
   @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
   .splash-title { font-family:'Bebas Neue',sans-serif; font-size:72px; letter-spacing:4px; color:var(--text); line-height:1; margin-bottom:8px; }
   .splash-tag { color:var(--muted); font-size:14px; font-weight:300; letter-spacing:1px; text-align:center; margin-bottom:56px; padding:0 40px; line-height:1.6; }
-  .splash-btn { background:var(--accent); color:#050805; border:none; cursor:pointer; padding:18px 64px; border-radius:100px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 0 30px rgba(124,255,107,0.3); margin-bottom:16px; }
+  .splash-btn { background:var(--accent); color:#050805; border:none; cursor:pointer; padding:18px 64px; border-radius:100px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 0 30px rgba(200,150,106,0.3); margin-bottom:16px; }
   .splash-btn:active { transform:scale(0.96); }
   .splash-priv { color:var(--muted); font-size:12px; letter-spacing:0.5px; }
 
@@ -72,7 +72,7 @@
 
   /* UPLOAD */
   .ucard { background:var(--surface2); border:1px solid var(--border); border-radius:16px; padding:16px 18px; display:flex; align-items:center; gap:14px; cursor:pointer; margin-bottom:10px; transition:border-color 0.2s; }
-  .ucard.done { border-color:rgba(124,255,107,0.3); }
+  .ucard.done { border-color:rgba(200,150,106,0.3); }
   .uicon { width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; background:rgba(255,255,255,0.04); }
   .utxt h3 { font-size:14px; font-weight:600; }
   .utxt p { color:var(--muted); font-size:12px; margin-top:2px; font-weight:300; }
@@ -84,7 +84,7 @@
   .game-progress { display:flex; gap:6px; padding:16px 24px 0; }
   .gp-dot { flex:1; height:3px; border-radius:99px; background:var(--surface2); transition:background 0.3s; }
   .gp-dot.done { background:var(--accent); }
-  .gp-dot.active { background:rgba(124,255,107,0.5); }
+  .gp-dot.active { background:rgba(200,150,106,0.5); }
 
   .scenario-wrap { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px 24px; }
   .scenario-emoji { font-size:80px; margin-bottom:20px; transition:transform 0.3s; }
@@ -100,11 +100,11 @@
     font-size:13px; font-weight:500; color:var(--text);
     transition:all 0.15s; text-align:center; line-height:1.4;
   }
-  .choice-btn:active, .choice-btn.picked { background:rgba(124,255,107,0.12); border-color:var(--accent); color:var(--accent); transform:scale(0.97); }
+  .choice-btn:active, .choice-btn.picked { background:rgba(200,150,106,0.12); border-color:var(--accent); color:var(--accent); transform:scale(0.97); }
 
   /* This-or-That cards */
   .tot-card { display:flex; align-items:center; gap:18px; width:100%; padding:22px 24px; background:var(--surface2); border:1.5px solid var(--border); border-radius:18px; cursor:pointer; color:var(--text); transition:all 0.2s; text-align:left; }
-  .tot-card:active, .tot-card.picked { background:rgba(124,255,107,0.12); border-color:var(--accent); color:var(--accent); transform:scale(0.98); }
+  .tot-card:active, .tot-card.picked { background:rgba(200,150,106,0.12); border-color:var(--accent); color:var(--accent); transform:scale(0.98); }
   .tot-emoji { font-size:42px; flex-shrink:0; }
   .tot-label { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; }
   .tot-or { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px; color:var(--muted); text-align:center; padding:2px 0; }
@@ -125,7 +125,7 @@
   .pcard:active { transform:scale(0.96); }
   .pcard.picked {
     border-color:var(--accent);
-    box-shadow:0 0 0 2px rgba(124,255,107,0.25), 0 6px 20px rgba(124,255,107,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+    box-shadow:0 0 0 2px rgba(200,150,106,0.25), 0 6px 20px rgba(200,150,106,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
     transform:translateY(-2px);
   }
   .pcard.picked::after { content:'✓'; position:absolute; top:8px; right:8px; width:24px; height:24px; background:var(--accent); color:#050805; border-radius:50%; font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center; }
@@ -174,13 +174,13 @@
   .cta:disabled { opacity:0.2; cursor:not-allowed; }
 
   /* RESULT */
-  #result { background:radial-gradient(ellipse 80% 40% at 50% 0%,rgba(124,255,107,0.05) 0%,transparent 60%), var(--bg); }
+  #result { background:radial-gradient(ellipse 80% 40% at 50% 0%,rgba(200,150,106,0.05) 0%,transparent 60%), var(--bg); }
   .result-img { width:calc(100% - 48px); height:380px; margin:0 24px 20px; border-radius:22px; overflow:hidden; position:relative; }
   .result-img img { width:100%; height:100%; object-fit:cover; }
   .result-img::after { content:''; position:absolute; bottom:0; left:0; right:0; height:80px; background:linear-gradient(transparent,var(--bg)); }
   .result-body { padding:0 24px 8px; }
   .result-name { font-family:'Bebas Neue',sans-serif; font-size:42px; letter-spacing:2px; line-height:1; margin-bottom:4px; display:flex; align-items:center; gap:12px; }
-  .uniq { font-size:10px; font-weight:600; letter-spacing:1.5px; background:rgba(124,255,107,0.1); color:var(--accent); padding:4px 10px; border-radius:100px; font-family:'Inter',sans-serif; }
+  .uniq { font-size:10px; font-weight:600; letter-spacing:1.5px; background:rgba(200,150,106,0.1); color:var(--accent); padding:4px 10px; border-radius:100px; font-family:'Inter',sans-serif; }
   .result-desc { color:var(--muted); font-size:13px; line-height:1.6; margin-bottom:20px; font-weight:300; }
   .trait-map h4 { font-size:10px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
   .trow { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
@@ -197,7 +197,7 @@
   .loader { position:absolute; inset:0; background:var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
   .loader.on { display:flex; }
   .loader-icon { font-size:72px; margin-bottom:28px; animation:pulse 1.5s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 10px rgba(124,255,107,0.3))} 50%{transform:scale(1.08);filter:drop-shadow(0 0 25px rgba(124,255,107,0.6))} }
+  @keyframes pulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 10px rgba(200,150,106,0.3))} 50%{transform:scale(1.08);filter:drop-shadow(0 0 25px rgba(200,150,106,0.6))} }
   .loader-steps { display:flex; flex-direction:column; gap:12px; width:100%; margin-bottom:32px; }
   .lstep { display:flex; align-items:center; gap:12px; opacity:0.3; transition:opacity 0.4s; }
   .lstep.active { opacity:1; }
@@ -315,7 +315,7 @@
 
       <!-- Category tabs -->
       <div style="display:flex;gap:10px;padding:0 24px 16px;">
-        <div class="cat-tab active" onclick="setTab(this,'animals')" style="flex:1;padding:12px 14px;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid var(--accent);background:rgba(124,255,107,0.12);color:var(--accent);text-align:center">🐾 Animals</div>
+        <div class="cat-tab active" onclick="setTab(this,'animals')" style="flex:1;padding:12px 14px;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid var(--accent);background:rgba(200,150,106,0.12);color:var(--accent);text-align:center">🐾 Animals</div>
         <div class="cat-tab" onclick="setTab(this,'humans')" style="flex:1;padding:12px 14px;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid rgba(255,255,255,0.2);background:var(--surface2);color:var(--text);text-align:center">🧑 Humans</div>
       </div>
 
@@ -629,7 +629,7 @@ function setTab(el, tab) {
     t.style.color = 'var(--muted)';
   });
   el.style.borderColor = 'var(--accent)';
-  el.style.background = 'rgba(124,255,107,0.1)';
+  el.style.background = 'rgba(200,150,106,0.1)';
   el.style.color = 'var(--accent)';
   document.getElementById('tab-animals').style.display = tab === 'animals' ? 'grid' : 'none';
   document.getElementById('tab-humans').style.display = tab === 'humans' ? 'grid' : 'none';
