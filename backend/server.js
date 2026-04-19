@@ -109,13 +109,15 @@ const HUMAN_AVATARS = new Set(['yourself','animated','pirate','lawyer','presiden
 
 async function faceSwap(targetUrl, faceBase64, faceMime) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
-  const startRes = await fetch('https://api.replicate.com/v1/models/cdingram/face-swap/predictions', {
+  const FACE_SWAP_VERSION = 'd1d6ea8c8be89d664a07a457526f7128109dee7030fdac424788d762c71ed111';
+  const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: { swap_image: faceDataUrl, input_image: targetUrl } })
+    body: JSON.stringify({ version: FACE_SWAP_VERSION, input: { swap_image: faceDataUrl, input_image: targetUrl } })
   });
   const prediction = await startRes.json();
   if (!prediction.id) { console.error('Face swap start error:', JSON.stringify(prediction)); return null; }
+  console.log('Face swap started:', prediction.id);
 
   for (let i = 0; i < 25; i++) {
     await new Promise(r => setTimeout(r, 3000));
@@ -123,9 +125,10 @@ async function faceSwap(targetUrl, faceBase64, faceMime) {
       headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
     });
     const result = await pollRes.json();
-    if (result.status === 'succeeded') return result.output;
+    if (result.status === 'succeeded') { console.log('Face swap succeeded'); return result.output; }
     if (result.status === 'failed') { console.error('Face swap failed:', result.error); return null; }
   }
+  console.error('Face swap timed out');
   return null;
 }
 
