@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="AvatarMe"/>
 <meta name="theme-color" content="#080C0A"/>
 <title>AvatarMe</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
   :root {
     --bg: #080C0A;
@@ -148,6 +148,25 @@
   .av-info { padding:10px 12px 12px; }
   .av-info h3 { font-size:13px; font-weight:600; }
   .av-tag { font-size:10px; color:var(--muted); margin-top:2px; font-weight:300; }
+
+  /* HOLO-STYLE ANIMAL CARDS (v5 grey/brown) */
+  .pk-card { position:relative; padding:8px; cursor:pointer; transition:transform 0.15s; background:linear-gradient(155deg,#2a241c 0%,#15110c 100%); border:1px solid rgba(168,152,120,0.3); clip-path:polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+  .pk-card::before { content:''; position:absolute; inset:0; background:linear-gradient(135deg, transparent 0%, rgba(168,152,120,0.06) 50%, transparent 100%); pointer-events:none; }
+  .pk-card.sel { border-color:#a85c3a; box-shadow:0 0 16px rgba(168,92,58,0.45); }
+  .pk-card.sel::after { content:'✓'; position:absolute; top:6px; right:6px; width:20px; height:20px; background:#a85c3a; color:#1a1006; border-radius:50%; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; z-index:5; }
+  .pk-head { display:flex; justify-content:space-between; align-items:center; padding:0 4px 6px; font-family:'Orbitron',sans-serif; font-size:9px; letter-spacing:1.5px; color:#a89878; text-transform:uppercase; }
+  .pk-name { color:#e8ddc8; }
+  .pk-type { color:#c8966a; font-weight:700; }
+  .pk-frame { position:relative; aspect-ratio:1/1; background:#000; overflow:hidden; border:1px solid rgba(168,152,120,0.18); }
+  .pk-frame img { width:100%; height:100%; object-fit:cover; filter:contrast(1.06) saturate(0.92); display:block; }
+  .pk-frame::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, transparent 60%, rgba(20,15,10,0.7) 100%), linear-gradient(180deg, rgba(168,152,120,0.08) 0%, transparent 30%); pointer-events:none; }
+  .pk-corner { position:absolute; width:10px; height:10px; border:1px solid #c8966a; z-index:3; }
+  .pk-corner.tl { top:2px; left:2px; border-right:none; border-bottom:none; }
+  .pk-corner.br { bottom:2px; right:2px; border-left:none; border-top:none; }
+  .pk-silhouette { position:absolute; right:5px; bottom:5px; width:34px; height:34px; border-radius:50%; background:rgba(15,11,8,0.9); border:1px solid #c8966a; display:flex; align-items:center; justify-content:center; font-size:18px; box-shadow:0 0 10px rgba(200,150,106,0.35); z-index:2; }
+  .pk-silhouette span { filter:brightness(0) invert(1); opacity:0.95; }
+  .pk-foot { padding:6px 4px 0; display:flex; gap:4px; flex-wrap:wrap; font-family:'Orbitron',sans-serif; }
+  .pk-tag { font-size:8px; letter-spacing:1px; color:#a89878; border:1px solid rgba(168,152,120,0.3); padding:1px 5px; text-transform:uppercase; }
 
   /* CTA */
   .cta { width:calc(100% - 48px); margin:0 24px 20px; background:var(--accent); color:#050805; border:none; cursor:pointer; padding:18px; border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; transition:transform 0.15s,opacity 0.2s; }
@@ -302,37 +321,45 @@
 
       <!-- Animals -->
       <div id="tab-animals" class="avatar-grid">
-        <div class="av-card" onclick="pickAv(this,'wolf')">
-          <img src="https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
-          <div class="av-info"><h3>Arctic Wolf</h3><div class="av-tag">Fierce · Loyal</div></div>
+        <div class="pk-card" style="--c1:#2a2418;--c2:#0e0a04" onclick="pickAv(this,'wolf')">
+          <div class="pk-head"><span class="pk-name">Arctic Wolf</span><span class="pk-type">α</span></div>
+          <div class="pk-frame"><img src="https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=400&h=400&fit=crop&crop=face" loading="lazy"/><div class="pk-silhouette"><span>🐺</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Fierce</span><span class="pk-tag">Loyal</span></div>
         </div>
-        <div class="av-card" onclick="pickAv(this,'snow_leopard')">
-          <img src="https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
-          <div class="av-info"><h3>Snow Leopard</h3><div class="av-tag">Rare · Precise</div></div>
+        <div class="pk-card" style="--c1:#1a2230;--c2:#070b14" onclick="pickAv(this,'snow_leopard')">
+          <div class="pk-head"><span class="pk-name">Snow Leopard</span><span class="pk-type">RARE</span></div>
+          <div class="pk-frame"><img src="https://images.unsplash.com/photo-1456926631375-92c8ce872def?w=400&h=400&fit=crop&crop=face" loading="lazy"/><div class="pk-silhouette"><span>🐆</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Rare</span><span class="pk-tag">Precise</span></div>
         </div>
-        <div class="av-card" onclick="pickAv(this,'monkey')">
-          <img src="https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
-          <div class="av-info"><h3>Wise Monkey</h3><div class="av-tag">Clever · Playful</div></div>
+        <div class="pk-card" style="--c1:#2a1f12;--c2:#0e0805" onclick="pickAv(this,'monkey')">
+          <div class="pk-head"><span class="pk-name">Wise Monkey</span><span class="pk-type">μ</span></div>
+          <div class="pk-frame"><img src="https://images.unsplash.com/photo-1540573133985-87b6da6d54a9?w=400&h=400&fit=crop&crop=face" loading="lazy"/><div class="pk-silhouette"><span>🐒</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Clever</span><span class="pk-tag">Playful</span></div>
         </div>
-        <div class="av-card" onclick="pickAv(this,'eagle')">
-          <img src="https://replicate.delivery/xezq/VM01Lg6XcLY6OxpULewrXqPGCsHsZ8HKnlxcgHPI2Al6OLOLA/out-0.jpg" loading="lazy"/>
-          <div class="av-info"><h3>Golden Eagle</h3><div class="av-tag">Visionary · Bold</div></div>
+        <div class="pk-card" style="--c1:#2c1a0a;--c2:#0e0703" onclick="pickAv(this,'eagle')">
+          <div class="pk-head"><span class="pk-name">Golden Eagle</span><span class="pk-type">EPIC</span></div>
+          <div class="pk-frame"><img src="https://images.unsplash.com/photo-1611689342806-0863700ce1e4?w=400&h=400&fit=crop&crop=face" loading="lazy"/><div class="pk-silhouette"><span>🦅</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Visionary</span><span class="pk-tag">Bold</span></div>
         </div>
-        <div class="av-card" onclick="pickAv(this,'fox')">
-          <img src="https://images.unsplash.com/photo-1516934024742-b461fba47600?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
-          <div class="av-info"><h3>Red Fox</h3><div class="av-tag">Cunning · Sharp</div></div>
+        <div class="pk-card" style="--c1:#2a160a;--c2:#0e0703" onclick="pickAv(this,'fox')">
+          <div class="pk-head"><span class="pk-name">Red Fox</span><span class="pk-type">φ</span></div>
+          <div class="pk-frame"><img src="https://images.unsplash.com/photo-1516934024742-b461fba47600?w=400&h=400&fit=crop&crop=face" loading="lazy"/><div class="pk-silhouette"><span>🦊</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Cunning</span><span class="pk-tag">Sharp</span></div>
         </div>
-        <div class="av-card" onclick="pickAv(this,'bear')">
-          <img src="https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
-          <div class="av-info"><h3>Grizzly Bear</h3><div class="av-tag">Dominant · Raw</div></div>
+        <div class="pk-card" style="--c1:#1f1a14;--c2:#0a0805" onclick="pickAv(this,'bear')">
+          <div class="pk-head"><span class="pk-name">Grizzly Bear</span><span class="pk-type">β</span></div>
+          <div class="pk-frame"><img src="https://images.unsplash.com/photo-1589656966895-2f33e7653819?w=400&h=400&fit=crop&crop=face" loading="lazy"/><div class="pk-silhouette"><span>🐻</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Dominant</span><span class="pk-tag">Raw</span></div>
         </div>
-        <div class="av-card" onclick="pickAv(this,'tiger')">
-          <img src="https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
-          <div class="av-info"><h3>White Tiger</h3><div class="av-tag">Intense · Powerful</div></div>
+        <div class="pk-card" style="--c1:#241a14;--c2:#0c0805" onclick="pickAv(this,'tiger')">
+          <div class="pk-head"><span class="pk-name">White Tiger</span><span class="pk-type">LEGEND</span></div>
+          <div class="pk-frame"><img src="https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=400&h=400&fit=crop&crop=face" loading="lazy"/><div class="pk-silhouette"><span>🐅</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Intense</span><span class="pk-tag">Powerful</span></div>
         </div>
-        <div class="av-card" onclick="pickAv(this,'owl')">
-          <img src="https://images.unsplash.com/photo-1543549049-9fbda2a4bc31?w=300&h=130&fit=crop&crop=face" loading="lazy"/>
-          <div class="av-info"><h3>Great Owl</h3><div class="av-tag">Wise · Ancient</div></div>
+        <div class="pk-card" style="--c1:#1a1a24;--c2:#070710" onclick="pickAv(this,'owl')">
+          <div class="pk-head"><span class="pk-name">Great Owl</span><span class="pk-type">ω</span></div>
+          <div class="pk-frame"><img src="https://images.unsplash.com/photo-1543549049-9fbda2a4bc31?w=400&h=400&fit=crop&crop=face" loading="lazy"/><div class="pk-silhouette"><span>🦉</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Wise</span><span class="pk-tag">Ancient</span></div>
         </div>
       </div>
 
@@ -610,7 +637,7 @@ function setTab(el, tab) {
 
 // ── AVATAR BANK ──
 function pickAv(card, name) {
-  document.querySelectorAll('.av-card').forEach(c => c.classList.remove('sel'));
+  document.querySelectorAll('.av-card, .pk-card').forEach(c => c.classList.remove('sel'));
   card.classList.add('sel');
   chosenAv = name;
   document.getElementById('bcta').disabled = false;
