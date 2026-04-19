@@ -102,23 +102,40 @@
   }
   .choice-btn:active, .choice-btn.picked { background:rgba(124,255,107,0.12); border-color:var(--accent); color:var(--accent); transform:scale(0.97); }
 
-  /* DRAG & RANK */
+  /* This-or-That cards */
+  .tot-card { display:flex; align-items:center; gap:18px; width:100%; padding:22px 24px; background:var(--surface2); border:1.5px solid var(--border); border-radius:18px; cursor:pointer; color:var(--text); transition:all 0.2s; text-align:left; }
+  .tot-card:active, .tot-card.picked { background:rgba(124,255,107,0.12); border-color:var(--accent); color:var(--accent); transform:scale(0.98); }
+  .tot-emoji { font-size:42px; flex-shrink:0; }
+  .tot-label { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; }
+  .tot-or { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px; color:var(--muted); text-align:center; padding:2px 0; }
+
+  /* ABILITY CARDS PACK */
   #rank { background:var(--bg); }
-  .rank-list { padding:0 24px; display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
-  .rank-item {
-    background:var(--surface2); border:1px solid var(--border);
-    border-radius:14px; padding:16px 18px;
-    display:flex; align-items:center; gap:14px;
-    cursor:grab; user-select:none; transition:all 0.2s;
+  .card-pack { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 20px 24px; }
+  .pcard {
+    position:relative; aspect-ratio:3/4; border-radius:16px; cursor:pointer;
+    background:linear-gradient(160deg, var(--c1,#1a2118) 0%, var(--c2,#0f1410) 100%);
+    border:1.5px solid rgba(255,255,255,0.08);
+    padding:14px 12px; display:flex; flex-direction:column; justify-content:space-between;
+    transition:all 0.25s; overflow:hidden;
+    box-shadow:0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.08);
   }
-  .rank-item:active { cursor:grabbing; transform:scale(0.98); border-color:rgba(124,255,107,0.3); }
-  .rank-item.dragging { opacity:0.5; border-color:var(--accent); }
-  .rank-item.drag-over { border-color:var(--accent); background:rgba(124,255,107,0.05); }
-  .rank-num { font-family:'Bebas Neue',sans-serif; font-size:24px; color:var(--accent); width:24px; flex-shrink:0; }
-  .rank-emoji { font-size:24px; }
-  .rank-txt h3 { font-size:14px; font-weight:600; }
-  .rank-txt p { color:var(--muted); font-size:12px; font-weight:300; margin-top:2px; }
-  .rank-handle { margin-left:auto; color:var(--muted); font-size:18px; }
+  .pcard::before { content:''; position:absolute; top:0; left:-50%; right:-50%; height:40%;
+    background:linear-gradient(180deg, rgba(255,255,255,0.08), transparent); transform:rotate(-2deg); pointer-events:none; }
+  .pcard:active { transform:scale(0.96); }
+  .pcard.picked {
+    border-color:var(--accent);
+    box-shadow:0 0 0 2px rgba(124,255,107,0.25), 0 6px 20px rgba(124,255,107,0.25), inset 0 1px 0 rgba(255,255,255,0.12);
+    transform:translateY(-2px);
+  }
+  .pcard.picked::after { content:'✓'; position:absolute; top:8px; right:8px; width:24px; height:24px; background:var(--accent); color:#050805; border-radius:50%; font-size:13px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .pcard.dim { opacity:0.45; }
+  .pc-top { display:flex; justify-content:space-between; align-items:flex-start; }
+  .pc-tier { font-size:9px; font-weight:700; letter-spacing:2px; color:rgba(255,255,255,0.4); }
+  .pc-pwr { font-family:'Bebas Neue',sans-serif; font-size:22px; line-height:1; color:var(--gold); text-shadow:0 0 12px rgba(255,209,102,0.4); }
+  .pc-emoji { font-size:54px; text-align:center; filter:drop-shadow(0 4px 12px rgba(0,0,0,0.5)); margin:6px 0; }
+  .pc-name { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1.5px; text-align:center; line-height:1; }
+  .pc-desc { font-size:10px; color:rgba(255,255,255,0.55); text-align:center; line-height:1.35; padding:0 2px; font-weight:300; }
 
   /* AVATAR BANK */
   #bank { background:var(--bg); }
@@ -251,23 +268,22 @@
       </div>
       <div class="game-progress" id="game-progress"></div>
       <div class="scenario-wrap">
-        <div class="scenario-emoji" id="sc-emoji">🌊</div>
-        <div class="scenario-q" id="sc-q">LOADING...</div>
-        <p class="scenario-sub" id="sc-sub"></p>
+        <div class="scenario-q" id="sc-q" style="margin-bottom:8px">LOADING...</div>
+        <p class="scenario-sub" id="sc-sub" style="margin-bottom:24px"></p>
         <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
-        <div class="choices" id="choices"></div>
+        <div id="tot-cards" style="display:flex;flex-direction:column;gap:14px;width:100%;margin-top:20px"></div>
       </div>
     </div>
 
-    <!-- DRAG & RANK -->
+    <!-- ABILITY CARDS PACK -->
     <div class="screen" id="rank">
       <div class="pad">
-        <div class="label">Round 2 — Rank It</div>
-        <h2>WHAT DRIVES<br/>YOU MOST?</h2>
-        <p class="hint">Drag to reorder. #1 is your strongest trait.</p>
+        <div class="label">Round 2 — Open Your Pack</div>
+        <h2>PICK YOUR<br/>POWERS</h2>
+        <p class="hint">Tap <span style="color:var(--accent);font-weight:600">3 cards</span> that feel most like you. (<span id="pick-count">0</span>/3)</p>
       </div>
-      <div class="rank-list" id="rank-list"></div>
-      <button class="cta" onclick="goTo('bank')">CHOOSE YOUR AVATAR →</button>
+      <div class="card-pack" id="card-pack"></div>
+      <button class="cta" id="rank-cta" onclick="goTo('bank')" disabled>CHOOSE YOUR AVATAR →</button>
     </div>
 
     <!-- AVATAR BANK -->
@@ -465,11 +481,13 @@ function fileSelected(type, input) {
 
 // ── REACTION GAME ──
 var scenarios = [
-  { emoji:'🌊', q:'You see a massive wave.', sub:'What do you do?', choices:['Dive straight in','Watch from shore','Surf it','Run away'] },
-  { emoji:'🔥', q:'A fire breaks out nearby.', sub:'Your first move?', choices:['Fight the fire','Call for help','Grab your things','Warn others'] },
-  { emoji:'🌙', q:'Alone at midnight.', sub:'What do you feel?', choices:['Power','Peace','Fear','Excitement'] },
-  { emoji:'🦁', q:'A lion appears.', sub:'Your reaction?', choices:['Hold eye contact','Back away slowly','Freeze','Make noise'] },
-  { emoji:'⚡', q:'A storm is coming.', sub:'You...', choices:['Chase it','Find shelter','Ignore it','Prepare carefully'] },
+  { q:'THIS OR THAT?', sub:'Trust your gut.', a:{ emoji:'🌅', label:'Sunrise' },          b:{ emoji:'🌃', label:'Midnight' } },
+  { q:'THIS OR THAT?', sub:'No thinking.',    a:{ emoji:'🏔️', label:'Mountains' },         b:{ emoji:'🌊', label:'Ocean' } },
+  { q:'THIS OR THAT?', sub:'Pick fast.',      a:{ emoji:'🎯', label:'Plan it out' },        b:{ emoji:'🎲', label:'Wing it' } },
+  { q:'THIS OR THAT?', sub:'Instinct.',       a:{ emoji:'🐺', label:'Lone wolf' },          b:{ emoji:'🤝', label:'In the pack' } },
+  { q:'THIS OR THAT?', sub:'Honest answer.',  a:{ emoji:'⚔️', label:'Fight back' },          b:{ emoji:'🕊️', label:'Walk away' } },
+  { q:'THIS OR THAT?', sub:'First feeling.',  a:{ emoji:'🔥', label:'Burn bright' },         b:{ emoji:'❄️', label:'Stay cool' } },
+  { q:'THIS OR THAT?', sub:'Be real.',        a:{ emoji:'👑', label:'Lead' },               b:{ emoji:'🧭', label:'Explore' } },
 ];
 var currentScenario = 0;
 var timer = null;
@@ -487,13 +505,19 @@ function renderScenario() {
   dots.innerHTML = scenarios.map((_, i) =>
     `<div class="gp-dot ${i < currentScenario ? 'done' : i === currentScenario ? 'active' : ''}"></div>`
   ).join('');
-  document.getElementById('sc-emoji').textContent = s.emoji;
   document.getElementById('sc-q').textContent = s.q;
   document.getElementById('sc-sub').textContent = s.sub;
-  var ch = document.getElementById('choices');
-  ch.innerHTML = s.choices.map(c =>
-    `<button class="choice-btn" onclick="pickChoice('${c}')">${c}</button>`
-  ).join('');
+  var ch = document.getElementById('tot-cards');
+  ch.innerHTML = `
+    <button class="tot-card" onclick="pickChoice('${s.a.label}')">
+      <span class="tot-emoji">${s.a.emoji}</span>
+      <span class="tot-label">${s.a.label}</span>
+    </button>
+    <div class="tot-or">OR</div>
+    <button class="tot-card" onclick="pickChoice('${s.b.label}')">
+      <span class="tot-emoji">${s.b.emoji}</span>
+      <span class="tot-label">${s.b.label}</span>
+    </button>`;
   startTimer();
 }
 
@@ -513,86 +537,62 @@ function startTimer() {
 
 function pickChoice(choice) {
   clearTimeout(timer);
-  gameAnswers.push({ scenario: scenarios[currentScenario].q, choice });
-  var btns = document.querySelectorAll('.choice-btn');
-  btns.forEach(b => { if (b.textContent === choice) b.classList.add('picked'); b.onclick = null; });
-  setTimeout(() => { currentScenario++; renderScenario(); }, 400);
+  var s = scenarios[currentScenario];
+  gameAnswers.push({ scenario: `${s.a.label} vs ${s.b.label}`, choice });
+  document.querySelectorAll('.tot-card').forEach(b => {
+    if (b.textContent.includes(choice)) b.classList.add('picked');
+    b.onclick = null;
+  });
+  setTimeout(() => { currentScenario++; renderScenario(); }, 350);
 }
 
-// ── DRAG & RANK ──
-var traits = [
-  { id:'power',   emoji:'⚡', name:'Power',       desc:'Strength & dominance' },
-  { id:'wisdom',  emoji:'🧠', name:'Wisdom',      desc:'Insight & strategy' },
-  { id:'speed',   emoji:'💨', name:'Speed',        desc:'Agility & reaction' },
-  { id:'stealth', emoji:'🌑', name:'Stealth',      desc:'Patience & precision' },
-  { id:'loyalty', emoji:'🤝', name:'Loyalty',      desc:'Connection & trust' },
+// ── ABILITY CARDS PACK ──
+var abilityCards = [
+  { id:'power',     emoji:'⚡', name:'Power',     desc:'Raw strength, presence',     pwr:88, tier:'RARE',     c1:'#3a1414', c2:'#1a0808' },
+  { id:'wisdom',    emoji:'🧠', name:'Wisdom',    desc:'Read situations, see ahead', pwr:92, tier:'EPIC',     c1:'#0e1a3a', c2:'#070d1f' },
+  { id:'speed',     emoji:'💨', name:'Speed',     desc:'Agile, fast reactions',      pwr:85, tier:'RARE',     c1:'#0f3a3a', c2:'#071a1a' },
+  { id:'stealth',   emoji:'🌑', name:'Stealth',   desc:'Calm, patient, unseen',      pwr:90, tier:'EPIC',     c1:'#1a1a2e', c2:'#0a0a14' },
+  { id:'loyalty',   emoji:'🤝', name:'Loyalty',   desc:'Bonds and trust',            pwr:80, tier:'COMMON',   c1:'#3a2a0e', c2:'#1f1505' },
+  { id:'fury',      emoji:'🔥', name:'Fury',      desc:'Intensity, drive',           pwr:94, tier:'LEGEND',   c1:'#3a1808', c2:'#1f0a02' },
+  { id:'instinct',  emoji:'🦅', name:'Instinct',  desc:'Trust your gut',             pwr:87, tier:'RARE',     c1:'#2a1a08', c2:'#150a02' },
+  { id:'charisma',  emoji:'✨', name:'Charisma',  desc:'Pull, charm, command',       pwr:91, tier:'EPIC',     c1:'#3a0e3a', c2:'#1a051a' },
+  { id:'grit',      emoji:'⛰️', name:'Grit',      desc:'Endure, never quit',         pwr:89, tier:'RARE',     c1:'#1f2418', c2:'#0d100a' },
 ];
-var dragSrc = null;
+var pickedCards = [];
 
 function initRank() {
-  rankOrder = [...traits];
-  renderRank();
+  pickedCards = [];
+  rankOrder = [];
+  renderCards();
+  document.getElementById('rank-cta').disabled = true;
+  document.getElementById('pick-count').textContent = '0';
 }
 
-function renderRank() {
-  var list = document.getElementById('rank-list');
-  list.innerHTML = rankOrder.map((t, i) => `
-    <div class="rank-item" draggable="true" data-id="${t.id}"
-      ondragstart="dragStart(event)" ondragover="dragOver(event)"
-      ondrop="dragDrop(event)" ondragend="dragEnd(event)">
-      <span class="rank-num">${i+1}</span>
-      <span class="rank-emoji">${t.emoji}</span>
-      <div class="rank-txt"><h3>${t.name}</h3><p>${t.desc}</p></div>
-      <span class="rank-handle" style="padding:8px 4px;touch-action:none"
-        ontouchstart="touchStart(event)" ontouchmove="touchMove(event)" ontouchend="touchEnd(event)">⋮⋮</span>
-    </div>
-  `).join('');
+function renderCards() {
+  var pack = document.getElementById('card-pack');
+  pack.innerHTML = abilityCards.map(c => {
+    var picked = pickedCards.includes(c.id);
+    var dim = pickedCards.length >= 3 && !picked;
+    return `
+      <div class="pcard ${picked?'picked':''} ${dim?'dim':''}" style="--c1:${c.c1};--c2:${c.c2}" onclick="toggleCard('${c.id}')">
+        <div class="pc-top"><span class="pc-tier">${c.tier}</span><span class="pc-pwr">${c.pwr}</span></div>
+        <div class="pc-emoji">${c.emoji}</div>
+        <div>
+          <div class="pc-name">${c.name}</div>
+          <div class="pc-desc">${c.desc}</div>
+        </div>
+      </div>`;
+  }).join('');
 }
 
-function dragStart(e) { dragSrc = e.currentTarget; e.currentTarget.classList.add('dragging'); }
-function dragOver(e) { e.preventDefault(); document.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over')); e.currentTarget.classList.add('drag-over'); }
-function dragEnd(e) { e.currentTarget.classList.remove('dragging'); document.querySelectorAll('.rank-item').forEach(i => i.classList.remove('drag-over')); }
-function dragDrop(e) {
-  e.preventDefault();
-  var srcId = dragSrc.dataset.id, tgtId = e.currentTarget.dataset.id;
-  if (srcId === tgtId) return;
-  var si = rankOrder.findIndex(t => t.id === srcId), ti = rankOrder.findIndex(t => t.id === tgtId);
-  var tmp = rankOrder[si]; rankOrder[si] = rankOrder[ti]; rankOrder[ti] = tmp;
-  renderRank();
-}
-
-// Touch drag support
-var touchItem = null, touchClone = null, touchStartY = 0;
-function touchStart(e) {
-  e.preventDefault();
-  touchItem = e.currentTarget.closest('.rank-item');
-  touchStartY = e.touches[0].clientY;
-  touchItem.classList.add('dragging');
-}
-function touchMove(e) {
-  e.preventDefault();
-  var y = e.touches[0].clientY;
-  var items = document.querySelectorAll('.rank-item');
-  items.forEach(item => {
-    var rect = item.getBoundingClientRect();
-    if (y > rect.top && y < rect.bottom && item !== touchItem) {
-      item.classList.add('drag-over');
-    } else { item.classList.remove('drag-over'); }
-  });
-}
-function touchEnd(e) {
-  var y = e.changedTouches[0].clientY;
-  var items = document.querySelectorAll('.rank-item');
-  var target = null;
-  items.forEach(item => { var rect = item.getBoundingClientRect(); if (y > rect.top && y < rect.bottom && item !== touchItem) target = item; });
-  if (target) {
-    var srcId = touchItem.dataset.id, tgtId = target.dataset.id;
-    var si = rankOrder.findIndex(t => t.id === srcId), ti = rankOrder.findIndex(t => t.id === tgtId);
-    var tmp = rankOrder[si]; rankOrder[si] = rankOrder[ti]; rankOrder[ti] = tmp;
-  }
-  touchItem.classList.remove('dragging');
-  items.forEach(i => i.classList.remove('drag-over'));
-  renderRank();
+function toggleCard(id) {
+  var idx = pickedCards.indexOf(id);
+  if (idx >= 0) pickedCards.splice(idx, 1);
+  else if (pickedCards.length < 3) pickedCards.push(id);
+  rankOrder = pickedCards.map(pid => abilityCards.find(c => c.id === pid));
+  document.getElementById('pick-count').textContent = pickedCards.length;
+  document.getElementById('rank-cta').disabled = pickedCards.length !== 3;
+  renderCards();
 }
 
 // ── CATEGORY TABS ──

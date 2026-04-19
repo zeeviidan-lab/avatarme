@@ -50,13 +50,15 @@ ${imageBase64 ? 'Face photo: provided (analyze expression, energy, features)' : 
 2. A highly detailed FLUX image prompt for a unique full body photorealistic ${av.animal} character
 
 Image prompt rules:
-- Full body portrait of a ${av.animal} (${av.base}), head to toe, standing in a powerful confident pose
-- Background environment: ${av.env} — describe it in rich detail, it must look like a real photograph or film still
-- Encode personality into visual details: eye intensity, expression, posture, lighting direction, color palette
-- ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? 'IMPORTANT: This is a REAL ANIMAL — absolutely no clothing, no outfit, no accessories, no armor — pure natural animal body only' : 'HUMAN CHARACTER: include the full iconic costume and outfit for this character type' }
-- Style: ${ avatarKey === 'animated' ? 'Pixar / Disney 3D animated movie style, stylized cartoon rendering, vibrant saturated colors, expressive oversized eyes, smooth CGI shading, animated film quality' : 'photorealistic, shot on RED cinema camera, National Geographic meets Hollywood cinematography, physically accurate lighting, real-world textures, no cartoon or CGI look' }
+- Candid full body portrait of a ${av.animal} (${av.base}), captured in a natural unposed moment — not a hero pose, not posed for the camera
+- Setting: ${av.env} — described in plain natural language, like a real place that exists
+- Subtle personality cues only: gaze, posture, micro-expression, the way light falls. Avoid theatrical drama.
+- Composition: off-center framing, natural camera angle (eye level or slightly low), shallow depth of field, environment visible but not overwhelming
+- ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? 'REAL ANIMAL — absolutely no clothing, no outfit, no accessories — natural animal body only, like a wildlife documentary still' : 'HUMAN — wearing the iconic outfit for this character type, but worn naturally, lived-in, not costume-perfect' }
+- Style: ${ avatarKey === 'animated' ? 'Pixar / Disney 3D animated film style, soft natural lighting, vibrant but believable colors, expressive features, smooth CGI shading' : 'documentary photography, soft natural ambient light (overcast, golden hour, or window light — no harsh studio lighting, no dramatic backlight), believable shadows, fine film grain, slight imperfections, looks like it was actually photographed' }
+- AVOID: glossy CGI look, oversaturated colors, perfect symmetry, glowing rim lighting, lens flares, "epic" hero shots
 - 2-3 sentences, highly descriptive
-- End with: "${ avatarKey === 'animated' ? 'full body, 3D animated, Pixar style, Disney animation, vibrant, high detail, stylized CGI' : 'full body, photorealistic, 8K resolution, cinematic photography, real environment, physically accurate lighting, sharp detail' }"
+- End with: "${ avatarKey === 'animated' ? 'Pixar 3D animation style, soft natural lighting, full body shot, high detail' : 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' }"
 
 Respond in JSON only:
 {"description":"2-3 sentence personal description","flux_prompt":"detailed image prompt","traits":{"Composure":80,"Strategy":75,"Instinct":85,"Adaptability":70},"dominant_trait":"one word"}`;
