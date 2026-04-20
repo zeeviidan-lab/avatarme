@@ -56,7 +56,7 @@ Image prompt rules:
 - Setting: ${av.env} — described in plain natural language, like a real place that exists
 - Subtle personality cues only: gaze, posture, micro-expression, the way light falls. Avoid theatrical drama.
 - Composition: off-center framing, natural camera angle at eye level or slightly ABOVE (never from below — low angles distort faces unflatteringly), shallow depth of field, environment visible but not overwhelming
-- ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? 'REAL ANIMAL — absolutely no clothing, no outfit, no accessories — natural animal body only, like a wildlife documentary still' : 'HUMAN/HERO — wearing the iconic outfit for this character, fully in-character, in-world' }
+- ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? `REAL ANIMAL — absolutely no clothing, no outfit, no accessories — natural animal body only, like a wildlife documentary still.${imageBase64 ? ' SPIRIT-ANIMAL ECHO: look at the face photo and weave 2–3 subtle features into the animal — e.g. match the eye color, fur/coat tone echoing the person\'s hair or beard color (salt-and-pepper grey, warm brown, etc.), mirror the expression (calm, alert, gentle). Keep it natural — the animal must still read as a real animal, not a hybrid.' : ''}` : 'ICONIC CHARACTER — the character look MUST dominate. Render the full iconic costume, hair, and signature features of this character — not a regular person wearing an accessory. The face may carry a subtle echo of a real person (bone structure, beard/hair tone, expression) but the character transformation is primary.' }
 - Style: ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'documentary photography, soft diffused light (overcast sky, open shade, or soft window light — NEVER direct harsh sun), gentle flattering shadows, fine film grain, looks like it was actually photographed' : avatarKey === 'animated' ? 'clean stylized 3D render, Pixar / Fortnite / Overwatch style — smooth simple shapes, flat readable shading, minimal surface detail, toy-figure proportions, bright even lighting, no photoreal textures' : 'clean AAA game-character render — soft even lighting, gentle natural shadows, low-contrast shading, subtle rim light only, no harsh dramatic shadows, no heavy atmospheric haze, balanced exposure, friendly approachable look, ArtStation quality' }
 - 2-3 sentences, highly descriptive
 - End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : avatarKey === 'animated' ? 'stylized 3D character render, Pixar / Fortnite style, low-detail toy figure, smooth shading, clean background, full body' : 'clean AAA game render, soft balanced lighting, gentle shadows, low contrast, subtle rim light, natural exposure, approachable friendly tone, full body, ultra detailed' }"
@@ -110,21 +110,30 @@ async function generateImage(fluxPrompt) {
 
 const HUMAN_AVATARS = new Set(['yourself','animated','link','kratos','mario','master_chief','geralt','aragorn','joker','neo','mickey','arthas','illidan','sylvanas']);
 
-// InstantID — generates image WITH the user's face identity preserved
-async function generateWithFace(prompt, faceBase64, faceMime) {
+// InstantID — generates image WITH the user's face identity preserved.
+// Per-avatar weights: yourself needs high identity, iconic characters
+// need the character look to dominate (small facial echo only).
+const INSTANT_ID_WEIGHTS = {
+  yourself: { ip: 0.8, cn: 0.5 },
+  animated: { ip: 0.55, cn: 0.35 },
+};
+const ICONIC_WEIGHTS = { ip: 0.35, cn: 0.25 };
+
+async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
   const INSTANT_ID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
+  const w = INSTANT_ID_WEIGHTS[avatarKey] || ICONIC_WEIGHTS;
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: INSTANT_ID_VERSION, input: {
       image: faceDataUrl,
       prompt: prompt + ', smooth flattering skin, soft even face lighting, gentle portrait, no harsh facial shadows',
-      negative_prompt: 'harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, harsh contrast shadows on face, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs',
+      negative_prompt: 'harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, harsh contrast shadows on face, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs, realistic human face overriding the character, plain everyday clothing where iconic outfit should be',
       num_inference_steps: 30,
       guidance_scale: 5,
-      ip_adapter_scale: 0.75,
-      controlnet_conditioning_scale: 0.5,
+      ip_adapter_scale: w.ip,
+      controlnet_conditioning_scale: w.cn,
       output_format: 'jpg',
       output_quality: 95,
     } })
@@ -164,7 +173,7 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
 
     // If face uploaded AND human avatar → use InstantID for true identity preservation
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      imageUrl = await generateWithFace(claudeResult.flux_prompt, imageBase64, imageMime);
+      imageUrl = await generateWithFace(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
     }
 
     // Fallback (or animal/no-face) → regular FLUX
