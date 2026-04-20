@@ -119,12 +119,12 @@ async function generateWithFace(prompt, faceBase64, faceMime) {
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: INSTANT_ID_VERSION, input: {
       image: faceDataUrl,
-      prompt,
-      negative_prompt: 'low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs',
+      prompt: prompt + ', smooth flattering skin, soft even face lighting, gentle portrait, no harsh facial shadows',
+      negative_prompt: 'harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, harsh contrast shadows on face, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs',
       num_inference_steps: 30,
       guidance_scale: 5,
-      ip_adapter_scale: 0.8,
-      controlnet_conditioning_scale: 0.8,
+      ip_adapter_scale: 0.75,
+      controlnet_conditioning_scale: 0.5,
       output_format: 'jpg',
       output_quality: 95,
     } })
