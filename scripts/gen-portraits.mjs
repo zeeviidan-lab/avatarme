@@ -61,17 +61,22 @@ async function generate(prompt) {
 
 const results = {};
 const outPath = path.resolve(__dirname, 'portraits.json');
-if (fs.existsSync(outPath)) Object.assign(results, JSON.parse(fs.readFileSync(outPath,'utf8')));
+const imgDir = path.resolve(__dirname, '../frontend/portraits');
+fs.mkdirSync(imgDir, { recursive: true });
 
 for (const s of subjects) {
-  if (results[s.key]) { console.log('skip', s.key); continue; }
+  const localPath = path.join(imgDir, `${s.key}.jpg`);
+  if (fs.existsSync(localPath)) { console.log('skip', s.key); results[s.key] = `portraits/${s.key}.jpg`; continue; }
   console.log('→', s.key);
   try {
     const url = await generate(s.prompt);
-    results[s.key] = url;
+    const imgRes = await fetch(url);
+    const buf = Buffer.from(await imgRes.arrayBuffer());
+    fs.writeFileSync(localPath, buf);
+    results[s.key] = `portraits/${s.key}.jpg`;
     fs.writeFileSync(outPath, JSON.stringify(results, null, 2));
-    console.log('  ✓', url);
-    await new Promise(r => setTimeout(r, 11000)); // rate limit cushion
+    console.log('  ✓ saved', localPath, `(${buf.length} bytes)`);
+    await new Promise(r => setTimeout(r, 11000));
   } catch (e) {
     console.error('  ✗', s.key, e.message);
     await new Promise(r => setTimeout(r, 20000));

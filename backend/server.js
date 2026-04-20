@@ -25,7 +25,7 @@ const AVATARS = {
   tiger:        { name: 'White Tiger',  animal: 'white tiger',      base: 'pure white fur with charcoal black stripes, intense ice-blue eyes, raw muscular power',  env: 'ancient bamboo forest in morning fog, shafts of pale green light filtering through tall bamboo, scattered white flower petals on the ground' },
   owl:          { name: 'Great Owl',    animal: 'great horned owl', base: 'huge luminous amber eyes, mottled brown-grey feathers, broad silent wings, wise expression', env: 'old-growth forest at night, full moon visible through dark twisted branches, fireflies glowing in the darkness, thick ancient tree trunk' },
   yourself:   { name: 'Just Me',    animal: 'regular contemporary person',  base: 'natural realistic features, casual modern clothing, confident expression, authentic everyday look — no costume, no theme', env: 'natural urban setting at golden hour, soft cinematic background, modern city street or park bokeh, warm natural light' },
-  animated:   { name: 'Animated Me', animal: 'cinematic 3D game-character version of a person', base: 'detailed stylized features, sharp realistic facial structure, dramatic fantasy or sci-fi outfit fitting their personality, expressive but grounded', env: 'cinematic game environment matching their personality (futuristic city, mythic ruin, neon street, etc.), volumetric lighting, dramatic rim light, atmospheric haze, lens flare' },
+  animated:   { name: 'Animated Me', animal: 'stylized 3D game-figure of a person (Pixar / Fortnite / Overwatch style)', base: 'simplified cartoon-proportioned features, bold clean shapes, smooth shaded skin, large expressive eyes, simple readable outfit fitting their personality — low-detail stylized toy-figure look, NOT photoreal', env: 'clean game-render backdrop matching their personality (soft gradient, simple stylized scene), bright even lighting, subtle rim light, shallow depth of field' },
   link:        { name: 'Link',          animal: 'Link from The Legend of Zelda', base: 'green tunic, pointed elf ears, blonde hair, blue determined eyes, master sword on back', env: 'lush Hyrule field at golden hour, distant mountains, swaying grass, soft volumetric god rays' },
   kratos:      { name: 'Kratos',        animal: 'Kratos from God of War',        base: 'pale skin with red tattoo, beard, intense angry eyes, leviathan axe, leather armor', env: 'ash-grey Norse battlefield, broken stone runes, swirling smoke, dim cold backlight' },
   mario:       { name: 'Mario',         animal: 'Super Mario',                   base: 'red cap with M, blue overalls, thick black mustache, cheerful smile, white gloves', env: 'Mushroom Kingdom green field, fluffy clouds, floating coins, bright cheerful lighting' },
@@ -57,9 +57,9 @@ Image prompt rules:
 - Subtle personality cues only: gaze, posture, micro-expression, the way light falls. Avoid theatrical drama.
 - Composition: off-center framing, natural camera angle (eye level or slightly low), shallow depth of field, environment visible but not overwhelming
 - ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? 'REAL ANIMAL — absolutely no clothing, no outfit, no accessories — natural animal body only, like a wildlife documentary still' : 'HUMAN/HERO — wearing the iconic outfit for this character, fully in-character, in-world' }
-- Style: ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'documentary photography, soft natural ambient light (overcast, golden hour, or window light), believable shadows, fine film grain, looks like it was actually photographed' : 'cinematic Unreal Engine 5 / AAA game-character render — dramatic volumetric lighting, strong rim light, atmospheric haze, depth of field, film-poster composition, Greg Rutkowski / WLOP / ArtStation quality' }
+- Style: ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'documentary photography, soft natural ambient light (overcast, golden hour, or window light), believable shadows, fine film grain, looks like it was actually photographed' : avatarKey === 'animated' ? 'clean stylized 3D render, Pixar / Fortnite / Overwatch style — smooth simple shapes, flat readable shading, minimal surface detail, toy-figure proportions, bright even lighting, no photoreal textures' : 'cinematic Unreal Engine 5 / AAA game-character render — dramatic volumetric lighting, strong rim light, atmospheric haze, depth of field, film-poster composition, Greg Rutkowski / WLOP / ArtStation quality' }
 - 2-3 sentences, highly descriptive
-- End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : 'cinematic AAA game render, Unreal Engine 5, volumetric lighting, dramatic rim light, atmospheric depth, full body hero shot, ultra detailed, film poster quality' }"
+- End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : avatarKey === 'animated' ? 'stylized 3D character render, Pixar / Fortnite style, low-detail toy figure, smooth shading, clean background, full body' : 'cinematic AAA game render, Unreal Engine 5, volumetric lighting, dramatic rim light, atmospheric depth, full body hero shot, ultra detailed, film poster quality' }"
 
 Respond in JSON only:
 {"description":"2-3 sentence personal description","flux_prompt":"detailed image prompt","traits":{"Composure":80,"Strategy":75,"Instinct":85,"Adaptability":70},"dominant_trait":"one word"}`;
@@ -207,6 +207,21 @@ app.get('/status/:id', (req, res) => {
   const job = jobs[req.params.id];
   if (!job) return res.status(404).json({ error: 'Job not found' });
   res.json(job);
+});
+
+app.get('/download', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !/^https:\/\/replicate\.delivery\//.test(url)) return res.status(400).send('bad url');
+  try {
+    const upstream = await fetch(url);
+    if (!upstream.ok) return res.status(502).send('upstream error');
+    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'image/jpeg');
+    res.setHeader('Content-Disposition', 'attachment; filename="AvatarMe.jpg"');
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.send(buf);
+  } catch (e) {
+    res.status(500).send('proxy error');
+  }
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
