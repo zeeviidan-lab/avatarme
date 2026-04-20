@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>v4 — Bold Mono</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root { --bg:#FFFFFF; --ink:#0A0A0A; --accent:#FF3D2E; --grid:#EFEFEF; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
+  body { background:#1a1a1a; font-family:'Space Grotesk',sans-serif; color:var(--ink); display:flex; align-items:center; justify-content:center; }
+  .phone { width:390px; height:844px; background:var(--bg); border-radius:50px; overflow:hidden; position:relative; display:flex; flex-direction:column; box-shadow:0 0 0 8px #050608, 0 40px 100px rgba(0,0,0,0.5);
+    background-image:linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:32px 32px; background-position:0 0;
+  }
+  .top { padding:60px 28px 0; display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; }
+  .ticker { display:flex; gap:6px; align-items:center; }
+  .ticker-dot { width:8px; height:8px; background:var(--accent); border-radius:50%; animation:blink 1.4s infinite; }
+  @keyframes blink { 50%{opacity:0.3} }
+  .hero { padding:60px 28px 0; flex:1; display:flex; flex-direction:column; justify-content:flex-start; }
+  .stamp { display:inline-block; padding:6px 10px; background:var(--accent); color:var(--bg); font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; margin-bottom:28px; transform:rotate(-1deg); }
+  h1 { font-size:84px; line-height:0.88; font-weight:700; letter-spacing:-4px; margin-bottom:24px; text-transform:uppercase; }
+  h1 .strike { position:relative; display:inline-block; }
+  h1 .strike::after { content:''; position:absolute; left:-4%; right:-4%; top:48%; height:6px; background:var(--accent); transform:rotate(-1deg); }
+  .lede { font-size:16px; line-height:1.45; max-width:300px; font-weight:400; }
+  .lede b { font-weight:700; background:var(--ink); color:var(--bg); padding:1px 6px; }
+  .footer { padding:24px 28px 36px; border-top:2px solid var(--ink); background:var(--bg); }
+  .meta-row { display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--ink); margin-bottom:18px; text-transform:uppercase; letter-spacing:1px; }
+  .cta { width:100%; background:var(--ink); color:var(--bg); border:none; padding:24px; font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:700; cursor:pointer; letter-spacing:1px; text-transform:uppercase; transition:all 0.15s; display:flex; justify-content:space-between; align-items:center; }
+  .cta:hover { background:var(--accent); }
+  .arrow { font-family:'JetBrains Mono',monospace; }
+</style></head>
+<body>
+<div class="phone">
+  <div class="top">
+    <div>AVATARME / 001</div>
+    <div class="ticker"><span class="ticker-dot"></span>LIVE</div>
+  </div>
+  <div class="hero">
+    <div class="stamp">REAL TALK ONLY</div>
+    <h1>Who<br/>are you<br/><span class="strike">really</span>?</h1>
+    <p class="lede">Skip the personality tests. <b>Trust your gut</b>. Get a portrait of the animal underneath.</p>
+  </div>
+  <div class="footer">
+    <div class="meta-row">
+      <span>3 MIN · NO SIGNUP</span>
+      <span>v.001</span>
+    </div>
+    <button class="cta">Start <span class="arrow">→</span></button>
+  </div>
+</div>
+</body></html>

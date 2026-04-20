@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>v2 — Premium Dark</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root { --bg:#0B0E14; --bg2:#11151E; --ink:#E8E4D8; --gold:#C8A661; --muted:#5C6371; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
+  body { background:#1a1a1a; font-family:'Inter',sans-serif; color:var(--ink); display:flex; align-items:center; justify-content:center; }
+  .phone { width:390px; height:844px; background:radial-gradient(ellipse 100% 60% at 50% 0%, #182030 0%, var(--bg) 60%); border-radius:50px; overflow:hidden; position:relative; display:flex; flex-direction:column; padding:90px 40px 60px; box-shadow:0 0 0 8px #050608, 0 40px 100px rgba(0,0,0,0.8); }
+  .crest { width:64px; height:64px; border:1px solid var(--gold); border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:48px; position:relative; }
+  .crest::before, .crest::after { content:''; position:absolute; width:1px; height:14px; background:var(--gold); }
+  .crest::before { top:-8px; left:50%; }
+  .crest::after { bottom:-8px; left:50%; }
+  .crest-inner { font-family:'Cormorant Garamond',serif; font-size:24px; color:var(--gold); font-weight:500; }
+  .label { font-size:10px; letter-spacing:6px; color:var(--gold); text-transform:uppercase; margin-bottom:32px; font-weight:500; }
+  h1 { font-family:'Cormorant Garamond',serif; font-size:64px; line-height:1.0; font-weight:300; letter-spacing:-1px; margin-bottom:28px; }
+  h1 em { font-style:italic; color:var(--gold); }
+  .div { width:48px; height:1px; background:var(--gold); margin:0 0 28px; }
+  .lede { font-size:14px; line-height:1.7; color:var(--muted); font-weight:300; max-width:280px; letter-spacing:0.3px; }
+  .spacer { flex:1; }
+  .cta { width:100%; background:transparent; color:var(--gold); border:1px solid var(--gold); padding:20px; font-family:'Inter',sans-serif; font-size:11px; letter-spacing:5px; text-transform:uppercase; cursor:pointer; font-weight:500; transition:all 0.2s; margin-bottom:18px; }
+  .cta:hover { background:var(--gold); color:var(--bg); }
+  .priv { text-align:center; font-size:10px; letter-spacing:2px; color:var(--muted); text-transform:uppercase; }
+  .corner { position:absolute; width:24px; height:24px; border:1px solid var(--gold); opacity:0.4; }
+  .c-tl { top:60px; left:30px; border-right:none; border-bottom:none; }
+  .c-tr { top:60px; right:30px; border-left:none; border-bottom:none; }
+  .c-bl { bottom:40px; left:30px; border-right:none; border-top:none; }
+  .c-br { bottom:40px; right:30px; border-left:none; border-top:none; }
+</style></head>
+<body>
+<div class="phone">
+  <div class="corner c-tl"></div><div class="corner c-tr"></div>
+  <div class="corner c-bl"></div><div class="corner c-br"></div>
+  <div class="crest"><span class="crest-inner">A</span></div>
+  <div class="label">EST · MMXXVI</div>
+  <h1>Discover<br/>your <em>true</em><br/>nature.</h1>
+  <div class="div"></div>
+  <p class="lede">A private study of who you really are — built from your instincts, not your answers.</p>
+  <div class="spacer"></div>
+  <button class="cta">Begin the Study</button>
+  <div class="priv">⌁  Strictly confidential  ⌁</div>
+</div>
+</body></html>

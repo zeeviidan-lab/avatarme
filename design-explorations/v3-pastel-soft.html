@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>v3 — Soft Pastel</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root { --bg:#FBF5EF; --pink:#F4C9B8; --sage:#B8C4A1; --lav:#C9B8E0; --ink:#2A2520; --muted:#9A8E7E; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { height:100%; }
+  body { background:#1a1a1a; font-family:'Inter',sans-serif; color:var(--ink); display:flex; align-items:center; justify-content:center; }
+  .phone { width:390px; height:844px; background:var(--bg); border-radius:50px; overflow:hidden; position:relative; display:flex; flex-direction:column; padding:80px 32px 50px; box-shadow:0 0 0 8px #050608, 0 40px 100px rgba(0,0,0,0.5); }
+  .blob1 { position:absolute; top:-80px; right:-80px; width:280px; height:280px; background:var(--pink); border-radius:50%; filter:blur(20px); opacity:0.7; }
+  .blob2 { position:absolute; bottom:120px; left:-100px; width:240px; height:240px; background:var(--sage); border-radius:50%; filter:blur(30px); opacity:0.6; }
+  .blob3 { position:absolute; top:300px; right:-40px; width:140px; height:140px; background:var(--lav); border-radius:50%; filter:blur(20px); opacity:0.5; }
+  .content { position:relative; z-index:2; flex:1; display:flex; flex-direction:column; }
+  .badge { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.6); backdrop-filter:blur(20px); padding:8px 14px; border-radius:100px; font-size:11px; font-weight:500; color:var(--ink); width:fit-content; margin-bottom:32px; border:1px solid rgba(0,0,0,0.04); }
+  .dot { width:6px; height:6px; background:var(--sage); border-radius:50%; }
+  h1 { font-family:'DM Serif Display',serif; font-size:62px; line-height:1.0; font-weight:400; letter-spacing:-1.5px; margin-bottom:20px; color:var(--ink); }
+  h1 .a { display:inline; background:linear-gradient(110deg, var(--pink) 60%, transparent 60%); padding:0 4px; }
+  .lede { font-size:16px; line-height:1.55; color:var(--ink); font-weight:400; max-width:300px; opacity:0.8; }
+  .features { display:flex; gap:8px; margin-top:auto; margin-bottom:24px; flex-wrap:wrap; }
+  .chip { background:rgba(255,255,255,0.7); backdrop-filter:blur(20px); padding:10px 14px; border-radius:100px; font-size:12px; font-weight:500; color:var(--ink); border:1px solid rgba(0,0,0,0.05); display:flex; align-items:center; gap:6px; }
+  .cta { width:100%; background:var(--ink); color:var(--bg); border:none; padding:20px; border-radius:18px; font-family:'Inter',sans-serif; font-size:15px; font-weight:600; cursor:pointer; transition:transform 0.15s; }
+  .cta:active { transform:scale(0.98); }
+  .priv { text-align:center; font-size:12px; color:var(--muted); margin-top:14px; font-weight:400; }
+</style></head>
+<body>
+<div class="phone">
+  <div class="blob1"></div><div class="blob2"></div><div class="blob3"></div>
+  <div class="content">
+    <div class="badge"><span class="dot"></span>New · A gentle quiz</div>
+    <h1>Find <span class="a">you</span><br/>in another<br/>shape.</h1>
+    <p class="lede">A few questions, your honest gut, and a portrait of who you really are.</p>
+    <div class="features">
+      <div class="chip">🌿 3 min</div>
+      <div class="chip">🔒 Private</div>
+      <div class="chip">✨ Unique</div>
+    </div>
+    <button class="cta">Start exploring</button>
+    <p class="priv">No account · No data kept</p>
+  </div>
+</div>
+</body></html>
