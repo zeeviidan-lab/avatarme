@@ -193,11 +193,21 @@
   .btn-pri { flex:2; padding:15px; background:var(--accent); border:none; border-radius:12px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:#050805; }
 
   /* LOADER */
-  /* LOADER */
   .loader { position:absolute; inset:0; background:var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
   .loader.on { display:flex; }
-  .loader-icon { font-size:72px; margin-bottom:28px; animation:pulse 1.5s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{transform:scale(1);filter:drop-shadow(0 0 10px rgba(200,150,106,0.3))} 50%{transform:scale(1.08);filter:drop-shadow(0 0 25px rgba(200,150,106,0.6))} }
+  .dna-helix { position:relative; width:110px; height:170px; margin-bottom:28px; }
+  .dna-node { position:absolute; width:11px; height:11px; border-radius:50%; margin-left:-5.5px; animation:helixSpin 2.4s ease-in-out infinite; }
+  .dna-node.a { background:#4a90e2; box-shadow:0 0 10px rgba(74,144,226,0.85); }
+  .dna-node.b { background:#3fbf5a; box-shadow:0 0 10px rgba(63,191,90,0.85); animation-delay:-1.2s; }
+  .dna-rung { position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg, rgba(74,144,226,0.25), rgba(63,191,90,0.25)); animation:rungFade 2.4s ease-in-out infinite; }
+  @keyframes helixSpin {
+    0%   { left:50%; transform:scale(0.55); opacity:0.35; z-index:1; }
+    25%  { left:100%; transform:scale(1);    opacity:1;    z-index:2; }
+    50%  { left:50%; transform:scale(0.55); opacity:0.35; z-index:1; }
+    75%  { left:0%;  transform:scale(1);    opacity:1;    z-index:2; }
+    100% { left:50%; transform:scale(0.55); opacity:0.35; z-index:1; }
+  }
+  @keyframes rungFade { 0%,100%{opacity:0.15} 25%,75%{opacity:0.55} 50%{opacity:0.15} }
   .loader-steps { display:flex; flex-direction:column; gap:12px; width:100%; margin-bottom:32px; }
   .lstep { display:flex; align-items:center; gap:12px; opacity:0.3; transition:opacity 0.4s; }
   .lstep.active { opacity:1; }
@@ -223,7 +233,7 @@
 
   <div class="screen-wrap">
     <div class="loader" id="loader">
-      <div class="loader-icon" id="loader-icon">🧬</div>
+      <div class="dna-helix" id="dna-helix"></div>
       <div class="loader-steps">
         <div class="lstep" id="ls1"><div class="lstep-dot"></div><span class="lstep-txt">Reading your personality</span></div>
         <div class="lstep" id="ls2"><div class="lstep-dot"></div><span class="lstep-txt">Building your unique prompt</span></div>
@@ -681,6 +691,40 @@ function pickAv(card, name) {
 }
 
 // ── GENERATE ──
+// Build DNA helix nodes once
+(function buildHelix(){
+  var h = document.getElementById('dna-helix');
+  if (!h) return;
+  var rows = 9;
+  for (var i = 0; i < rows; i++) {
+    var top = (i * 100 / (rows - 1)) + '%';
+    var delay = (-i * 0.24) + 's';
+    var a = document.createElement('div'); a.className = 'dna-node a';
+    a.style.top = top; a.style.animationDelay = delay;
+    var b = document.createElement('div'); b.className = 'dna-node b';
+    b.style.top = top; b.style.animationDelay = ((-i * 0.24) - 1.2) + 's';
+    var r = document.createElement('div'); r.className = 'dna-rung';
+    r.style.top = top; r.style.animationDelay = delay;
+    h.appendChild(r); h.appendChild(a); h.appendChild(b);
+  }
+})();
+
+// Ticking sound via Web Audio
+var tickCtx = null, tickInterval = null;
+function playTick() {
+  try {
+    if (!tickCtx) tickCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var o = tickCtx.createOscillator(), g = tickCtx.createGain();
+    o.type = 'square'; o.frequency.value = 1400;
+    g.gain.setValueAtTime(0.04, tickCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, tickCtx.currentTime + 0.04);
+    o.connect(g); g.connect(tickCtx.destination);
+    o.start(); o.stop(tickCtx.currentTime + 0.05);
+  } catch(e){}
+}
+function startTicks(){ if (!tickInterval) tickInterval = setInterval(playTick, 1000); }
+function stopTicks(){ if (tickInterval) { clearInterval(tickInterval); tickInterval = null; } }
+
 function setLoaderStep(step, barPct, icon) {
   ['ls1','ls2','ls3','ls4'].forEach((id, i) => {
     var el = document.getElementById(id);
@@ -689,14 +733,14 @@ function setLoaderStep(step, barPct, icon) {
     if (i + 1 === step) el.classList.add('active');
   });
   document.getElementById('loader-bar-fill').style.width = barPct + '%';
-  if (icon) document.getElementById('loader-icon').textContent = icon;
 }
 
 async function generate() {
   if (!chosenAv) return;
   var loader = document.getElementById('loader');
   loader.classList.add('on');
-  setLoaderStep(1, 10, '🧬');
+  setLoaderStep(1, 10);
+  startTicks();
 
   try {
     var formData = new FormData();
@@ -737,6 +781,7 @@ async function generate() {
     if (thumb) thumb.src = result.image_url;
 
     loader.classList.remove('on');
+    stopTicks();
     goTo('result');
 
     // Add reveal animation
@@ -753,6 +798,7 @@ async function generate() {
 
   } catch(err) {
     loader.classList.remove('on');
+    stopTicks();
     alert('Something went wrong. Please try again.');
     console.error(err);
   }
