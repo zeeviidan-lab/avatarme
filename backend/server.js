@@ -218,6 +218,82 @@ app.get('/status/:id', (req, res) => {
   res.json(job);
 });
 
+// ── 3D generation (Hunyuan3D-2) ───────────────────────────
+async function generate3D(imageUrl) {
+  const startRes = await fetch('https://api.replicate.com/v1/models/ndreca/hunyuan3d-2/predictions', {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ input: {
+      image: imageUrl,
+      steps: 30,
+      guidance_scale: 5.5,
+      octree_resolution: 256,
+      remove_background: true,
+    } })
+  });
+  const pred = await startRes.json();
+  if (!pred.id) throw new Error('Hunyuan3D start error: ' + JSON.stringify(pred));
+  console.log('Hunyuan3D started:', pred.id);
+  for (let i = 0; i < 90; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const poll = await fetch(`https://api.replicate.com/v1/predictions/${pred.id}`, {
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
+    });
+    const result = await poll.json();
+    if (result.status === 'succeeded') {
+      const out = result.output;
+      // Output can be {mesh:"..."} or a URL string or array
+      if (typeof out === 'string') return out;
+      if (Array.isArray(out)) return out[0];
+      if (out && out.mesh) return out.mesh;
+      if (out && out.glb) return out.glb;
+      return null;
+    }
+    if (result.status === 'failed' || result.status === 'canceled') {
+      throw new Error('Hunyuan3D ' + result.status + ': ' + result.error);
+    }
+  }
+  throw new Error('Hunyuan3D timed out');
+}
+
+app.post('/start-3d/:id', async (req, res) => {
+  const job = jobs[req.params.id];
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  if (!job.image_url) return res.status(400).json({ error: 'No image yet' });
+  if (job.glb_url) return res.json({ glb_url: job.glb_url });
+  if (job.status_3d === 'generating') return res.json({ status_3d: 'generating' });
+  job.status_3d = 'generating';
+  (async () => {
+    try {
+      const glb = await generate3D(job.image_url);
+      job.glb_url = glb;
+      job.status_3d = 'done';
+      console.log('3D done:', glb);
+    } catch (e) {
+      job.status_3d = 'error';
+      job.error_3d = e.message;
+      console.error('3D error:', e);
+    }
+  })();
+  res.json({ status_3d: 'generating' });
+});
+
+// Proxy GLB through our origin (CORS + nicer URL for <model-viewer>)
+app.get('/glb', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !/^https:\/\/replicate\.delivery\//.test(url)) return res.status(400).send('bad url');
+  try {
+    const upstream = await fetch(url);
+    if (!upstream.ok) return res.status(502).send('upstream error');
+    res.setHeader('Content-Type', 'model/gltf-binary');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.send(buf);
+  } catch (e) {
+    res.status(500).send('proxy error');
+  }
+});
+
 app.get('/download', async (req, res) => {
   const url = req.query.url;
   if (!url || !/^https:\/\/replicate\.delivery\//.test(url)) return res.status(400).send('bad url');
