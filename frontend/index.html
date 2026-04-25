@@ -475,9 +475,10 @@
           <div style="font-size:11px;color:var(--muted);letter-spacing:1px">THIS TAKES ABOUT 60 SECONDS</div>
         </div>
       </div>
-      <div style="padding:16px 20px;display:flex;gap:10px">
-        <button class="btn-sec" style="flex:1" onclick="close3D()">BACK</button>
-        <button class="btn-pri" style="flex:1;background:#4a90e2;color:#fff" onclick="share3D()">SHARE 3D</button>
+      <div style="padding:16px 20px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-sec" style="flex:1;min-width:80px" onclick="close3D()">BACK</button>
+        <button class="btn-sec" style="flex:1;min-width:90px" onclick="share3D()">SHARE</button>
+        <button class="btn-pri" style="flex:1.4;min-width:120px;background:#4a90e2;color:#fff" onclick="save3D()">SAVE .GLB 💾</button>
       </div>
     </div>
 
@@ -908,6 +909,28 @@ function showGLB(url) {
   document.getElementById('mv-loading').style.display = 'none';
 }
 function close3D() { document.getElementById('viewer3d').style.display = 'none'; }
+async function save3D() {
+  var mv = document.getElementById('mv');
+  if (!mv.src) return;
+  var name = (document.getElementById('rname').textContent || 'AvatarMe').replace(/\s/g,'-');
+  var fileName = 'AvatarMe-' + name + '.glb';
+  try {
+    var res = await fetch(mv.src);
+    var blob = await res.blob();
+    if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'model/gltf-binary' })] })) {
+      await navigator.share({ files: [new File([blob], fileName, { type: 'model/gltf-binary' })], title: name + ' 3D' });
+    } else {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  } catch (e) {
+    console.error(e);
+    alert('Save failed.');
+  }
+}
 function share3D() {
   var mv = document.getElementById('mv');
   if (!mv.src) return;
