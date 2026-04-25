@@ -38,6 +38,8 @@ const subjects = [
   { key:'arthas',       prompt:'Epic cinematic portrait of Arthas the Lich King from World of Warcraft, spiked ice crown helmet, icy blue glowing eyes, pale undead face, detailed face and helmet close-up headshot, Blizzard game render style, dramatic rim lighting, frost and snow bokeh' },
   { key:'illidan',      prompt:'Epic cinematic portrait of Illidan Stormrage from World of Warcraft, demon hunter, horned skull, long green-black hair, glowing green eyes behind blindfold, purple tattoos, detailed face close-up headshot, Blizzard game render style, dramatic rim lighting, fel green bokeh' },
   { key:'sylvanas',     prompt:'Epic cinematic portrait of Sylvanas Windrunner from World of Warcraft, banshee queen, long white hair, glowing red eyes, pale elf features, pointed ears, fierce expression, detailed face close-up headshot, Blizzard game render style, dramatic rim lighting, dark shadow bokeh' },
+  { key:'simpsons',     prompt:'Official frame from The Simpsons TV show, Matt Groening style, generic Simpsons character close-up portrait — flat bright yellow skin, large round white eyes with small black pupils, classic Simpsons overbite, simple bold black outlines, flat 2D vector cartoon, primary colors, no shading, looks exactly like an actual frame from the TV show, Springfield background blur' },
+  { key:'martian',      prompt:'Cinematic sci-fi portrait of a Martian alien from Mars, smooth green-grey alien skin, large oval black eyes, slim humanoid head with subtle ridges, sleek minimalist alien jumpsuit, close-up headshot, AAA game render quality, soft balanced lighting, subtle rim light, rust-red Martian desert background bokeh, pale orange sky' },
 ];
 
 async function generate(prompt) {
