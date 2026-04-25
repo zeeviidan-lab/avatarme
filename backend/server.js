@@ -190,6 +190,24 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
       imageUrl = await generateImage(claudeResult.flux_prompt);
     }
 
+    // For supported animals (macaque), face-swap the user's face onto
+    // the FLUX-generated animal portrait. Honest "you-as-the-animal"
+    // result that text-to-image alone can't produce.
+    if (imageUrl && imageBase64 && FACESWAP_SUPPORTED.has(avatarKey)) {
+      try {
+        const faceDataUrl = `data:${imageMime};base64,${imageBase64}`;
+        const swapped = await faceSwap(imageUrl, faceDataUrl);
+        if (swapped) {
+          console.log('Face-swap applied to', avatarKey);
+          imageUrl = swapped;
+        } else {
+          console.log('Face-swap failed for', avatarKey, '— falling back to original');
+        }
+      } catch (e) {
+        console.error('Face-swap exception:', e);
+      }
+    }
+
     jobs[jobId].status = 'done';
     jobs[jobId].image_url = imageUrl;
     jobs[jobId].avatar_name = AVATARS[avatarKey].name;
@@ -229,6 +247,43 @@ app.get('/status/:id', (req, res) => {
 });
 
 // ── 3D generation (Hunyuan3D-2) ───────────────────────────
+// ── Face-swap (lucataco/faceswap) ──
+// Used to swap user's face onto AI-generated animal portraits where the
+// target has human-readable facial landmarks (e.g. macaque). Won't work
+// on canids/birds — those keep the spirit-pairing UX instead.
+const FACESWAP_VERSION = '9a4298548422074c3f57258c5d544497314ae4112df80d116f0d2109e843d20d';
+const FACESWAP_SUPPORTED = new Set(['monkey']);
+async function faceSwap(targetImageUrl, sourceFaceDataUrl) {
+  const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: FACESWAP_VERSION, input: {
+      target_image: targetImageUrl,
+      swap_image: sourceFaceDataUrl,
+    } })
+  });
+  const pred = await startRes.json();
+  if (!pred.id) { console.error('Face-swap start error:', JSON.stringify(pred)); return null; }
+  console.log('Face-swap started:', pred.id);
+  for (let i = 0; i < 40; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const poll = await fetch(`https://api.replicate.com/v1/predictions/${pred.id}`, {
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
+    });
+    const result = await poll.json();
+    if (result.status === 'succeeded') {
+      console.log('Face-swap succeeded');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
+    if (result.status === 'failed' || result.status === 'canceled') {
+      console.error('Face-swap ' + result.status + ':', result.error);
+      return null;
+    }
+  }
+  console.error('Face-swap timed out');
+  return null;
+}
+
 const HUNYUAN3D_VERSION = '0602bae6db1ce420f2690339bf2feb47e18c0c722a1f02e9db9abd774abaff5d';
 async function generate3D(imageUrl) {
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
