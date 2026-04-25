@@ -305,25 +305,53 @@ async function faceSwapLucataco(targetImageUrl, sourceFaceDataUrl) {
 }
 
 async function faceSwapXiankgx(targetImageUrl, sourceFaceDataUrl) {
+  // xiankgx uses source_image / target_image (NOT input_image/swap_image).
+  // det_thresh:0.05 is more permissive than the 0.1 default — needed for
+  // ambiguous faces like an AI-generated macaque.
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: FACESWAP_FALLBACK_VERSION, input: {
-      input_image: sourceFaceDataUrl,
-      swap_image: targetImageUrl,
+      source_image: sourceFaceDataUrl,
+      target_image: targetImageUrl,
+      det_thresh: 0.05,
+      weight: 0.7,
     } })
   });
   const pred = await startRes.json();
   if (!pred.id) { console.error('Xiankgx face-swap start error:', JSON.stringify(pred)); return null; }
   console.log('Xiankgx face-swap started:', pred.id);
-  return pollPrediction(pred.id, 2000, 40, 'Xiankgx face-swap');
+  const out = await pollPrediction(pred.id, 2000, 40, 'Xiankgx face-swap');
+  // xiankgx returns {image: "..."} or a URL string
+  if (out && typeof out === 'object' && out.image) return out.image;
+  return out;
+}
+
+// cdingram/face-swap — third fallback. input_image=TARGET, swap_image=SOURCE.
+const FACESWAP_THIRD_VERSION = 'd1d6ea8c8be89d664a07a457526f7128109dee7030fdac424788d762c71ed111';
+async function faceSwapCdingram(targetImageUrl, sourceFaceDataUrl) {
+  const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: FACESWAP_THIRD_VERSION, input: {
+      input_image: targetImageUrl,
+      swap_image: sourceFaceDataUrl,
+    } })
+  });
+  const pred = await startRes.json();
+  if (!pred.id) { console.error('Cdingram face-swap start error:', JSON.stringify(pred)); return null; }
+  console.log('Cdingram face-swap started:', pred.id);
+  return pollPrediction(pred.id, 2000, 40, 'Cdingram face-swap');
 }
 
 async function faceSwap(targetImageUrl, sourceFaceDataUrl) {
   const primary = await faceSwapLucataco(targetImageUrl, sourceFaceDataUrl);
   if (primary) return primary;
-  console.log('Lucataco failed — falling back to xiankgx');
-  return faceSwapXiankgx(targetImageUrl, sourceFaceDataUrl);
+  console.log('Lucataco failed — trying xiankgx');
+  const second = await faceSwapXiankgx(targetImageUrl, sourceFaceDataUrl);
+  if (second) return second;
+  console.log('Xiankgx failed — trying cdingram');
+  return faceSwapCdingram(targetImageUrl, sourceFaceDataUrl);
 }
 
 const HUNYUAN3D_VERSION = '0602bae6db1ce420f2690339bf2feb47e18c0c722a1f02e9db9abd774abaff5d';
