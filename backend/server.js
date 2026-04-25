@@ -145,8 +145,12 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: INSTANT_ID_VERSION, input: {
       image: faceDataUrl,
-      width: 768,
-      height: 1280,
+      // CRITICAL: InstantID's enable_pose_controlnet defaults to true
+      // and auto-derives pose from the input selfie (a head-and-shoulders
+      // crop) — which forces a face-crop output regardless of prompt.
+      // Disable it so the prompt's full-body framing actually wins.
+      enable_pose_controlnet: false,
+      pose_strength: 0,
       prompt: 'FULL BODY SHOT, head to toe, wide framing, full standing pose, feet visible, the entire figure standing within the frame from feet to top of head with clear space around the body — ' + prompt + ', soft balanced three-point lighting, gentle key light with soft fill, neutral natural shadows, anatomically correct proportions, well-balanced face, symmetric features',
       negative_prompt: 'cropped at waist, cropped at chest, headshot, bust crop, portrait crop, extreme close-up of face, face fills the frame, body cut off, missing feet, missing legs, missing knees, distorted proportions, oversized head, tiny body, deformed body, asymmetric face, wonky eyes, crossed eyes, harsh under-light, harsh top-light, dramatic split lighting, blown highlights on face, blocked-up shadows on face, harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs, realistic human face overriding the character, plain everyday clothing where iconic outfit should be',
       num_inference_steps: 40,
