@@ -103,7 +103,7 @@ async function generateImage(fluxPrompt) {
   const startRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: { prompt: fluxPrompt, aspect_ratio: '2:3', output_format: 'jpg', output_quality: 95 } })
+    body: JSON.stringify({ input: { prompt: 'FULL BODY SHOT, head to toe, wide framing, full standing pose, feet visible, entire figure within the frame — ' + fluxPrompt, aspect_ratio: '2:3', output_format: 'jpg', output_quality: 95 } })
   });
 
   const prediction = await startRes.json();
@@ -145,8 +145,10 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: INSTANT_ID_VERSION, input: {
       image: faceDataUrl,
-      prompt: prompt + ', full body head to toe, wide standing pose, feet visible, soft balanced three-point lighting, gentle key light with soft fill, neutral natural shadows, anatomically correct proportions, well-balanced face, symmetric features',
-      negative_prompt: 'cropped at waist, headshot only, bust crop, extreme close-up of face, distorted proportions, oversized head, tiny body, deformed body, asymmetric face, wonky eyes, crossed eyes, harsh under-light, harsh top-light, dramatic split lighting, blown highlights on face, blocked-up shadows on face, harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs, missing feet, missing legs, realistic human face overriding the character, plain everyday clothing where iconic outfit should be',
+      width: 768,
+      height: 1280,
+      prompt: 'FULL BODY SHOT, head to toe, wide framing, full standing pose, feet visible, the entire figure standing within the frame from feet to top of head with clear space around the body — ' + prompt + ', soft balanced three-point lighting, gentle key light with soft fill, neutral natural shadows, anatomically correct proportions, well-balanced face, symmetric features',
+      negative_prompt: 'cropped at waist, cropped at chest, headshot, bust crop, portrait crop, extreme close-up of face, face fills the frame, body cut off, missing feet, missing legs, missing knees, distorted proportions, oversized head, tiny body, deformed body, asymmetric face, wonky eyes, crossed eyes, harsh under-light, harsh top-light, dramatic split lighting, blown highlights on face, blocked-up shadows on face, harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs, realistic human face overriding the character, plain everyday clothing where iconic outfit should be',
       num_inference_steps: 40,
       guidance_scale: 5,
       ip_adapter_scale: w.ip,
