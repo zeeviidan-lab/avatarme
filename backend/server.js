@@ -121,7 +121,12 @@ async function generateImage(fluxPrompt) {
   throw new Error('Timed out');
 }
 
-const HUMAN_AVATARS = new Set(['yourself','animated','martian','yellow_toon']);
+// HUMAN_AVATARS used to route through InstantID for identity preservation,
+// but InstantID cannot produce full-body output (no dimension controls,
+// face-IP-adapter dominates composition). All avatars now go FLUX-first
+// (guaranteed full body via aspect_ratio:'2:3') and use face-swap for
+// identity. See FACESWAP_SUPPORTED below.
+const HUMAN_AVATARS = new Set();
 
 // InstantID — generates image WITH the user's face identity preserved.
 // Per-avatar weights: yourself needs high identity, iconic characters
@@ -268,7 +273,11 @@ app.get('/status/:id', (req, res) => {
 // on canids/birds — those keep the spirit-pairing UX instead.
 const FACESWAP_VERSION = '9a4298548422074c3f57258c5d544497314ae4112df80d116f0d2109e843d20d';
 const FACESWAP_FALLBACK_VERSION = 'cff87316e31787df12002c9e20a78a017a36cb31fde9862d8dedd15ab29b7288'; // xiankgx/face-swap
+// Every avatar with a humanoid/face-readable target gets face-swap when
+// the user uploaded a selfie. Real wildlife animals (wolf/eagle/etc.)
+// stay out — their faces have no human landmarks for InsightFace.
 const FACESWAP_SUPPORTED = new Set([
+  'yourself','animated','yellow_toon','martian',
   'monkey',
   'cartoon_wolf','cartoon_fox','cartoon_bear','cartoon_owl','cartoon_tiger','cartoon_monkey',
 ]);
