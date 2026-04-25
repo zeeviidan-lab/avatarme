@@ -223,11 +223,12 @@ app.get('/status/:id', (req, res) => {
 });
 
 // ── 3D generation (Hunyuan3D-2) ───────────────────────────
+const HUNYUAN3D_VERSION = '0602bae6db1ce420f2690339bf2feb47e18c0c722a1f02e9db9abd774abaff5d';
 async function generate3D(imageUrl) {
-  const startRes = await fetch('https://api.replicate.com/v1/models/ndreca/hunyuan3d-2/predictions', {
+  const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: {
+    body: JSON.stringify({ version: HUNYUAN3D_VERSION, input: {
       image: imageUrl,
       steps: 30,
       guidance_scale: 5.5,
