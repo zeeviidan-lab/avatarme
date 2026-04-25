@@ -12,16 +12,17 @@
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 <style>
   :root {
-    --bg: #0c0907;
-    --surface: #181410;
-    --surface2: #221c16;
-    --border: rgba(255,255,255,0.07);
-    --accent: #c8966a;
-    --accent2: #a85c3a;
-    --accent3: #7a6a52;
-    --gold: #e8c767;
-    --text: #e8ddc8;
-    --muted: #6b6051;
+    --bg: #06050a;
+    --bg2: #0a0810;
+    --surface: #14111c;
+    --surface2: #1c1828;
+    --border: rgba(255,255,255,0.06);
+    --accent: #d4a373;
+    --accent2: #b35c38;
+    --accent3: #6b5a44;
+    --gold: #f0cd6a;
+    --text: #ece2d0;
+    --muted: #6a6072;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; overflow:hidden; }
@@ -52,18 +53,29 @@
   .nav-label { font-size:9px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; }
   .nav-item.active .nav-label { color:var(--gold); }
 
-  /* SPLASH */
+  /* SPLASH — cinematic */
   #splash {
-    align-items:center; justify-content:center;
-    background:radial-gradient(ellipse 80% 60% at 50% 30%, rgba(200,150,106,0.07) 0%, transparent 65%), var(--bg);
+    align-items:center; justify-content:flex-end;
+    background:
+      radial-gradient(ellipse 90% 60% at 50% 25%, rgba(212,163,115,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 50% 95%, rgba(179,92,56,0.08) 0%, transparent 60%),
+      var(--bg);
+    position:relative; padding:0 0 56px;
   }
-  .splash-icon { font-size:80px; margin-bottom:20px; filter:drop-shadow(0 0 30px rgba(200,150,106,0.4)); animation:float 3s ease-in-out infinite; }
-  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-  .splash-title { font-family:'Bebas Neue',sans-serif; font-size:72px; letter-spacing:4px; color:var(--text); line-height:1; margin-bottom:8px; }
-  .splash-tag { color:var(--muted); font-size:14px; font-weight:300; letter-spacing:1px; text-align:center; margin-bottom:56px; padding:0 40px; line-height:1.6; }
-  .splash-btn { background:var(--accent); color:#050805; border:none; cursor:pointer; padding:18px 64px; border-radius:100px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 0 30px rgba(200,150,106,0.3); margin-bottom:16px; }
+  .splash-stage { position:absolute; top:0; left:0; right:0; height:62%; overflow:hidden; pointer-events:none; }
+  .splash-stage::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, transparent 0%, transparent 50%, var(--bg) 100%); }
+  .splash-collage { position:absolute; inset:0; display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:repeat(2, 1fr); gap:6px; padding:14px; opacity:0.55; filter:saturate(0.9) contrast(1.05); }
+  .splash-collage div { background-size:cover; background-position:center; border-radius:10px; }
+  .splash-collage div:nth-child(1) { transform:translateY(8px) scale(1.02); }
+  .splash-collage div:nth-child(4) { transform:translateY(-8px); }
+  .splash-collage div:nth-child(6) { transform:translateY(6px) scale(0.98); }
+  .splash-content { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 32px; width:100%; }
+  .splash-mark { font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:5px; color:var(--accent); margin-bottom:14px; }
+  .splash-title { font-family:'Bebas Neue',sans-serif; font-size:78px; letter-spacing:5px; color:var(--text); line-height:0.95; margin-bottom:14px; text-shadow:0 4px 30px rgba(212,163,115,0.25); }
+  .splash-tag { color:var(--muted); font-size:13px; font-weight:300; letter-spacing:1px; margin-bottom:38px; line-height:1.6; max-width:280px; }
+  .splash-btn { background:linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); color:#0a0608; border:none; cursor:pointer; padding:20px 80px; border-radius:100px; font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:3px; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 8px 32px rgba(212,163,115,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset; margin-bottom:18px; font-weight:700; }
   .splash-btn:active { transform:scale(0.96); }
-  .splash-priv { color:var(--muted); font-size:12px; letter-spacing:0.5px; }
+  .splash-priv { color:var(--muted); font-size:11px; letter-spacing:1px; }
 
   /* SHARED */
   .pad { padding:24px 24px 0; }
@@ -199,21 +211,16 @@
   .btn-pri { flex:2; padding:15px; background:var(--accent); border:none; border-radius:12px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:#050805; }
 
   /* LOADER */
-  .loader { position:absolute; inset:0; background:var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
+  .loader { position:absolute; inset:0; background:radial-gradient(ellipse 70% 50% at 50% 35%, rgba(212,163,115,0.08) 0%, transparent 60%), var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
   .loader.on { display:flex; }
-  .dna-helix { position:relative; width:110px; height:170px; margin-bottom:28px; }
-  .dna-node { position:absolute; width:11px; height:11px; border-radius:50%; margin-left:-5.5px; animation:helixSpin 2.4s ease-in-out infinite; }
-  .dna-node.a { background:#4a90e2; box-shadow:0 0 10px rgba(74,144,226,0.85); }
-  .dna-node.b { background:#3fbf5a; box-shadow:0 0 10px rgba(63,191,90,0.85); animation-delay:-1.2s; }
-  .dna-rung { position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg, rgba(74,144,226,0.25), rgba(63,191,90,0.25)); animation:rungFade 2.4s ease-in-out infinite; }
-  @keyframes helixSpin {
-    0%   { left:50%; transform:scale(0.55); opacity:0.35; z-index:1; }
-    25%  { left:100%; transform:scale(1);    opacity:1;    z-index:2; }
-    50%  { left:50%; transform:scale(0.55); opacity:0.35; z-index:1; }
-    75%  { left:0%;  transform:scale(1);    opacity:1;    z-index:2; }
-    100% { left:50%; transform:scale(0.55); opacity:0.35; z-index:1; }
-  }
-  @keyframes rungFade { 0%,100%{opacity:0.15} 25%,75%{opacity:0.55} 50%{opacity:0.15} }
+  .pring { position:relative; width:140px; height:140px; margin-bottom:28px; }
+  .pring svg { transform:rotate(-90deg); width:100%; height:100%; }
+  .pring .pring-track { fill:none; stroke:rgba(255,255,255,0.06); stroke-width:3; }
+  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:3; stroke-linecap:round; stroke-dasharray:0 999; transition:stroke-dasharray 0.8s cubic-bezier(.4,0,.2,1); filter:drop-shadow(0 0 6px rgba(212,163,115,0.5)); }
+  .pring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .pring-secs { font-family:'Bebas Neue',sans-serif; font-size:38px; line-height:1; color:var(--text); letter-spacing:1px; }
+  .pring-secs .small { font-size:14px; color:var(--muted); margin-left:2px; letter-spacing:1px; }
+  .pring-pct { font-size:9px; letter-spacing:2px; color:var(--accent); font-weight:600; margin-top:4px; }
   .loader-steps { display:flex; flex-direction:column; gap:12px; width:100%; margin-bottom:32px; }
   .lstep { display:flex; align-items:center; gap:12px; opacity:0.3; transition:opacity 0.4s; }
   .lstep.active { opacity:1; }
@@ -239,24 +246,50 @@
 
   <div class="screen-wrap">
     <div class="loader" id="loader">
-      <div class="dna-helix" id="dna-helix"></div>
+      <div class="pring">
+        <svg viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="pringGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#d4a373"/>
+              <stop offset="100%" stop-color="#b35c38"/>
+            </linearGradient>
+          </defs>
+          <circle class="pring-track" cx="50" cy="50" r="46"/>
+          <circle class="pring-fill" id="pring-fill" cx="50" cy="50" r="46"/>
+        </svg>
+        <div class="pring-center">
+          <div class="pring-secs"><span id="pring-secs">0</span><span class="small">s</span></div>
+          <div class="pring-pct" id="pring-pct">STARTING</div>
+        </div>
+      </div>
       <div class="loader-steps">
         <div class="lstep" id="ls1"><div class="lstep-dot"></div><span class="lstep-txt">Reading your personality</span></div>
         <div class="lstep" id="ls2"><div class="lstep-dot"></div><span class="lstep-txt">Building your unique prompt</span></div>
         <div class="lstep" id="ls3"><div class="lstep-dot"></div><span class="lstep-txt">Generating your avatar</span></div>
         <div class="lstep" id="ls4"><div class="lstep-dot"></div><span class="lstep-txt">Rendering final details</span></div>
       </div>
-      <div class="loader-bar"><div class="loader-bar-fill" id="loader-bar-fill"></div></div>
-      <p id="loader-sub">THIS TAKES ABOUT 30 SECONDS</p>
+      <p id="loader-sub" style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2.5px;margin-top:24px;color:var(--muted)">THIS TAKES ABOUT 30 SECONDS</p>
     </div>
 
     <!-- SPLASH -->
     <div class="screen active" id="splash">
-      <div class="splash-icon">🐾</div>
-      <div class="splash-title">AVATARME</div>
-      <p class="splash-tag">Answer with your instincts.<br/>Discover the animal inside you.</p>
-      <button class="splash-btn" onclick="goTo('upload')">BEGIN</button>
-      <p class="splash-priv">🔒 Your data stays private</p>
+      <div class="splash-stage">
+        <div class="splash-collage">
+          <div style="background-image:url('portraits/wolf.jpg')"></div>
+          <div style="background-image:url('portraits/cartoon_fox.jpg')"></div>
+          <div style="background-image:url('portraits/animated.jpg')"></div>
+          <div style="background-image:url('portraits/tiger.jpg')"></div>
+          <div style="background-image:url('portraits/martian.jpg')"></div>
+          <div style="background-image:url('portraits/cartoon_bear.jpg')"></div>
+        </div>
+      </div>
+      <div class="splash-content">
+        <div class="splash-mark">★ AI PORTRAIT STUDIO</div>
+        <div class="splash-title">AVATAR<br/>ME</div>
+        <p class="splash-tag">Answer with your instincts.<br/>Become the avatar inside you.</p>
+        <button class="splash-btn" onclick="goTo('upload')">BEGIN</button>
+        <p class="splash-priv">🔒 Your data stays private</p>
+      </div>
     </div>
 
     <!-- UPLOAD -->
@@ -330,9 +363,10 @@
       </div>
 
       <!-- Category tabs -->
-      <div style="display:flex;gap:10px;padding:0 24px 16px;">
-        <div class="cat-tab active" onclick="setTab(this,'animals')" style="flex:1;padding:12px 14px;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid var(--accent);background:rgba(200,150,106,0.12);color:var(--accent);text-align:center">🐾 Animals</div>
-        <div class="cat-tab" onclick="setTab(this,'humans')" style="flex:1;padding:12px 14px;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;border:1.5px solid rgba(255,255,255,0.2);background:var(--surface2);color:var(--text);text-align:center">🧑 Humans</div>
+      <div style="display:flex;gap:6px;padding:0 24px 16px;">
+        <div class="cat-tab active" data-tab="animals" onclick="setTab(this,'animals')" style="flex:1;padding:11px 8px;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--accent);background:rgba(212,163,115,0.12);color:var(--accent);text-align:center">🐾 ANIMALS</div>
+        <div class="cat-tab" data-tab="cartoons" onclick="setTab(this,'cartoons')" style="flex:1;padding:11px 8px;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);text-align:center">🎨 CARTOONS</div>
+        <div class="cat-tab" data-tab="humans" onclick="setTab(this,'humans')" style="flex:1;padding:11px 8px;border-radius:12px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface2);color:var(--muted);text-align:center">🧑 HUMANS</div>
       </div>
 
       <!-- Animals -->
@@ -376,6 +410,40 @@
           <div class="pk-head"><span class="pk-name">Great Owl</span><span class="pk-type">ω</span></div>
           <div class="pk-frame"><img src="portraits/owl.jpg" loading="lazy"/><div class="pk-silhouette"><span>🦉</span></div></div>
           <div class="pk-foot"><span class="pk-tag">Wise</span><span class="pk-tag">Ancient</span></div>
+        </div>
+      </div>
+
+      <!-- Cartoon animals -->
+      <div id="tab-cartoons" class="avatar-grid" style="display:none">
+        <div class="pk-card" style="--c1:#1c2030;--c2:#0a0c14" onclick="pickAv(this,'cartoon_wolf')">
+          <div class="pk-head"><span class="pk-name">Cartoon Wolf</span><span class="pk-type">3D</span></div>
+          <div class="pk-frame"><img src="portraits/cartoon_wolf.jpg" loading="lazy"/><div class="pk-silhouette"><span>🐺</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Friendly</span><span class="pk-tag">Pixar-like</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#2c1a0a;--c2:#0e0703" onclick="pickAv(this,'cartoon_fox')">
+          <div class="pk-head"><span class="pk-name">Cartoon Fox</span><span class="pk-type">3D</span></div>
+          <div class="pk-frame"><img src="portraits/cartoon_fox.jpg" loading="lazy"/><div class="pk-silhouette"><span>🦊</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Charming</span><span class="pk-tag">Stylized</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#1f1a14;--c2:#0a0805" onclick="pickAv(this,'cartoon_bear')">
+          <div class="pk-head"><span class="pk-name">Cartoon Bear</span><span class="pk-type">3D</span></div>
+          <div class="pk-frame"><img src="portraits/cartoon_bear.jpg" loading="lazy"/><div class="pk-silhouette"><span>🐻</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Warm</span><span class="pk-tag">Huggable</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#1a1a24;--c2:#070710" onclick="pickAv(this,'cartoon_owl')">
+          <div class="pk-head"><span class="pk-name">Cartoon Owl</span><span class="pk-type">3D</span></div>
+          <div class="pk-frame"><img src="portraits/cartoon_owl.jpg" loading="lazy"/><div class="pk-silhouette"><span>🦉</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Curious</span><span class="pk-tag">Wise</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#241a14;--c2:#0c0805" onclick="pickAv(this,'cartoon_tiger')">
+          <div class="pk-head"><span class="pk-name">Cartoon Tiger</span><span class="pk-type">3D</span></div>
+          <div class="pk-frame"><img src="portraits/cartoon_tiger.jpg" loading="lazy"/><div class="pk-silhouette"><span>🐅</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Bold</span><span class="pk-tag">Playful</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#2a1f12;--c2:#0e0805" onclick="pickAv(this,'cartoon_monkey')">
+          <div class="pk-head"><span class="pk-name">Cartoon Monkey</span><span class="pk-type">3D</span></div>
+          <div class="pk-frame"><img src="portraits/cartoon_monkey.jpg" loading="lazy"/><div class="pk-silhouette"><span>🐒</span></div></div>
+          <div class="pk-foot"><span class="pk-tag">Clever</span><span class="pk-tag">Goofy</span></div>
         </div>
       </div>
 
@@ -428,7 +496,22 @@
       <div style="flex:1;position:relative" id="viewer3d-body">
         <model-viewer id="mv" style="width:100%;height:100%;background:radial-gradient(ellipse at 50% 50%, #0c1420 0%, #05080c 70%)" camera-controls touch-action="pan-y" auto-rotate auto-rotate-delay="500" rotation-per-second="20deg" shadow-intensity="1" exposure="1" ar ar-modes="webxr scene-viewer quick-look"></model-viewer>
         <div id="mv-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05080c;color:#7bb3ff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px">
-          <div class="dna-helix" id="dna-helix-3d" style="margin-bottom:24px"></div>
+          <div class="pring" style="margin-bottom:20px">
+            <svg viewBox="0 0 100 100">
+              <defs>
+                <linearGradient id="pringGrad3d" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#7bb3ff"/>
+                  <stop offset="100%" stop-color="#4a90e2"/>
+                </linearGradient>
+              </defs>
+              <circle class="pring-track" cx="50" cy="50" r="46"/>
+              <circle cx="50" cy="50" r="46" fill="none" stroke="url(#pringGrad3d)" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 999" id="pring3d-fill" style="transition:stroke-dasharray 0.8s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 0 6px rgba(123,179,255,0.5))"/>
+            </svg>
+            <div class="pring-center">
+              <div class="pring-secs" style="color:#dceaff"><span id="pring3d-secs">0</span><span class="small" style="color:#7bb3ff">s</span></div>
+              <div class="pring-pct" style="color:#7bb3ff" id="pring3d-pct">STARTING</div>
+            </div>
+          </div>
           <div style="font-size:16px;margin-bottom:8px" id="mv-loading-title">BUILDING 3D MESH</div>
           <div style="font-size:11px;color:var(--muted);letter-spacing:1px">THIS TAKES ABOUT 60 SECONDS</div>
         </div>
@@ -516,6 +599,12 @@ const AV_PHOTOS = {
   owl:          'portraits/owl.jpg',
   yellow_toon:  'portraits/yellow_toon.jpg',
   martian:      'portraits/martian.jpg',
+  cartoon_wolf:   'portraits/cartoon_wolf.jpg',
+  cartoon_fox:    'portraits/cartoon_fox.jpg',
+  cartoon_bear:   'portraits/cartoon_bear.jpg',
+  cartoon_owl:    'portraits/cartoon_owl.jpg',
+  cartoon_tiger:  'portraits/cartoon_tiger.jpg',
+  cartoon_monkey: 'portraits/cartoon_monkey.jpg',
 };
 
 // ── NAVIGATION ──
@@ -550,7 +639,7 @@ function fileSelected(type, input) {
   document.getElementById('fp-' + type).textContent = '✓ ' + name;
 }
 
-var ANIMAL_KEYS = new Set(['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl']);
+var ANIMAL_KEYS = new Set(['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','cartoon_wolf','cartoon_fox','cartoon_bear','cartoon_owl','cartoon_tiger','cartoon_monkey']);
 
 // ── REACTION GAME ──
 var scenarios = [
@@ -672,14 +761,16 @@ function toggleCard(id) {
 function setTab(el, tab) {
   document.querySelectorAll('.cat-tab').forEach(t => {
     t.style.borderColor = 'var(--border)';
-    t.style.background = 'transparent';
+    t.style.background = 'var(--surface2)';
     t.style.color = 'var(--muted)';
   });
   el.style.borderColor = 'var(--accent)';
-  el.style.background = 'rgba(200,150,106,0.1)';
+  el.style.background = 'rgba(212,163,115,0.12)';
   el.style.color = 'var(--accent)';
-  document.getElementById('tab-animals').style.display = tab === 'animals' ? 'grid' : 'none';
-  document.getElementById('tab-humans').style.display = tab === 'humans' ? 'grid' : 'none';
+  ['animals','cartoons','humans'].forEach(t => {
+    var grid = document.getElementById('tab-' + t);
+    if (grid) grid.style.display = (tab === t) ? 'grid' : 'none';
+  });
 }
 
 // ── AVATAR BANK ──
@@ -694,23 +785,41 @@ function pickAv(card, name) {
 }
 
 // ── GENERATE ──
-// Build DNA helix nodes once
-(function buildHelix(){
-  var h = document.getElementById('dna-helix');
-  if (!h) return;
-  var rows = 9;
-  for (var i = 0; i < rows; i++) {
-    var top = (i * 100 / (rows - 1)) + '%';
-    var delay = (-i * 0.24) + 's';
-    var a = document.createElement('div'); a.className = 'dna-node a';
-    a.style.top = top; a.style.animationDelay = delay;
-    var b = document.createElement('div'); b.className = 'dna-node b';
-    b.style.top = top; b.style.animationDelay = ((-i * 0.24) - 1.2) + 's';
-    var r = document.createElement('div'); r.className = 'dna-rung';
-    r.style.top = top; r.style.animationDelay = delay;
-    h.appendChild(r); h.appendChild(a); h.appendChild(b);
+// Progress ring control
+var PRING_CIRC = 2 * Math.PI * 46; // r=46 => ~289
+var pringTimer = null, pringStart = 0, pringEstSec = 30;
+function pringStartCounter(estSec, ids) {
+  pringEstSec = estSec || 30;
+  pringStart = Date.now();
+  if (pringTimer) clearInterval(pringTimer);
+  var fillId = ids && ids.fill || 'pring-fill';
+  var secsId = ids && ids.secs || 'pring-secs';
+  var pctId  = ids && ids.pct  || 'pring-pct';
+  function tick() {
+    var elapsed = (Date.now() - pringStart) / 1000;
+    var pct = Math.min(0.97, elapsed / pringEstSec);
+    var fill = document.getElementById(fillId);
+    if (fill) fill.setAttribute('stroke-dasharray', (pct * PRING_CIRC) + ' ' + PRING_CIRC);
+    var secs = document.getElementById(secsId);
+    if (secs) secs.textContent = Math.floor(elapsed);
   }
-})();
+  tick();
+  pringTimer = setInterval(tick, 250);
+}
+function pringSetPct(label, fillId) {
+  var el = document.getElementById(fillId || 'pring-pct');
+  if (el) el.textContent = label;
+}
+function pringComplete(ids) {
+  var fillId = ids && ids.fill || 'pring-fill';
+  var pctId  = ids && ids.pct  || 'pring-pct';
+  if (pringTimer) clearInterval(pringTimer);
+  pringTimer = null;
+  var fill = document.getElementById(fillId);
+  if (fill) fill.setAttribute('stroke-dasharray', PRING_CIRC + ' ' + PRING_CIRC);
+  var pct = document.getElementById(pctId);
+  if (pct) pct.textContent = 'DONE';
+}
 
 // Ticking sound via Web Audio
 var tickCtx = null, tickInterval = null;
@@ -735,13 +844,15 @@ function setLoaderStep(step, barPct, icon) {
     if (i + 1 < step) el.classList.add('done');
     if (i + 1 === step) el.classList.add('active');
   });
-  document.getElementById('loader-bar-fill').style.width = barPct + '%';
+  var labels = ['STARTING','READING','BUILDING','GENERATING','RENDERING','DONE'];
+  pringSetPct(labels[Math.min(step, labels.length - 1)] || 'WORKING');
 }
 
 async function generate() {
   if (!chosenAv) return;
   var loader = document.getElementById('loader');
   loader.classList.add('on');
+  pringStartCounter(35);
   setLoaderStep(1, 10);
   startTicks();
 
@@ -776,6 +887,7 @@ async function generate() {
     if (!result) throw new Error('Timed out');
 
     setLoaderStep(5, 100, '🐾');
+    pringComplete();
     await new Promise(r => setTimeout(r, 600));
 
     // Populate result
@@ -810,6 +922,7 @@ async function generate() {
 
   } catch(err) {
     loader.classList.remove('on');
+    pringComplete();
     stopTicks();
     alert('Something went wrong. Please try again.');
     console.error(err);
@@ -826,19 +939,7 @@ async function make3D() {
   overlay.style.display = 'flex';
   loading.style.display = 'flex';
   mv.src = '';
-  // Build helix in 3D loader if not built
-  var h3d = document.getElementById('dna-helix-3d');
-  if (h3d && !h3d.hasChildNodes()) {
-    var rows = 9;
-    for (var i = 0; i < rows; i++) {
-      var top = (i * 100 / (rows - 1)) + '%';
-      var delay = (-i * 0.24) + 's';
-      var a = document.createElement('div'); a.className = 'dna-node a'; a.style.top = top; a.style.animationDelay = delay;
-      var b = document.createElement('div'); b.className = 'dna-node b'; b.style.top = top; b.style.animationDelay = ((-i * 0.24) - 1.2) + 's';
-      var r = document.createElement('div'); r.className = 'dna-rung'; r.style.top = top; r.style.animationDelay = delay;
-      h3d.appendChild(r); h3d.appendChild(a); h3d.appendChild(b);
-    }
-  }
+  pringStartCounter(60, { fill:'pring3d-fill', secs:'pring3d-secs', pct:'pring3d-pct' });
   try {
     var kickRes = await fetch(BACKEND + '/start-3d/' + currentJobId, { method: 'POST' });
     var kick = await kickRes.json();

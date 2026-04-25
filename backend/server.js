@@ -18,7 +18,7 @@ const jobs = {};
 const AVATARS = {
   wolf:         { name: 'Arctic Wolf',  animal: 'arctic wolf',      base: 'thick white and grey fur, piercing blue eyes, powerful jaw, muscular build',           env: 'vast frozen tundra at twilight, aurora borealis rippling across a deep purple sky, snow-dusted pine forest stretching to the horizon, icy breath visible in the cold air' },
   snow_leopard: { name: 'Snow Leopard', animal: 'snow leopard',     base: 'rosette-spotted pale fur, sleek elegant build, pale green eyes, mountain predator',    env: 'dramatic Himalayan mountain cliff at golden hour, jagged snow-capped peaks behind, swirling mist below, warm orange light hitting the rock face' },
-  monkey:       { name: 'Wise Monkey',  animal: 'monkey',           base: 'expressive face, rich golden-brown fur, intelligent deep eyes, nimble hands',          env: 'dense ancient jungle canopy, shafts of sunlight piercing through enormous tropical leaves, hanging vines, distant waterfall visible through the mist' },
+  monkey:       { name: 'Wise Monkey',  animal: 'japanese macaque monkey',           base: 'large bare flesh-pink face FILLING THE FRAME and FACING THE CAMERA DIRECTLY (front-facing, nearly head-on, both eyes clearly visible, symmetric), surrounded by a thick fur ruff, large warm intelligent forward-facing eyes with crisp catchlights, nostrils and mouth clearly visible at human-readable proportions, the bare facial skin readable as a near-human face, nimble hands',          env: 'dense ancient jungle canopy, shafts of soft sunlight piercing through enormous tropical leaves, hanging vines, distant waterfall through mist, gentle even light on the face (no harsh side shadows)' },
   eagle:        { name: 'Golden Eagle', animal: 'golden eagle',     base: 'sharp curved talons, rich brown and gold feathers, fierce amber eyes, broad wingspan',  env: 'standing on a rocky mountain peak above the clouds, vast open sky, distant mountain range bathed in golden sunrise light, wind-swept environment' },
   fox:          { name: 'Red Fox',      animal: 'red fox',          base: 'vibrant fiery red and white fur, cunning amber eyes, sleek slender build, bushy tail',  env: 'misty autumn forest at dawn, golden and crimson fallen leaves on the ground, soft morning fog between ancient oak trees, dew on the grass' },
   bear:         { name: 'Grizzly Bear', animal: 'grizzly bear',     base: 'enormous powerful frame, thick dark-brown fur, commanding presence, small dark eyes',   env: 'rushing salmon river in the Pacific Northwest, dense green pine forest, dramatic overcast sky, water splashing around massive rocks' },
@@ -26,6 +26,15 @@ const AVATARS = {
   owl:          { name: 'Great Owl',    animal: 'great horned owl', base: 'huge luminous amber eyes, mottled brown-grey feathers, broad silent wings, wise expression', env: 'old-growth forest at night, full moon visible through dark twisted branches, fireflies glowing in the darkness, thick ancient tree trunk' },
   yourself:   { name: 'Just Me',    animal: 'regular contemporary person',  base: 'natural realistic features, smooth flattering skin, casual modern clothing, relaxed confident expression, authentic everyday look — no costume, no theme', env: 'bright overcast outdoor setting or open shade on a quiet city street, soft diffused daylight, gentle out-of-focus background, clean soft portrait lighting — no direct sun, no harsh shadows' },
   animated:   { name: 'Animated Me', animal: '2D animated TV-series character version of the person, in the visual style of the Netflix Stranger Things animated series (Flying Bark Productions) — modern western animation, semi-realistic stylized 2D, comparable to Arcane / Blood of Zeus', base: 'clean confident line work, painterly cel-shaded skin with soft gradient shadows, slightly stylized but anatomically grounded face proportions, expressive eyes with crisp highlights, hair drawn as defined shape clusters with painted highlights, recognizable likeness preserved (same face shape, hair, beard, skin tone), outfit chosen to fit their personality, looks like an official key frame from a high-end animated series', env: 'cinematic painted backdrop in the same animation style — subtle environmental scene matching their personality, hand-painted depth, soft atmospheric haze, restrained color palette, dramatic but not theatrical lighting' },
+  // Cartoon animals — anthropomorphic 3D animated-film characters
+  // (Pixar / DreamWorks / Sony Pictures Animation style). Face-swap-
+  // friendly because the eyes/nose/mouth are roughly human-proportioned.
+  cartoon_wolf:   { name: 'Cartoon Wolf',   animal: 'anthropomorphic stylized 3D animated film wolf character, Pixar / DreamWorks quality', base: 'large expressive forward-facing eyes with crisp highlights, soft white-grey fur, friendly proportions, simple outfit (hoodie or vest) fitting their personality, clean cel-shaded look', env: 'snowy pine forest at golden hour, soft warm light filtering through trees, gentle bokeh, painted backdrop in 3D animated film style' },
+  cartoon_fox:    { name: 'Cartoon Fox',    animal: 'anthropomorphic stylized 3D animated film red fox character, Pixar / DreamWorks quality', base: 'large expressive forward-facing eyes with crisp highlights, vibrant orange-red fur with white belly, friendly proportions, simple casual outfit fitting their personality, clean cel-shaded look', env: 'autumn forest with golden leaves, soft warm afternoon light, gentle painted bokeh, animated film backdrop' },
+  cartoon_bear:   { name: 'Cartoon Bear',   animal: 'anthropomorphic stylized 3D animated film bear character, Pixar / DreamWorks quality', base: 'large expressive forward-facing eyes with crisp highlights, soft brown fur, friendly proportions, simple casual outfit fitting their personality, clean cel-shaded look', env: 'mountain meadow at sunset, soft warm light, gentle painted bokeh, animated film backdrop' },
+  cartoon_owl:    { name: 'Cartoon Owl',    animal: 'anthropomorphic stylized 3D animated film owl character with a flat round face, Pixar / DreamWorks quality', base: 'huge round forward-facing eyes with crisp highlights, soft mottled brown-grey feathers, friendly proportions, simple casual outfit fitting their personality, clean cel-shaded look', env: 'old library at dusk with warm lamp glow and floating dust motes, soft painted bokeh, animated film backdrop' },
+  cartoon_tiger:  { name: 'Cartoon Tiger',  animal: 'anthropomorphic stylized 3D animated film tiger character, Pixar / DreamWorks quality', base: 'large expressive forward-facing eyes with crisp highlights, vivid orange fur with bold black stripes, friendly proportions, simple casual outfit fitting their personality, clean cel-shaded look', env: 'lush jungle clearing with shafts of warm light, soft painted bokeh, animated film backdrop' },
+  cartoon_monkey: { name: 'Cartoon Monkey', animal: 'anthropomorphic stylized 3D animated film macaque character, Pixar / DreamWorks quality', base: 'large expressive forward-facing eyes with crisp highlights, flesh-pink face surrounded by warm brown fur, friendly proportions, simple casual outfit fitting their personality, clean cel-shaded look', env: 'tropical jungle canopy with shafts of golden light, soft painted bokeh, animated film backdrop' },
   yellow_toon: { name: 'Yellow Toon Me', animal: 'flat 2D cartoon character version of the person, in the classic 90s American prime-time animated sitcom visual style', base: 'flat bright yellow skin, simple bold black outlines, large round white eyes with small black pupils, prominent overbite mouth, four fingers per hand, simplified two-dimensional cartoon proportions, hair drawn as a single solid shape matching the person\'s real hairstyle and color, recognizable likeness preserved through hair shape, beard if any, glasses if worn, and clothing color', env: 'generic small American suburban backdrop — quiet residential street with simple flat houses, picket fences, neatly trimmed lawns, blue sky with a few simple white clouds — flat cartoon vector backdrop, bright primary colors, simple shapes (NO real-world place names, NO TV-show locations)' },
   martian:     { name: 'Martian Me',    animal: 'Martian alien version of the person from the planet Mars',                base: 'smooth green or grey-green skin, large oval black or amber alien eyes, slim humanoid build, subtle ridges or markings on the head, sleek minimalist alien jumpsuit, the user\'s recognizable face structure echoed in the alien skull (same overall face shape, brow line, jaw, beard pattern as facial markings/ridges, hair pattern as crest or dorsal ridge if any) — clearly an alien, but unmistakably YOU as an alien', env: 'rust-red Martian desert under a pale orange sky, distant dusty mountains, two small moons (Phobos and Deimos) in the sky, futuristic alien outpost or crashed pod in the distance, fine red dust in the air' },
 };
@@ -60,10 +69,10 @@ Image prompt rules:
 - Setting: ${env} — described in plain natural language, like a real place that exists
 - Subtle personality cues only: gaze, posture, micro-expression, the way light falls. Avoid theatrical drama.
 - Composition: off-center framing, natural camera angle at eye level or slightly ABOVE (never from below — low angles distort faces unflatteringly), shallow depth of field, environment visible but not overwhelming
-- ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? `REAL ANIMAL — absolutely no clothing, no outfit, no accessories — natural animal body only, like a wildlife documentary still.${imageBase64 ? avatarKey === 'monkey' ? ` SPIRIT-ANIMAL ECHO (MANDATORY — must appear explicitly in the flux_prompt): the japanese macaque has a bare flesh-pink face surrounded by a fur ruff — this is the most human-readable animal in the bank, so the resemblance must be obvious. Study the user's photo and write into the flux_prompt: (a) the macaque's facial skin tone matches the user's actual skin tone (name it: "warm olive", "fair pink", "deep brown"), (b) the surrounding fur ruff/cheek tufts/crown match the user's hair and beard — color, density and pattern (e.g. "thick salt-and-pepper fur ruff framing the face like a full beard", "short reddish-brown crown matching cropped auburn hair", "bald pink crown with grey side tufts"), (c) eye color named explicitly (warm brown, amber, hazel), (d) the same brow shape and expression (heavy thoughtful brow, gentle calm gaze, sharp alert focus). The result must read as a real macaque that anyone seeing the user's photo would instantly recognise.` : ` SPIRIT-ANIMAL ECHO (MANDATORY — must appear explicitly in the flux_prompt): study the user's face photo and pick specific, visible features — their actual eye color (name it: "amber", "warm brown", "green-grey"), their hair/beard color and pattern (name it: "salt-and-pepper grey muzzle and chest", "sandy-brown coat with grey around the eyes"), their expression (calm, intense, gentle). The animal's fur/feather coloring and facial markings MUST directly reflect these — e.g. a wolf with the user's salt-and-pepper grey around its muzzle and warm brown eyes. These must be written into the flux_prompt as concrete visual details, not as subtext. The animal still reads as a real animal — but one that visibly resembles the person.` : ''}` : 'ICONIC CHARACTER — the character look (costume, signature features, iconic hair/helmet/color scheme) MUST be fully rendered. The user\'s face should carry recognizable identity (bone structure, beard/hair, expression) but wearing the complete iconic outfit of this character — never their regular clothes with just an accessory.' }
-- Style: ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'documentary photography, soft diffused light (overcast sky, open shade, or soft window light — NEVER direct harsh sun), gentle flattering shadows, fine film grain, looks like it was actually photographed' : avatarKey === 'animated' ? 'high-end 2D animated TV-series still — Netflix Stranger Things animated series style (Flying Bark Productions), Arcane / Blood of Zeus quality, painterly cel-shading, defined ink-line silhouettes, soft watercolor-style ambient shadows, semi-realistic stylized faces with crisp eye highlights, painted background with depth — NOT 3D, NOT Pixar, NOT photoreal' : avatarKey === 'yellow_toon' ? 'classic 90s American prime-time animated sitcom visual style — flat 2D vector cartoon, bright yellow skin, bold black ink outlines, primary-color flat fills, no gradients, no shading beyond simple flat tones, simple cel-animation aesthetic — NOT 3D, NOT realistic, NOT painterly. Generic style only — do NOT name or replicate any specific TV show, character, or location' : avatarKey === 'martian' ? 'cinematic sci-fi character portrait — clean AAA render of an alien being, soft balanced lighting, subtle rim light, gentle atmospheric red dust, restrained color palette, looks like concept art for a serious sci-fi film' : 'clean AAA game-character render — soft even lighting, gentle natural shadows, low-contrast shading, subtle rim light only, no harsh dramatic shadows, no heavy atmospheric haze, balanced exposure, friendly approachable look, ArtStation quality' }
+- ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? `REAL ANIMAL — absolutely no clothing, no outfit, no accessories — natural animal body only, like a wildlife documentary still.${avatarKey === 'monkey' ? ' CRITICAL CAMERA: the macaque MUST be facing the camera directly (front-on, head straight to lens, both eyes equally visible, face symmetric in frame, NOT in profile, NOT three-quarter, NOT looking away). Face occupies a large portion of the upper frame even though framing is full body.' : ''}${imageBase64 ? avatarKey === 'monkey' ? ` SPIRIT-ANIMAL ECHO (MANDATORY — must appear explicitly in the flux_prompt): the japanese macaque has a bare flesh-pink face surrounded by a fur ruff — this is the most human-readable animal in the bank, so the resemblance must be obvious. Study the user's photo and write into the flux_prompt: (a) the macaque's facial skin tone matches the user's actual skin tone (name it: "warm olive", "fair pink", "deep brown"), (b) the surrounding fur ruff/cheek tufts/crown match the user's hair and beard — color, density and pattern (e.g. "thick salt-and-pepper fur ruff framing the face like a full beard", "short reddish-brown crown matching cropped auburn hair", "bald pink crown with grey side tufts"), (c) eye color named explicitly (warm brown, amber, hazel), (d) the same brow shape and expression (heavy thoughtful brow, gentle calm gaze, sharp alert focus). The result must read as a real macaque that anyone seeing the user's photo would instantly recognise.` : ` SPIRIT-ANIMAL ECHO (MANDATORY — must appear explicitly in the flux_prompt): study the user's face photo and pick specific, visible features — their actual eye color (name it: "amber", "warm brown", "green-grey"), their hair/beard color and pattern (name it: "salt-and-pepper grey muzzle and chest", "sandy-brown coat with grey around the eyes"), their expression (calm, intense, gentle). The animal's fur/feather coloring and facial markings MUST directly reflect these — e.g. a wolf with the user's salt-and-pepper grey around its muzzle and warm brown eyes. These must be written into the flux_prompt as concrete visual details, not as subtext. The animal still reads as a real animal — but one that visibly resembles the person.` : ''}` : avatarKey.startsWith('cartoon_') ? `ANTHROPOMORPHIC ANIMATED-FILM CHARACTER — a stylized 3D cartoon animal that walks/sits/poses like a character in a Pixar or DreamWorks feature. Forward-facing, looking at camera, large clearly readable eyes, simple casual outfit (hoodie/vest/t-shirt) chosen to fit personality. NOT a realistic animal, NOT a wildlife shot — a character.${imageBase64 ? ' The face is intentionally human-proportioned (eye spacing, nose bridge, mouth position) so the user\'s likeness can later be face-swapped onto it — keep the head front-facing, well lit, and at a natural three-quarter to camera angle suitable for face replacement.' : ''}` : 'ICONIC CHARACTER — the character look (costume, signature features, iconic hair/helmet/color scheme) MUST be fully rendered. The user\'s face should carry recognizable identity (bone structure, beard/hair, expression) but wearing the complete iconic outfit of this character — never their regular clothes with just an accessory.' }
+- Style: ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'documentary photography, soft diffused light (overcast sky, open shade, or soft window light — NEVER direct harsh sun), gentle flattering shadows, fine film grain, looks like it was actually photographed' : avatarKey === 'animated' ? 'high-end 2D animated TV-series still — Netflix Stranger Things animated series style (Flying Bark Productions), Arcane / Blood of Zeus quality, painterly cel-shading, defined ink-line silhouettes, soft watercolor-style ambient shadows, semi-realistic stylized faces with crisp eye highlights, painted background with depth — NOT 3D, NOT Pixar, NOT photoreal' : avatarKey.startsWith('cartoon_') ? 'high-end 3D animated film style — Pixar / DreamWorks / Sony Pictures Animation quality, soft cel-shading with painterly subsurface, expressive forward-facing character pose, polished cinematic key-frame look, painted bokeh backdrop, clean approachable color palette' : avatarKey === 'yellow_toon' ? 'classic 90s American prime-time animated sitcom visual style — flat 2D vector cartoon, bright yellow skin, bold black ink outlines, primary-color flat fills, no gradients, no shading beyond simple flat tones, simple cel-animation aesthetic — NOT 3D, NOT realistic, NOT painterly. Generic style only — do NOT name or replicate any specific TV show, character, or location' : avatarKey === 'martian' ? 'cinematic sci-fi character portrait — clean AAA render of an alien being, soft balanced lighting, subtle rim light, gentle atmospheric red dust, restrained color palette, looks like concept art for a serious sci-fi film' : 'clean AAA game-character render — soft even lighting, gentle natural shadows, low-contrast shading, subtle rim light only, no harsh dramatic shadows, no heavy atmospheric haze, balanced exposure, friendly approachable look, ArtStation quality' }
 - 2-3 sentences, highly descriptive
-- End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : avatarKey === 'animated' ? 'official animated TV series key frame, Netflix Stranger Things animated style, Flying Bark Productions, Arcane-quality 2D, painterly cel-shading, ink-line silhouettes, painted background, full body' : avatarKey === 'yellow_toon' ? 'classic 90s American animated sitcom style, flat yellow skin, bold black outlines, simple cel cartoon, full body' : avatarKey === 'martian' ? 'cinematic sci-fi alien portrait, clean AAA render, ArtStation quality, full body, ultra detailed' : 'clean AAA game render, soft balanced lighting, gentle shadows, low contrast, subtle rim light, natural exposure, approachable friendly tone, full body, ultra detailed' }"
+- End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : avatarKey === 'animated' ? 'official animated TV series key frame, Netflix Stranger Things animated style, Flying Bark Productions, Arcane-quality 2D, painterly cel-shading, ink-line silhouettes, painted background, full body' : avatarKey.startsWith('cartoon_') ? 'high-end 3D animated film key frame, Pixar / DreamWorks quality, soft cel-shading, expressive character, full body, ultra detailed' : avatarKey === 'yellow_toon' ? 'classic 90s American animated sitcom style, flat yellow skin, bold black outlines, simple cel cartoon, full body' : avatarKey === 'martian' ? 'cinematic sci-fi alien portrait, clean AAA render, ArtStation quality, full body, ultra detailed' : 'clean AAA game render, soft balanced lighting, gentle shadows, low contrast, subtle rim light, natural exposure, approachable friendly tone, full body, ultra detailed' }"
 
 Respond in JSON only:
 {"description":"2-3 sentence personal description","flux_prompt":"detailed image prompt","traits":{"Composure":80,"Strategy":75,"Instinct":85,"Adaptability":70},"dominant_trait":"one word"}`;
@@ -252,8 +261,33 @@ app.get('/status/:id', (req, res) => {
 // target has human-readable facial landmarks (e.g. macaque). Won't work
 // on canids/birds — those keep the spirit-pairing UX instead.
 const FACESWAP_VERSION = '9a4298548422074c3f57258c5d544497314ae4112df80d116f0d2109e843d20d';
-const FACESWAP_SUPPORTED = new Set(['monkey']);
-async function faceSwap(targetImageUrl, sourceFaceDataUrl) {
+const FACESWAP_FALLBACK_VERSION = 'cff87316e31787df12002c9e20a78a017a36cb31fde9862d8dedd15ab29b7288'; // xiankgx/face-swap
+const FACESWAP_SUPPORTED = new Set([
+  'monkey',
+  'cartoon_wolf','cartoon_fox','cartoon_bear','cartoon_owl','cartoon_tiger','cartoon_monkey',
+]);
+
+async function pollPrediction(id, sleepMs, maxIters, label) {
+  for (let i = 0; i < maxIters; i++) {
+    await new Promise(r => setTimeout(r, sleepMs));
+    const poll = await fetch(`https://api.replicate.com/v1/predictions/${id}`, {
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
+    });
+    const result = await poll.json();
+    if (result.status === 'succeeded') {
+      console.log(label + ' succeeded');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
+    if (result.status === 'failed' || result.status === 'canceled') {
+      console.error(label + ' ' + result.status + ':', result.error);
+      return null;
+    }
+  }
+  console.error(label + ' timed out');
+  return null;
+}
+
+async function faceSwapLucataco(targetImageUrl, sourceFaceDataUrl) {
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
@@ -263,25 +297,31 @@ async function faceSwap(targetImageUrl, sourceFaceDataUrl) {
     } })
   });
   const pred = await startRes.json();
-  if (!pred.id) { console.error('Face-swap start error:', JSON.stringify(pred)); return null; }
-  console.log('Face-swap started:', pred.id);
-  for (let i = 0; i < 40; i++) {
-    await new Promise(r => setTimeout(r, 2000));
-    const poll = await fetch(`https://api.replicate.com/v1/predictions/${pred.id}`, {
-      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
-    });
-    const result = await poll.json();
-    if (result.status === 'succeeded') {
-      console.log('Face-swap succeeded');
-      return Array.isArray(result.output) ? result.output[0] : result.output;
-    }
-    if (result.status === 'failed' || result.status === 'canceled') {
-      console.error('Face-swap ' + result.status + ':', result.error);
-      return null;
-    }
-  }
-  console.error('Face-swap timed out');
-  return null;
+  if (!pred.id) { console.error('Lucataco face-swap start error:', JSON.stringify(pred)); return null; }
+  console.log('Lucataco face-swap started:', pred.id);
+  return pollPrediction(pred.id, 2000, 40, 'Lucataco face-swap');
+}
+
+async function faceSwapXiankgx(targetImageUrl, sourceFaceDataUrl) {
+  const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: FACESWAP_FALLBACK_VERSION, input: {
+      input_image: sourceFaceDataUrl,
+      swap_image: targetImageUrl,
+    } })
+  });
+  const pred = await startRes.json();
+  if (!pred.id) { console.error('Xiankgx face-swap start error:', JSON.stringify(pred)); return null; }
+  console.log('Xiankgx face-swap started:', pred.id);
+  return pollPrediction(pred.id, 2000, 40, 'Xiankgx face-swap');
+}
+
+async function faceSwap(targetImageUrl, sourceFaceDataUrl) {
+  const primary = await faceSwapLucataco(targetImageUrl, sourceFaceDataUrl);
+  if (primary) return primary;
+  console.log('Lucataco failed — falling back to xiankgx');
+  return faceSwapXiankgx(targetImageUrl, sourceFaceDataUrl);
 }
 
 const HUNYUAN3D_VERSION = '0602bae6db1ce420f2690339bf2feb47e18c0c722a1f02e9db9abd774abaff5d';
