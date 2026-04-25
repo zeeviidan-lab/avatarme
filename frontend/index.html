@@ -169,6 +169,11 @@
   .pk-foot { padding:6px 4px 0; display:flex; gap:4px; flex-wrap:wrap; font-family:'Orbitron',sans-serif; }
   .pk-tag { font-size:8px; letter-spacing:1px; color:#a89878; border:1px solid rgba(168,152,120,0.3); padding:1px 5px; text-transform:uppercase; }
 
+  /* BG PICKER */
+  .bg-pill { flex-shrink:0; padding:8px 14px; border-radius:100px; background:var(--surface2); border:1.5px solid var(--border); color:var(--text); font-size:12px; font-weight:500; cursor:pointer; white-space:nowrap; transition:all 0.15s; }
+  .bg-pill.sel { background:rgba(200,150,106,0.12); border-color:var(--accent); color:var(--accent); }
+  #bg-picker::-webkit-scrollbar { display:none; }
+
   /* CTA */
   .cta { width:calc(100% - 48px); margin:0 24px 20px; background:var(--accent); color:#050805; border:none; cursor:pointer; padding:18px; border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:2px; transition:transform 0.15s,opacity 0.2s; }
   .cta:active { transform:scale(0.98); }
@@ -386,70 +391,10 @@
           <div class="pk-frame" style="aspect-ratio:auto;height:160px"><img src="portraits/animated.jpg" loading="lazy"/></div>
           <div class="pk-foot"><span class="pk-tag">Game Render</span><span class="pk-tag">Stylized</span></div>
         </div>
-        <div class="pk-card" onclick="pickAv(this,'link')">
-          <div class="pk-head"><span class="pk-name">Link</span><span class="pk-type">HERO</span></div>
-          <div class="pk-frame"><img src="portraits/link.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Brave</span><span class="pk-tag">Quiet</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'kratos')">
-          <div class="pk-head"><span class="pk-name">Kratos</span><span class="pk-type">RAGE</span></div>
-          <div class="pk-frame"><img src="portraits/kratos.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Fury</span><span class="pk-tag">Power</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'mario')">
-          <div class="pk-head"><span class="pk-name">Mario</span><span class="pk-type">JOY</span></div>
-          <div class="pk-frame"><img src="portraits/mario.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Cheerful</span><span class="pk-tag">Underdog</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'master_chief')">
-          <div class="pk-head"><span class="pk-name">Master Chief</span><span class="pk-type">SPARTAN</span></div>
-          <div class="pk-frame"><img src="portraits/master_chief.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Stoic</span><span class="pk-tag">Soldier</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'geralt')">
-          <div class="pk-head"><span class="pk-name">Geralt</span><span class="pk-type">WITCHER</span></div>
-          <div class="pk-frame"><img src="portraits/geralt.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Wanderer</span><span class="pk-tag">Grim</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'aragorn')">
-          <div class="pk-head"><span class="pk-name">Aragorn</span><span class="pk-type">KING</span></div>
-          <div class="pk-frame"><img src="portraits/aragorn.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Noble</span><span class="pk-tag">Leader</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'joker')">
-          <div class="pk-head"><span class="pk-name">Joker</span><span class="pk-type">CHAOS</span></div>
-          <div class="pk-frame"><img src="portraits/joker.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Wild</span><span class="pk-tag">Unhinged</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'neo')">
-          <div class="pk-head"><span class="pk-name">Neo</span><span class="pk-type">THE ONE</span></div>
-          <div class="pk-frame"><img src="portraits/neo.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Chosen</span><span class="pk-tag">Calm</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'mickey')">
-          <div class="pk-head"><span class="pk-name">Mickey</span><span class="pk-type">CLASSIC</span></div>
-          <div class="pk-frame"><img src="portraits/mickey.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Iconic</span><span class="pk-tag">Cheerful</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'arthas')">
-          <div class="pk-head"><span class="pk-name">Lich King</span><span class="pk-type">FROZEN</span></div>
-          <div class="pk-frame"><img src="portraits/arthas.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Fallen</span><span class="pk-tag">Cold</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'illidan')">
-          <div class="pk-head"><span class="pk-name">Illidan</span><span class="pk-type">DEMON</span></div>
-          <div class="pk-frame"><img src="portraits/illidan.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Outcast</span><span class="pk-tag">Furious</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'sylvanas')">
-          <div class="pk-head"><span class="pk-name">Sylvanas</span><span class="pk-type">BANSHEE</span></div>
-          <div class="pk-frame"><img src="portraits/sylvanas.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Vengeful</span><span class="pk-tag">Cold</span></div>
-        </div>
-        <div class="pk-card" onclick="pickAv(this,'simpsons')">
-          <div class="pk-head"><span class="pk-name">Simpsons Me</span><span class="pk-type">D'OH</span></div>
-          <div class="pk-frame"><img src="portraits/simpsons.jpg" loading="lazy"/></div>
-          <div class="pk-foot"><span class="pk-tag">Yellow</span><span class="pk-tag">Springfield</span></div>
+        <div class="pk-card" onclick="pickAv(this,'yellow_toon')">
+          <div class="pk-head"><span class="pk-name">Yellow Toon Me</span><span class="pk-type">2D</span></div>
+          <div class="pk-frame"><img src="portraits/yellow_toon.jpg" loading="lazy"/></div>
+          <div class="pk-foot"><span class="pk-tag">Cartoon</span><span class="pk-tag">Suburban</span></div>
         </div>
         <div class="pk-card" onclick="pickAv(this,'martian')">
           <div class="pk-head"><span class="pk-name">Martian Me</span><span class="pk-type">MARS</span></div>
@@ -458,6 +403,19 @@
         </div>
       </div>
 
+      <div style="padding:0 24px 12px">
+        <div class="label" style="margin-bottom:8px">Background <span style="color:var(--muted);font-weight:400;letter-spacing:0">(optional)</span></div>
+        <div id="bg-picker" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+          <div class="bg-pill sel" data-bg="auto" onclick="pickBg(this)">✨ Auto</div>
+          <div class="bg-pill" data-bg="city" onclick="pickBg(this)">🏙️ City</div>
+          <div class="bg-pill" data-bg="nature" onclick="pickBg(this)">🌲 Nature</div>
+          <div class="bg-pill" data-bg="studio" onclick="pickBg(this)">📸 Studio</div>
+          <div class="bg-pill" data-bg="cinematic" onclick="pickBg(this)">🎬 Cinematic</div>
+          <div class="bg-pill" data-bg="beach" onclick="pickBg(this)">🏖️ Beach</div>
+          <div class="bg-pill" data-bg="abstract" onclick="pickBg(this)">🎨 Abstract</div>
+          <div class="bg-pill" data-bg="night" onclick="pickBg(this)">🌃 Night</div>
+        </div>
+      </div>
       <button class="cta" id="bcta" onclick="generate()" disabled>GENERATE MY AVATAR ✦</button>
     </div>
 
@@ -537,6 +495,13 @@ var uploads = { face: null, body: false, voice: false };
 var gameAnswers = [];
 var rankOrder = [];
 var chosenAv = null;
+var chosenBg = 'auto';
+
+function pickBg(el) {
+  document.querySelectorAll('.bg-pill').forEach(p => p.classList.remove('sel'));
+  el.classList.add('sel');
+  chosenBg = el.dataset.bg;
+}
 
 const AV_PHOTOS = {
   yourself:     'portraits/yourself.jpg',
@@ -549,19 +514,7 @@ const AV_PHOTOS = {
   bear:         'portraits/bear.jpg',
   tiger:        'portraits/tiger.jpg',
   owl:          'portraits/owl.jpg',
-  link:         'portraits/link.jpg',
-  kratos:       'portraits/kratos.jpg',
-  mario:        'portraits/mario.jpg',
-  master_chief: 'portraits/master_chief.jpg',
-  geralt:       'portraits/geralt.jpg',
-  aragorn:      'portraits/aragorn.jpg',
-  joker:        'portraits/joker.jpg',
-  neo:          'portraits/neo.jpg',
-  mickey:       'portraits/mickey.jpg',
-  arthas:       'portraits/arthas.jpg',
-  illidan:      'portraits/illidan.jpg',
-  sylvanas:     'portraits/sylvanas.jpg',
-  simpsons:     'portraits/simpsons.jpg',
+  yellow_toon:  'portraits/yellow_toon.jpg',
   martian:      'portraits/martian.jpg',
 };
 
@@ -797,6 +750,7 @@ async function generate() {
     formData.append('q1', gameAnswers.map(a => a.scenario + ': ' + a.choice).join(' | '));
     formData.append('q2', rankOrder.map(t => t.name).join(' > '));
     formData.append('avatar', chosenAv);
+    formData.append('bg', chosenBg);
     if (uploads.face) formData.append('face', uploads.face);
 
     // Start job

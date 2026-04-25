@@ -26,24 +26,25 @@ const AVATARS = {
   owl:          { name: 'Great Owl',    animal: 'great horned owl', base: 'huge luminous amber eyes, mottled brown-grey feathers, broad silent wings, wise expression', env: 'old-growth forest at night, full moon visible through dark twisted branches, fireflies glowing in the darkness, thick ancient tree trunk' },
   yourself:   { name: 'Just Me',    animal: 'regular contemporary person',  base: 'natural realistic features, smooth flattering skin, casual modern clothing, relaxed confident expression, authentic everyday look — no costume, no theme', env: 'bright overcast outdoor setting or open shade on a quiet city street, soft diffused daylight, gentle out-of-focus background, clean soft portrait lighting — no direct sun, no harsh shadows' },
   animated:   { name: 'Animated Me', animal: '2D animated TV-series character version of the person, in the visual style of the Netflix Stranger Things animated series (Flying Bark Productions) — modern western animation, semi-realistic stylized 2D, comparable to Arcane / Blood of Zeus', base: 'clean confident line work, painterly cel-shaded skin with soft gradient shadows, slightly stylized but anatomically grounded face proportions, expressive eyes with crisp highlights, hair drawn as defined shape clusters with painted highlights, recognizable likeness preserved (same face shape, hair, beard, skin tone), outfit chosen to fit their personality, looks like an official key frame from a high-end animated series', env: 'cinematic painted backdrop in the same animation style — subtle environmental scene matching their personality, hand-painted depth, soft atmospheric haze, restrained color palette, dramatic but not theatrical lighting' },
-  link:        { name: 'Link',          animal: 'Link from The Legend of Zelda', base: 'green tunic, pointed elf ears, blonde hair, blue determined eyes, master sword on back', env: 'lush Hyrule field at golden hour, distant mountains, swaying grass, soft volumetric god rays' },
-  kratos:      { name: 'Kratos',        animal: 'Kratos from God of War',        base: 'pale skin with red tattoo, beard, intense angry eyes, leviathan axe, leather armor', env: 'ash-grey Norse battlefield, broken stone runes, swirling smoke, dim cold backlight' },
-  mario:       { name: 'Mario',         animal: 'Super Mario',                   base: 'red cap with M, blue overalls, thick black mustache, cheerful smile, white gloves', env: 'Mushroom Kingdom green field, fluffy clouds, floating coins, bright cheerful lighting' },
-  master_chief:{ name: 'Master Chief',  animal: 'Master Chief from Halo',        base: 'green spartan armor, gold reflective visor helmet, MA5 rifle, heavy boots', env: 'alien battlefield at twilight, glassed earth, distant covenant ships, glowing plasma, volumetric haze' },
-  geralt:      { name: 'Geralt',        animal: 'Geralt of Rivia from The Witcher', base: 'long white hair, yellow cat eyes, scarred face, two swords on back, dark leather armor', env: 'dark misty swamp at dusk, gnarled trees, glowing eyes in shadows, cool blue moonlight' },
-  aragorn:     { name: 'Aragorn',       animal: 'Aragorn from Lord of the Rings', base: 'long dark hair, weathered noble face, ranger cloak, sword Andúril, elven brooch', env: 'Middle-earth mountain pass at dawn, distant peaks, banners of Gondor in the wind, soft golden mist' },
-  joker:       { name: 'Joker',         animal: 'The Joker',                     base: 'white face paint, green messy hair, red painted smile, purple suit, manic eyes', env: 'gritty Gotham alley at night, neon signs flickering, smoke, dramatic underlight' },
-  neo:         { name: 'Neo',           animal: 'Neo from The Matrix',           base: 'long black trench coat, sleek black sunglasses, short dark hair, stoic expression', env: 'green digital rain corridor, mirrored floors, infinite hallway, dramatic side lighting' },
-  mickey:      { name: 'Mickey',        animal: 'Mickey Mouse',                  base: 'black round ears, big round eyes, red shorts with two yellow buttons, white gloves, yellow shoes, cheerful grin', env: 'classic Disney castle at sunrise, fireworks, fluffy clouds, bright pastel colors, magical sparkles' },
-  arthas:      { name: 'Lich King',     animal: 'Arthas the Lich King from World of Warcraft', base: 'spiked ice crown helmet, glowing icy blue eyes, pale undead face, Frostmourne sword, dark armor', env: 'frozen throne in Icecrown Citadel, swirling snow, jagged ice spires, cold blue light' },
-  illidan:     { name: 'Illidan',       animal: 'Illidan Stormrage from World of Warcraft', base: 'horned demon hunter, long green-black hair, glowing green eyes behind blindfold, purple skin, twin warglaives', env: 'fel-green burning Outland landscape, floating rocks, demonic ruins, swirling green energy' },
-  sylvanas:    { name: 'Sylvanas',      animal: 'Sylvanas Windrunner banshee queen from World of Warcraft', base: 'long white hair, glowing red eyes, pale elf features, pointed ears, dark ranger armor, black bow', env: 'Undercity ruins under a blood-red sky, dark gothic architecture, swirling shadow magic, eerie atmosphere' },
-  simpsons:    { name: 'Simpsons Me',   animal: 'Simpsons cartoon character version of the person, in the official Matt Groening / The Simpsons TV-show style', base: 'flat bright yellow skin, simple bold black outlines, large round white eyes with small black pupils, classic Simpsons overbite mouth, four fingers per hand, simplified two-dimensional cartoon proportions, hair drawn as a single solid shape matching the person\'s real hairstyle and color, recognizable likeness preserved through hair shape, beard if any, glasses if worn, and clothing color — looks like an actual frame from The Simpsons', env: 'classic Simpsons setting (Springfield street, Moe\'s Tavern interior, Kwik-E-Mart, Springfield Elementary, or Simpson family living room with the orange couch), flat cartoon backdrop, bright primary colors, simple shapes' },
+  yellow_toon: { name: 'Yellow Toon Me', animal: 'flat 2D cartoon character version of the person, in the classic 90s American prime-time animated sitcom visual style', base: 'flat bright yellow skin, simple bold black outlines, large round white eyes with small black pupils, prominent overbite mouth, four fingers per hand, simplified two-dimensional cartoon proportions, hair drawn as a single solid shape matching the person\'s real hairstyle and color, recognizable likeness preserved through hair shape, beard if any, glasses if worn, and clothing color', env: 'generic small American suburban backdrop — quiet residential street with simple flat houses, picket fences, neatly trimmed lawns, blue sky with a few simple white clouds — flat cartoon vector backdrop, bright primary colors, simple shapes (NO real-world place names, NO TV-show locations)' },
   martian:     { name: 'Martian Me',    animal: 'Martian alien version of the person from the planet Mars',                base: 'smooth green or grey-green skin, large oval black or amber alien eyes, slim humanoid build, subtle ridges or markings on the head, sleek minimalist alien jumpsuit, the user\'s recognizable face structure echoed in the alien skull (same overall face shape, brow line, jaw, beard pattern as facial markings/ridges, hair pattern as crest or dorsal ridge if any) — clearly an alien, but unmistakably YOU as an alien', env: 'rust-red Martian desert under a pale orange sky, distant dusty mountains, two small moons (Phobos and Deimos) in the sky, futuristic alien outpost or crashed pod in the distance, fine red dust in the air' },
 };
 
-async function analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey) {
+const BACKGROUNDS = {
+  auto:       null,
+  city:       'modern city street at golden hour, warm out-of-focus storefronts and signs in the distance, gentle sunset light, urban energy',
+  nature:     'soft forest clearing, dappled sunlight through leaves, gentle green out-of-focus foliage, peaceful natural atmosphere',
+  studio:     'clean professional photo studio, smooth seamless gradient backdrop in muted neutral tones, soft balanced studio lighting',
+  cinematic:  'moody cinematic environment with soft volumetric haze, restrained color palette, dramatic but balanced atmospheric lighting, shallow depth of field',
+  beach:      'tranquil beach at sunset, soft golden light on the sand, gentle out-of-focus ocean waves, warm horizon glow',
+  abstract:   'minimal abstract backdrop, soft pastel gradient with gentle out-of-focus geometric shapes, calm modern atmosphere',
+  night:      'atmospheric night street with soft glowing neon and bokeh city lights, cool blue and warm magenta highlights, cinematic mood',
+};
+
+async function analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey) {
   const av = AVATARS[avatarKey];
+  const bgOverride = BACKGROUNDS[bgKey] || null;
+  const env = bgOverride || av.env;
   const userContext = `Avatar chosen: ${av.animal}
 Reaction game answers: ${gameAnswers}
 Trait ranking (most to least important): ${rankOrder}
@@ -54,14 +55,15 @@ ${imageBase64 ? 'Face photo: provided (analyze expression, energy, features)' : 
 2. A highly detailed FLUX image prompt for a unique full body photorealistic ${av.animal} character
 
 Image prompt rules:
+- ULTRA-IMPORTANT FRAMING: this MUST be a FULL BODY shot — head to toe visible, wide framing, the entire figure standing within the frame from feet to top of head, with clear space around the body. NEVER a headshot, NEVER a bust crop, NEVER waist-up. The flux_prompt must explicitly contain the words "full body, head to toe, wide framing, full standing pose, feet visible".
 - Candid full body portrait of a ${av.animal} (${av.base}), captured in a natural unposed moment — not a hero pose, not posed for the camera
-- Setting: ${av.env} — described in plain natural language, like a real place that exists
+- Setting: ${env} — described in plain natural language, like a real place that exists
 - Subtle personality cues only: gaze, posture, micro-expression, the way light falls. Avoid theatrical drama.
 - Composition: off-center framing, natural camera angle at eye level or slightly ABOVE (never from below — low angles distort faces unflatteringly), shallow depth of field, environment visible but not overwhelming
 - ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl'].includes(avatarKey) ? `REAL ANIMAL — absolutely no clothing, no outfit, no accessories — natural animal body only, like a wildlife documentary still.${imageBase64 ? avatarKey === 'monkey' ? ` SPIRIT-ANIMAL ECHO (MANDATORY — must appear explicitly in the flux_prompt): the japanese macaque has a bare flesh-pink face surrounded by a fur ruff — this is the most human-readable animal in the bank, so the resemblance must be obvious. Study the user's photo and write into the flux_prompt: (a) the macaque's facial skin tone matches the user's actual skin tone (name it: "warm olive", "fair pink", "deep brown"), (b) the surrounding fur ruff/cheek tufts/crown match the user's hair and beard — color, density and pattern (e.g. "thick salt-and-pepper fur ruff framing the face like a full beard", "short reddish-brown crown matching cropped auburn hair", "bald pink crown with grey side tufts"), (c) eye color named explicitly (warm brown, amber, hazel), (d) the same brow shape and expression (heavy thoughtful brow, gentle calm gaze, sharp alert focus). The result must read as a real macaque that anyone seeing the user's photo would instantly recognise.` : ` SPIRIT-ANIMAL ECHO (MANDATORY — must appear explicitly in the flux_prompt): study the user's face photo and pick specific, visible features — their actual eye color (name it: "amber", "warm brown", "green-grey"), their hair/beard color and pattern (name it: "salt-and-pepper grey muzzle and chest", "sandy-brown coat with grey around the eyes"), their expression (calm, intense, gentle). The animal's fur/feather coloring and facial markings MUST directly reflect these — e.g. a wolf with the user's salt-and-pepper grey around its muzzle and warm brown eyes. These must be written into the flux_prompt as concrete visual details, not as subtext. The animal still reads as a real animal — but one that visibly resembles the person.` : ''}` : 'ICONIC CHARACTER — the character look (costume, signature features, iconic hair/helmet/color scheme) MUST be fully rendered. The user\'s face should carry recognizable identity (bone structure, beard/hair, expression) but wearing the complete iconic outfit of this character — never their regular clothes with just an accessory.' }
-- Style: ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'documentary photography, soft diffused light (overcast sky, open shade, or soft window light — NEVER direct harsh sun), gentle flattering shadows, fine film grain, looks like it was actually photographed' : avatarKey === 'animated' ? 'high-end 2D animated TV-series still — Netflix Stranger Things animated series style (Flying Bark Productions), Arcane / Blood of Zeus quality, painterly cel-shading, defined ink-line silhouettes, soft watercolor-style ambient shadows, semi-realistic stylized faces with crisp eye highlights, painted background with depth — NOT 3D, NOT Pixar, NOT photoreal' : avatarKey === 'simpsons' ? 'official frame from The Simpsons TV show — Matt Groening style, flat 2D vector cartoon, bright yellow skin, bold black outlines, primary-color flat fills, no gradients, no shading beyond simple flat tones, classic Simpsons aesthetic exactly as on TV — NOT 3D, NOT realistic, NOT painterly' : avatarKey === 'martian' ? 'cinematic sci-fi character portrait — clean AAA render of an alien being, soft balanced lighting, subtle rim light, gentle atmospheric red dust, restrained color palette, looks like concept art for a serious sci-fi film' : 'clean AAA game-character render — soft even lighting, gentle natural shadows, low-contrast shading, subtle rim light only, no harsh dramatic shadows, no heavy atmospheric haze, balanced exposure, friendly approachable look, ArtStation quality' }
+- Style: ${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'documentary photography, soft diffused light (overcast sky, open shade, or soft window light — NEVER direct harsh sun), gentle flattering shadows, fine film grain, looks like it was actually photographed' : avatarKey === 'animated' ? 'high-end 2D animated TV-series still — Netflix Stranger Things animated series style (Flying Bark Productions), Arcane / Blood of Zeus quality, painterly cel-shading, defined ink-line silhouettes, soft watercolor-style ambient shadows, semi-realistic stylized faces with crisp eye highlights, painted background with depth — NOT 3D, NOT Pixar, NOT photoreal' : avatarKey === 'yellow_toon' ? 'classic 90s American prime-time animated sitcom visual style — flat 2D vector cartoon, bright yellow skin, bold black ink outlines, primary-color flat fills, no gradients, no shading beyond simple flat tones, simple cel-animation aesthetic — NOT 3D, NOT realistic, NOT painterly. Generic style only — do NOT name or replicate any specific TV show, character, or location' : avatarKey === 'martian' ? 'cinematic sci-fi character portrait — clean AAA render of an alien being, soft balanced lighting, subtle rim light, gentle atmospheric red dust, restrained color palette, looks like concept art for a serious sci-fi film' : 'clean AAA game-character render — soft even lighting, gentle natural shadows, low-contrast shading, subtle rim light only, no harsh dramatic shadows, no heavy atmospheric haze, balanced exposure, friendly approachable look, ArtStation quality' }
 - 2-3 sentences, highly descriptive
-- End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : avatarKey === 'animated' ? 'official animated TV series key frame, Netflix Stranger Things animated style, Flying Bark Productions, Arcane-quality 2D, painterly cel-shading, ink-line silhouettes, painted background, full body' : avatarKey === 'simpsons' ? 'official Simpsons TV-show frame, Matt Groening style, flat yellow skin, bold black outlines, classic 2D cartoon, full body' : avatarKey === 'martian' ? 'cinematic sci-fi alien portrait, clean AAA render, ArtStation quality, full body, ultra detailed' : 'clean AAA game render, soft balanced lighting, gentle shadows, low contrast, subtle rim light, natural exposure, approachable friendly tone, full body, ultra detailed' }"
+- End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : avatarKey === 'animated' ? 'official animated TV series key frame, Netflix Stranger Things animated style, Flying Bark Productions, Arcane-quality 2D, painterly cel-shading, ink-line silhouettes, painted background, full body' : avatarKey === 'yellow_toon' ? 'classic 90s American animated sitcom style, flat yellow skin, bold black outlines, simple cel cartoon, full body' : avatarKey === 'martian' ? 'cinematic sci-fi alien portrait, clean AAA render, ArtStation quality, full body, ultra detailed' : 'clean AAA game render, soft balanced lighting, gentle shadows, low contrast, subtle rim light, natural exposure, approachable friendly tone, full body, ultra detailed' }"
 
 Respond in JSON only:
 {"description":"2-3 sentence personal description","flux_prompt":"detailed image prompt","traits":{"Composure":80,"Strategy":75,"Instinct":85,"Adaptability":70},"dominant_trait":"one word"}`;
@@ -110,18 +112,20 @@ async function generateImage(fluxPrompt) {
   throw new Error('Timed out');
 }
 
-const HUMAN_AVATARS = new Set(['yourself','animated','link','kratos','mario','master_chief','geralt','aragorn','joker','neo','mickey','arthas','illidan','sylvanas','simpsons','martian']);
+const HUMAN_AVATARS = new Set(['yourself','animated','martian','yellow_toon']);
 
 // InstantID — generates image WITH the user's face identity preserved.
 // Per-avatar weights: yourself needs high identity, iconic characters
 // need the character look to dominate (small facial echo only).
 const INSTANT_ID_WEIGHTS = {
-  yourself: { ip: 0.8, cn: 0.5 },
+  yourself: { ip: 0.8, cn: 0.42 },
   // animated: 2D series style needs strong face recognition (the whole
   // point is "you, animated") but enough room for the stylized look
-  animated: { ip: 0.7, cn: 0.4 },
+  animated: { ip: 0.7, cn: 0.32 },
+  martian:  { ip: 0.6, cn: 0.32 },
+  yellow_toon: { ip: 0.6, cn: 0.28 },
 };
-const ICONIC_WEIGHTS = { ip: 0.55, cn: 0.35 };
+const ICONIC_WEIGHTS = { ip: 0.55, cn: 0.32 };
 
 async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
@@ -132,12 +136,13 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: INSTANT_ID_VERSION, input: {
       image: faceDataUrl,
-      prompt: prompt + ', smooth flattering skin, soft even face lighting, gentle portrait, no harsh facial shadows',
-      negative_prompt: 'harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, harsh contrast shadows on face, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs, realistic human face overriding the character, plain everyday clothing where iconic outfit should be',
-      num_inference_steps: 30,
+      prompt: prompt + ', full body head to toe, wide standing pose, feet visible, soft balanced three-point lighting, gentle key light with soft fill, neutral natural shadows, anatomically correct proportions, well-balanced face, symmetric features',
+      negative_prompt: 'cropped at waist, headshot only, bust crop, extreme close-up of face, distorted proportions, oversized head, tiny body, deformed body, asymmetric face, wonky eyes, crossed eyes, harsh under-light, harsh top-light, dramatic split lighting, blown highlights on face, blocked-up shadows on face, harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs, missing feet, missing legs, realistic human face overriding the character, plain everyday clothing where iconic outfit should be',
+      num_inference_steps: 40,
       guidance_scale: 5,
       ip_adapter_scale: w.ip,
       controlnet_conditioning_scale: w.cn,
+      enhance_nonface_region: true,
       output_format: 'jpg',
       output_quality: 95,
     } })
@@ -163,10 +168,10 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
 }
 
 // Run the full pipeline in background
-async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey) {
+async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey) {
   try {
     jobs[jobId].status = 'analyzing';
-    const claudeResult = await analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey);
+    const claudeResult = await analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey);
 
     jobs[jobId].status = 'generating';
     jobs[jobId].description = claudeResult.description;
@@ -199,6 +204,7 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
 app.post('/start', upload.single('face'), (req, res) => {
   const jobId = Date.now().toString(36) + Math.random().toString(36).slice(2);
   const avatarKey = req.body.avatar || 'wolf';
+  const bgKey = req.body.bg || 'auto';
   const gameAnswers = req.body.q1 || '';
   const rankOrder = req.body.q2 || '';
 
@@ -210,7 +216,7 @@ app.post('/start', upload.single('face'), (req, res) => {
   }
 
   jobs[jobId] = { status: 'starting' };
-  runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey);
+  runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey);
 
   res.json({ jobId });
 });
