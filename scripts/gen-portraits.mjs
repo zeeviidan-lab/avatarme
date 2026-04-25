@@ -15,6 +15,9 @@ const TOKEN = process.env.REPLICATE_API_TOKEN;
 if (!TOKEN) { console.error('No REPLICATE_API_TOKEN'); process.exit(1); }
 
 const subjects = [
+  // Humans — bank cards
+  { key:'yourself',     prompt:'Cinematic candid portrait of an unidentifiable everyday person facing the camera, soft natural overcast daylight, clean modern casual outfit, neutral grey-tan blurred urban background, shallow depth of field, professional photography, Inter typography aesthetic, calm confident energy — generic stock-style headshot suitable as an app placeholder' },
+  { key:'animated',     prompt:'High-end 2D animated TV-series character portrait of a generic stylized hero, Netflix Stranger Things animated style / Arcane / Blood of Zeus quality, painterly cel-shading, defined ink-line silhouettes, semi-realistic stylized face with crisp eye highlights, painted soft cinematic backdrop, generic original character, calm confident expression — looks like an official key frame from a high-end animated series' },
   // Animals — tight face only
   { key:'wolf',         prompt:'Tight close-up headshot portrait of a real arctic wolf, face and head only filling the frame, intense piercing blue eyes, detailed fur texture, soft natural overcast light, shallow depth of field, professional wildlife photography, documentary style, 35mm lens, subtle background bokeh of snow' },
   { key:'snow_leopard', prompt:'Tight close-up headshot portrait of a real snow leopard, face and head only filling the frame, pale green eyes, detailed spotted fur, soft mountain light, shallow depth of field, professional wildlife photography, documentary style, 35mm lens, subtle background bokeh of rocks and snow' },
