@@ -260,22 +260,28 @@
      stroke-dasharray="X Y" was non-standard and rendering inconsistently. */
   .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:8; stroke-linecap:butt; stroke-dasharray:289; stroke-dashoffset:289; filter:drop-shadow(0 0 4px rgba(201,96,30,0.4)); }
 
-  /* Walking and running need to look DIFFERENT. Previous version had
-     similar vertical-bounce-only animations which all read as "jumping
-     in place." Walking is now a rhythmic small step (subtle); running
-     is a much bigger forward-lean stride. */
-  #lwalker.walking { animation:lw-walk 0.50s ease-in-out infinite; }
-  #lwalker.running { animation:lw-run  0.30s ease-in-out infinite; }
+  /* Faking leg motion: alternate scaleX(1) ↔ scaleX(-1) mid-bounce so
+     the figure visibly "switches stance" each step, simulating the
+     other leg coming forward. Combined with bounce + slight horizontal
+     slide, it reads as a real walk/run cycle, not a jump. */
+  #lwalker.walking { animation:lw-walk 0.7s linear infinite; }
+  #lwalker.running { animation:lw-run  0.4s linear infinite; }
   @keyframes lw-walk {
-    /* Small rhythmic step — modest bounce, no rotation, reads as walking */
-    0%, 100% { transform:translateY(0); }
-    50%      { transform:translateY(-5px); }
+    /* Step 1: left foot forward (bounce up), then plant (down) */
+    0%   { transform:translate(-2px, 0)  scaleX(1); }
+    25%  { transform:translate(-1px, -7px) scaleX(1); }
+    50%  { transform:translate(2px, 0)   scaleX(-1); }   /* MIRROR — other leg forward */
+    75%  { transform:translate(1px, -7px)  scaleX(-1); }
+    100% { transform:translate(-2px, 0)  scaleX(1); }
   }
   @keyframes lw-run {
-    /* Big forward-leaning stride — strong bounce + permanent forward tilt
-       + dynamic squash. Reads clearly as running, not jumping. */
-    0%, 100% { transform:translateY(0)    rotate(-8deg) scale(1, 1); }
-    50%      { transform:translateY(-14px) rotate(-12deg) scale(0.95, 1.06); }
+    /* Same idea but bigger bounce, more horizontal stride distance,
+       permanent forward-lean rotation that flips with the mirror. */
+    0%   { transform:translate(-4px, 0)   scaleX(1)  rotate(-10deg); }
+    25%  { transform:translate(-2px, -14px) scaleX(1)  rotate(-12deg); }
+    50%  { transform:translate(4px, 0)    scaleX(-1) rotate(10deg); }   /* mirror + lean flips */
+    75%  { transform:translate(2px, -14px)  scaleX(-1) rotate(12deg); }
+    100% { transform:translate(-4px, 0)   scaleX(1)  rotate(-10deg); }
   }
   .pring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .pring-secs { font-family:'Bebas Neue',sans-serif; font-size:38px; line-height:1; color:var(--text); letter-spacing:1px; }
