@@ -216,6 +216,98 @@ const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da3
 const CODEFORMER_VERSION = 'cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2';
 const SDXL_OUTPAINT_VERSION = 'a542ccf352995f3c41f0bcfaef641daa3058bf2b00e08e04feb0295334ab9804';
 
+// HEAD COMPOSITE — the proper Option A.
+// Face-swap models only transfer the inner face triangle (eyes/nose/mouth),
+// leaving FLUX's invented hair/beard/jawline. The result reads as "a guy
+// with the user's nose region" not "the user."
+//
+// Real fix: composite the WHOLE HEAD region (forehead through chin, ear to
+// ear, including hair + beard volume) from the InstantID portrait onto the
+// FLUX body. Heuristic-based alignment — InstantID and FLUX produce
+// consistent enough framings that ratios work without face detection.
+//
+// Heuristics (tuned from observed outputs):
+//   FLUX full-body (832×1216-ish): head occupies top ~22% × center ~38%
+//   InstantID portrait: head occupies top ~62% × center ~72%
+async function headComposite(fluxBodyUrl, idPortraitUrl) {
+  if (!fluxBodyUrl || !idPortraitUrl) return null;
+  try {
+    const [bodyArr, portraitArr] = await Promise.all([
+      fetch(fluxBodyUrl).then(r => r.arrayBuffer()),
+      fetch(idPortraitUrl).then(r => r.arrayBuffer()),
+    ]);
+    const bodyBuf = Buffer.from(bodyArr);
+    const portraitBuf = Buffer.from(portraitArr);
+    const bMeta = await sharp(bodyBuf).metadata();
+    const pMeta = await sharp(portraitBuf).metadata();
+    const Wb = bMeta.width, Hb = bMeta.height;
+    const Wp = pMeta.width, Hp = pMeta.height;
+    if (!Wb || !Hb || !Wp || !Hp) { console.error('headComposite: bad dims'); return null; }
+
+    // Region in FLUX body where head should land
+    const headTargetW = Math.round(Wb * 0.42);
+    const headTargetH = Math.round(Hb * 0.26);
+    const headTargetX = Math.round((Wb - headTargetW) / 2);
+    const headTargetY = Math.round(Hb * 0.01);   // 1% from top — leave a sliver for hair top
+
+    // Region in InstantID portrait to extract (head + hair + bit of shoulders)
+    const portraitHeadW = Math.round(Wp * 0.78);
+    const portraitHeadH = Math.round(Hp * 0.66);
+    const portraitHeadX = Math.round((Wp - portraitHeadW) / 2);
+    const portraitHeadY = Math.round(Hp * 0.02);
+
+    // Extract + resize InstantID head to target dims
+    const headPNG = await sharp(portraitBuf)
+      .extract({ left: portraitHeadX, top: portraitHeadY, width: portraitHeadW, height: portraitHeadH })
+      .resize(headTargetW, headTargetH, { fit: 'cover' })
+      .ensureAlpha()
+      .png().toBuffer();
+
+    // Build alpha feather: opaque top 70%, fade to transparent at bottom 30%
+    // (so neck/shoulders blend smoothly into FLUX body's torso). Sides get a
+    // small feather too (~6%) so ears/hair don't have hard vertical seams.
+    const featherBottom = Math.round(headTargetH * 0.30);
+    const featherSide = Math.round(headTargetW * 0.06);
+    const alphaSvg = `<svg width="${headTargetW}" height="${headTargetH}">
+      <defs>
+        <linearGradient id="vfade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="white"/>
+          <stop offset="${Math.round((headTargetH - featherBottom) / headTargetH * 100)}%" stop-color="white"/>
+          <stop offset="100%" stop-color="black"/>
+        </linearGradient>
+        <linearGradient id="hfadeL" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="black"/>
+          <stop offset="${Math.round(featherSide / headTargetW * 100)}%" stop-color="white"/>
+        </linearGradient>
+        <linearGradient id="hfadeR" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="${Math.round((headTargetW - featherSide) / headTargetW * 100)}%" stop-color="white"/>
+          <stop offset="100%" stop-color="black"/>
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#vfade)"/>
+      <rect width="100%" height="100%" fill="url(#hfadeL)" style="mix-blend-mode:multiply"/>
+      <rect width="100%" height="100%" fill="url(#hfadeR)" style="mix-blend-mode:multiply"/>
+    </svg>`;
+    const alphaBuf = await sharp(Buffer.from(alphaSvg)).toColorspace('b-w').raw().toBuffer();
+
+    // Replace alpha channel of head image
+    const headWithAlpha = await sharp(headPNG)
+      .joinChannel(alphaBuf, { raw: { width: headTargetW, height: headTargetH, channels: 1 } })
+      .png().toBuffer();
+
+    // Composite onto FLUX body
+    const composited = await sharp(bodyBuf)
+      .composite([{ input: headWithAlpha, top: headTargetY, left: headTargetX, blend: 'over' }])
+      .jpeg({ quality: 92 }).toBuffer();
+
+    console.log('headComposite ok: body', Wb + 'x' + Hb, '+ head', headTargetW + 'x' + headTargetH, 'at', headTargetX + ',' + headTargetY);
+    return 'data:image/jpeg;base64,' + composited.toString('base64');
+  } catch (e) {
+    console.error('headComposite exception:', e);
+    return null;
+  }
+}
+
 // Outpaint: extend the InstantID portrait DOWNWARD into a full-body shot.
 // Switched from flux-fill-dev (general inpainter — needed manual mask, weak
 // at pure extension) to fermatresearch/sdxl-outpainting-lora (purpose-built
@@ -510,12 +602,14 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
           instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
         ]);
         if (fluxBody && idPortrait) {
-          // Use the IDENTITY-LOCKED InstantID portrait as the face source
-          // (not the user's raw photo). InstantID has already adapted the
-          // face to the costume's lighting/style, so the swap blends better.
-          console.log('Swapping InstantID portrait → FLUX body');
-          const swapped = await faceSwap(fluxBody, idPortrait);
-          imageUrl = swapped || fluxBody;
+          // FULL HEAD composite (not just face-swap). headComposite cuts
+          // the WHOLE head region — hair, beard, jawline, ears — out of
+          // the InstantID portrait and pastes it over the FLUX body's
+          // head with feathered alpha. Solves "FLUX-grey-beard +
+          // user's-eye-region = doesn't read as user."
+          console.log('Compositing InstantID head → FLUX body (whole head, not just face)');
+          const composed = await headComposite(fluxBody, idPortrait);
+          imageUrl = composed || fluxBody;
         } else if (fluxBody) {
           imageUrl = fluxBody;
         } else if (idPortrait) {
