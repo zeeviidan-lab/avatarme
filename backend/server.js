@@ -224,6 +224,56 @@ const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e0
 const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4';
 const CODEFORMER_VERSION = 'cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2';
 const SDXL_OUTPAINT_VERSION = 'a542ccf352995f3c41f0bcfaef641daa3058bf2b00e08e04feb0295334ab9804';
+const MEDIAPIPE_FACE_VERSION = 'b52b4833a810a8b8d835d6339b72536d63590918b185588be2def78a89e7ca7b';
+
+// Face detection via mediapipe — returns the face region as a transparent
+// PNG (background masked out). We extract the bounding box from the
+// non-transparent pixels with sharp's getStats/extract logic.
+async function detectFaceBBox(imageUrl) {
+  try {
+    const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ version: MEDIAPIPE_FACE_VERSION, input: {
+        images: imageUrl,
+        output_transparent_image: true,
+        blur_amount: 0,
+        bias: 0,
+      } })
+    });
+    const prediction = await startRes.json();
+    if (!prediction.id) { console.error('mediapipe start error:', JSON.stringify(prediction)); return null; }
+    const result = await pollPrediction(prediction.id, 1500, 30, 'mediapipe-face');
+    if (!result) return null;
+    const maskUrl = Array.isArray(result) ? result[0] : result;
+    if (!maskUrl) return null;
+
+    // Fetch the transparent PNG, find bbox of non-transparent pixels via sharp.trim
+    const r = await fetch(maskUrl);
+    const buf = Buffer.from(await r.arrayBuffer());
+    const meta = await sharp(buf).metadata();
+    const W = meta.width, H = meta.height;
+    if (!W || !H) return null;
+
+    // Use sharp's trim() to find the bbox of non-transparent content.
+    // It returns the trimmed image + info.trimOffsetLeft/Top.
+    const trimmed = await sharp(buf).trim({ background: { r:0, g:0, b:0, alpha:0 }, threshold: 5 }).toBuffer({ resolveWithObject: true });
+    const offsetX = -(trimmed.info.trimOffsetLeft || 0);
+    const offsetY = -(trimmed.info.trimOffsetTop || 0);
+    const fW = trimmed.info.width;
+    const fH = trimmed.info.height;
+    if (!fW || !fH || fW < 30 || fH < 30) {
+      console.log('detectFaceBBox: trim too small, falling back to image dims');
+      return null;
+    }
+    const bbox = { x: offsetX, y: offsetY, w: fW, h: fH, imgW: W, imgH: H };
+    console.log('detectFaceBBox: face at', bbox);
+    return bbox;
+  } catch (e) {
+    console.error('detectFaceBBox exception:', e);
+    return null;
+  }
+}
 
 // HEAD COMPOSITE — the proper Option A.
 // Face-swap models only transfer the inner face triangle (eyes/nose/mouth),
@@ -241,9 +291,12 @@ const SDXL_OUTPAINT_VERSION = 'a542ccf352995f3c41f0bcfaef641daa3058bf2b00e08e04f
 async function headComposite(fluxBodyUrl, idPortraitUrl) {
   if (!fluxBodyUrl || !idPortraitUrl) return null;
   try {
-    const [bodyArr, portraitArr] = await Promise.all([
+    // Detect face bboxes in both images IN PARALLEL with fetching them.
+    const [bodyArr, portraitArr, bodyFace, portraitFace] = await Promise.all([
       fetch(fluxBodyUrl).then(r => r.arrayBuffer()),
       fetch(idPortraitUrl).then(r => r.arrayBuffer()),
+      detectFaceBBox(fluxBodyUrl),
+      detectFaceBBox(idPortraitUrl),
     ]);
     const bodyBuf = Buffer.from(bodyArr);
     const portraitBuf = Buffer.from(portraitArr);
@@ -253,20 +306,47 @@ async function headComposite(fluxBodyUrl, idPortraitUrl) {
     const Wp = pMeta.width, Hp = pMeta.height;
     if (!Wb || !Hb || !Wp || !Hp) { console.error('headComposite: bad dims'); return null; }
 
-    // Region in FLUX body where head should land. Tuned WIDER + TALLER
-    // than v1 because previous result still showed FLUX's hair (hair area
-    // outside the composite region). Now covers full hair envelope.
-    const headTargetW = Math.round(Wb * 0.50);   // was 0.42 — wider for hair sides
-    const headTargetH = Math.round(Hb * 0.32);   // was 0.26 — taller for hair top + neck blend
-    const headTargetX = Math.round((Wb - headTargetW) / 2);
-    const headTargetY = Math.round(Hb * 0.005);  // start almost at top
+    // Compute composite regions. Prefer detected face bboxes; fall back to
+    // tuned heuristics if detection failed for either image.
+    let headTargetW, headTargetH, headTargetX, headTargetY;
+    let portraitHeadW, portraitHeadH, portraitHeadX, portraitHeadY;
 
-    // Region in InstantID portrait to extract — TALLER to ensure we capture
-    // hair crown all the way to chin, not just the central face triangle.
-    const portraitHeadW = Math.round(Wp * 0.92);  // was 0.78 — wider for sideburns/ears
-    const portraitHeadH = Math.round(Hp * 0.78);  // was 0.66 — taller for full hair
-    const portraitHeadX = Math.round((Wp - portraitHeadW) / 2);
-    const portraitHeadY = 0;                       // start at top of portrait
+    if (bodyFace && portraitFace) {
+      // Detected: expand the face bbox to a HEAD bbox (face + hair + jaw).
+      // Hair extends ~50% above the detected face bbox; jaw/neck extends
+      // ~15% below; ears extend ~20% to either side.
+      const expand = (bb, imgW, imgH, top, bottom, side) => {
+        const cx = bb.x + bb.w/2;
+        const newW = Math.round(bb.w * (1 + 2 * side));
+        const newH = Math.round(bb.h * (1 + top + bottom));
+        const newX = Math.max(0, Math.round(cx - newW/2));
+        const newY = Math.max(0, Math.round(bb.y - bb.h * top));
+        return {
+          x: newX,
+          y: newY,
+          w: Math.min(newW, imgW - newX),
+          h: Math.min(newH, imgH - newY),
+        };
+      };
+      const bodyHead = expand(bodyFace, Wb, Hb, 0.55, 0.20, 0.30);
+      const portraitHead = expand(portraitFace, Wp, Hp, 0.60, 0.25, 0.35);
+      headTargetW = bodyHead.w; headTargetH = bodyHead.h;
+      headTargetX = bodyHead.x; headTargetY = bodyHead.y;
+      portraitHeadW = portraitHead.w; portraitHeadH = portraitHead.h;
+      portraitHeadX = portraitHead.x; portraitHeadY = portraitHead.y;
+      console.log('headComposite: USING DETECTED bboxes — body head', headTargetW + 'x' + headTargetH, 'at', headTargetX + ',' + headTargetY);
+    } else {
+      // Fallback: heuristic ratios (used when face detection fails).
+      console.log('headComposite: face detection failed (body=' + !!bodyFace + ', portrait=' + !!portraitFace + ') — using heuristic ratios');
+      headTargetW = Math.round(Wb * 0.50);
+      headTargetH = Math.round(Hb * 0.32);
+      headTargetX = Math.round((Wb - headTargetW) / 2);
+      headTargetY = Math.round(Hb * 0.005);
+      portraitHeadW = Math.round(Wp * 0.92);
+      portraitHeadH = Math.round(Hp * 0.78);
+      portraitHeadX = Math.round((Wp - portraitHeadW) / 2);
+      portraitHeadY = 0;
+    }
 
     // Extract + resize InstantID head to target dims
     const headPNG = await sharp(portraitBuf)
@@ -378,7 +458,7 @@ async function codeFormerRestore(imageUrl) {
       headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ version: CODEFORMER_VERSION, input: {
         image: imageUrl,
-        codeformer_fidelity: 0.7,    // 0=more change, 1=most faithful — 0.7 sharpens without destroying InstantID identity
+        codeformer_fidelity: 0.85,   // bumped from 0.7 — closer to 1.0 = more faithful to input pixels (less aggressive smoothing). Was over-rebuilding faces and contributing to identity drift.
         face_upsample: true,
         background_enhance: true,
         upscale: 2,
