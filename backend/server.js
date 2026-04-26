@@ -490,25 +490,42 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      // Primary: InstantID with full-body pose reference.
-      imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
-      // Fallback only: PhotoMaker if InstantID failed AND user gave ≥2 angles.
-      if (!imageUrl && faceImages && faceImages.length >= 2) {
-        console.log('InstantID failed — trying PhotoMaker with', faceImages.length, 'angles');
-        imageUrl = await photoMaker(claudeResult.flux_prompt, faceImages, avatarKey);
-      }
-      // Post-restore with CodeFormer (sharpens face, fixes diffusion artifacts).
-      // Skipped for stylized avatars because CodeFormer is a photoreal restorer.
       const isStylized = ['animated','yellow_toon'].includes(avatarKey);
-      if (imageUrl && !isStylized) {
-        const restored = await codeFormerRestore(imageUrl);
-        if (restored) { console.log('CodeFormer restoration applied'); imageUrl = restored; }
-      }
-      // Outpaint: extend the identity-locked portrait downward into a
-      // full-body shot. flux-fill-dev paints the body in matching style.
-      if (imageUrl && !isStylized) {
-        const fullBody = await outpaintToFullBody(imageUrl, claudeResult.flux_prompt);
-        if (fullBody) { console.log('Outpaint to full body applied'); imageUrl = fullBody; }
+      if (isStylized) {
+        // Stylized avatars: InstantID alone (no compose, no CodeFormer
+        // — would un-cartoon them).
+        imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+      } else {
+        // Photoreal avatars: COMPOSE pipeline.
+        // 1. FLUX generates full-body shot (correct framing, wrong face)
+        // 2. InstantID generates identity-locked portrait (correct face)
+        //    — both run in parallel, ~30s
+        // 3. Face-swap: paste InstantID portrait's face → FLUX body's head
+        // 4. CodeFormer: clean up the seam, sharpen
+        // Each model does what it's good at instead of fighting one model
+        // to do everything.
+        console.log('Compose pipeline: FLUX body + InstantID portrait + faceswap + CodeFormer');
+        const [fluxBody, idPortrait] = await Promise.all([
+          generateImage(claudeResult.flux_prompt),
+          instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
+        ]);
+        if (fluxBody && idPortrait) {
+          // Use the IDENTITY-LOCKED InstantID portrait as the face source
+          // (not the user's raw photo). InstantID has already adapted the
+          // face to the costume's lighting/style, so the swap blends better.
+          console.log('Swapping InstantID portrait → FLUX body');
+          const swapped = await faceSwap(fluxBody, idPortrait);
+          imageUrl = swapped || fluxBody;
+        } else if (fluxBody) {
+          imageUrl = fluxBody;
+        } else if (idPortrait) {
+          imageUrl = idPortrait;
+        }
+        // CodeFormer cleanup on the composite (sharpens face, smooths seam)
+        if (imageUrl) {
+          const restored = await codeFormerRestore(imageUrl);
+          if (restored) { console.log('CodeFormer applied to composite'); imageUrl = restored; }
+        }
       }
       portraitUrl = null;
     }
