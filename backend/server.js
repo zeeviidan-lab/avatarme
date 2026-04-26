@@ -176,6 +176,38 @@ const HUMAN_AVATARS = new Set(['yourself','animated','yellow_toon','martian','el
 // start_step: 0 = ID injected from the very first denoising step
 // (highest fidelity). 4 = more editability but weaker identity.
 const PULID_VERSION = '8baa7ef2255075b46f4d91cd238c21d31181b3e6a864463f967960bb0112525b';
+const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
+
+// InstantID — different identity preservation architecture than PuLID.
+// Uses an IdentityNet (face landmarks) + IPAdapter (face features) on
+// SDXL. Often more robust than PuLID on faces with heavy beards or
+// strong facial hair (which can confuse PuLID's encoder). We use the
+// juggernaut-xl-v8 base for realistic photo output.
+async function instantId(prompt, faceBase64, faceMime, avatarKey) {
+  const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
+  const tight = prompt.length > 380 ? prompt.slice(0, 380) : prompt;
+  const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: INSTANTID_VERSION, input: {
+      image: faceDataUrl,
+      prompt: tight,
+      negative_prompt: '(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, mutated, cross-eyed, ugly, disfigured, multiple faces, blurry',
+      sdxl_weights: 'juggernaut-xl-v8',         // photoreal base
+      ip_adapter_scale: 0.8,                     // face detail preservation
+      controlnet_conditioning_scale: 0.85,       // identity (landmark) lock
+      guidance_scale: 5,
+      num_inference_steps: 30,
+      enhance_nonface_region: true,
+      output_format: 'webp',
+      output_quality: 92,
+    } })
+  });
+  const prediction = await startRes.json();
+  if (!prediction.id) { console.error('InstantID start error:', JSON.stringify(prediction)); return null; }
+  console.log('InstantID started:', prediction.id, 'avatar:', avatarKey, 'face_bytes:', faceBase64.length);
+  return pollPrediction(prediction.id, 3000, 50, 'InstantID');
+}
 const PULID_ID_WEIGHTS = {
   yourself:    2.4,   // pure photo of YOU — push identity hardest
   animated:    1.8,   // 2D animated style needs some headroom
@@ -277,11 +309,11 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      // Pure PuLID at the per-avatar tuned id_weight from
-      // PULID_ID_WEIGHTS (yourself=2.4 is already near the practical
-      // ceiling). id_weight 3.0 overdrives the model — produces blurred
-      // eye-less output. No face-swap.
-      imageUrl = await pulidPortrait(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+      // InstantID — different identity model than PuLID. Generally
+      // more robust on faces with heavy facial hair (where PuLID's
+      // encoder struggles). Uses face landmarks (ControlNet) + face
+      // features (IPAdapter) on SDXL juggernaut for photoreal output.
+      imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
       portraitUrl = null;
     }
 
