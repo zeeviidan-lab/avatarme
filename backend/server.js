@@ -224,6 +224,32 @@ const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e0
 const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4';
 const CODEFORMER_VERSION = 'cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2';
 const SDXL_OUTPAINT_VERSION = 'a542ccf352995f3c41f0bcfaef641daa3058bf2b00e08e04feb0295334ab9804';
+
+// Upload bytes to Replicate's Files API → get a real HTTPS URL back.
+// Some Replicate models (especially face-swap ones) silently fail when
+// fed gigantic base64 data URLs — they need a real fetchable URL.
+// Returns { url, expires_at } or null on failure.
+async function uploadToReplicateFiles(base64, mime) {
+  try {
+    const buf = Buffer.from(base64, 'base64');
+    const form = new FormData();
+    form.append('content', new Blob([buf], { type: mime }), 'face.jpg');
+    form.append('type', mime);
+    const r = await fetch('https://api.replicate.com/v1/files', {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` },
+      body: form,
+    });
+    const data = await r.json();
+    const url = data && data.urls && (data.urls.get || data.urls.download);
+    if (!url) { console.error('Replicate Files upload failed:', JSON.stringify(data)); return null; }
+    console.log('Uploaded face to Replicate Files:', url);
+    return url;
+  } catch (e) {
+    console.error('uploadToReplicateFiles exception:', e);
+    return null;
+  }
+}
 const MEDIAPIPE_FACE_VERSION = 'b52b4833a810a8b8d835d6339b72536d63590918b185588be2def78a89e7ca7b';
 
 // Face detection via mediapipe — returns the face region as a transparent
@@ -685,21 +711,23 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
         // 4. CodeFormer: clean up the seam, sharpen
         // Each model does what it's good at instead of fighting one model
         // to do everything.
-        // DUAL OUTPUT — give the user BOTH:
-        //   imageUrl    = full body shot (FLUX + face-swap from photo) —
-        //                 "you in the avatar's world", framing is right
-        //   portraitUrl = InstantID portrait (max identity) —
-        //                 "actually-you face", no body but identity locks
-        // Run all three in parallel:
-        console.log('Dual pipeline: FLUX body + face-swap + InstantID portrait (parallel)');
+        console.log('Dual pipeline: upload face → FLUX body + face-swap + InstantID portrait');
+        // Upload user's photo to Replicate Files first → get real URL.
+        // Face-swap models reliably handle URLs but silently fail on
+        // megabyte-sized data URLs. This was the missing piece.
+        // Run upload + FLUX + InstantID all in parallel.
         const originalPhotoDataUrl = `data:${imageMime};base64,${imageBase64}`;
-        const [fluxBody, idPortrait] = await Promise.all([
+        const [photoUrl, fluxBody, idPortrait] = await Promise.all([
+          uploadToReplicateFiles(imageBase64, imageMime),
           generateImage(claudeResult.flux_prompt),
           instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
         ]);
         if (fluxBody) {
-          console.log('Face-swapping original photo → FLUX body');
-          const swapped = await faceSwap(fluxBody, originalPhotoDataUrl);
+          // Use the uploaded URL if available (way more reliable for
+          // face-swap), fall back to data URL if upload failed.
+          const sourceForSwap = photoUrl || originalPhotoDataUrl;
+          console.log('Face-swapping → FLUX body, source =', photoUrl ? 'uploaded URL' : 'data URL fallback');
+          const swapped = await faceSwap(fluxBody, sourceForSwap);
           imageUrl = swapped || fluxBody;
         } else if (idPortrait) {
           imageUrl = idPortrait;
