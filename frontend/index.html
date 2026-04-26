@@ -1769,8 +1769,18 @@ async function saveAvatar() {
   if (!img.src) return;
   var fileName = 'AvatarMe-' + name.replace(/\s/g,'-') + '.jpg';
   try {
-    var res = await fetch(BACKEND + '/download?url=' + encodeURIComponent(img.src));
-    var blob = await res.blob();
+    var blob;
+    // If the result is a data URL (now true for human avatars — head composite
+    // returns base64 JPEG), fetch it CLIENT-SIDE — backend /download can't
+    // resolve data URLs and the encoded URL is megabytes long.
+    if (img.src.startsWith('data:')) {
+      var resp = await fetch(img.src);  // browser fetch DOES handle data: URLs
+      blob = await resp.blob();
+    } else {
+      // External URL (Replicate-hosted) — backend proxy avoids CORS.
+      var res = await fetch(BACKEND + '/download?url=' + encodeURIComponent(img.src));
+      blob = await res.blob();
+    }
     if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: blob.type })] })) {
       await navigator.share({ files: [new File([blob], fileName, { type: blob.type })], title: name });
     } else {
