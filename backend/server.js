@@ -247,12 +247,15 @@ async function outpaintToFullBody(portraitImageUrl, fluxPrompt) {
       create: { width: W, height: targetH, channels: 3, background: { r:255, g:255, b:255 } }
     }).composite([{ input: portraitBuf, top: 0, left: 0 }]).png().toBuffer();
 
-    // 4. Mask: white where original is (keep), black where to inpaint (paint body)
-    // flux-fill convention: BLACK areas get inpainted.
+    // 4. Mask: BLACK = keep, WHITE = inpaint (flux-fill convention).
+    // Previous version had this inverted — flux regenerated the portrait
+    // (blurring it) and left the empty bottom untouched.
+    // Now: black on top (preserve portrait), white below (paint full body).
+    // Small overlap zone (16px) where mask transitions to help the seam.
     const mask = await sharp({
-      create: { width: W, height: targetH, channels: 3, background: { r:0, g:0, b:0 } }
+      create: { width: W, height: targetH, channels: 3, background: { r:255, g:255, b:255 } } // base = white = inpaint
     }).composite([{
-      input: Buffer.from(`<svg width="${W}" height="${targetH}"><rect x="0" y="0" width="${W}" height="${H - 16}" fill="white"/></svg>`),
+      input: Buffer.from(`<svg width="${W}" height="${targetH}"><rect x="0" y="0" width="${W}" height="${H - 16}" fill="black"/></svg>`),
       top: 0, left: 0
     }]).png().toBuffer();
 
