@@ -74,7 +74,7 @@ ${imageBase64 ? 'Face photo: provided (analyze expression, energy, features)' : 
 2. A highly detailed FLUX image prompt for a unique full body photorealistic ${av.animal} character
 
 Image prompt rules:
-- ${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? `IDENTITY FIDELITY (CRITICAL — this is YOU, not a fictionalized older version of you): study the photo and write the user's REAL features into the flux_prompt — exact apparent age (do NOT age them up; a man in his early 40s with some grey is NOT "distinguished elder" — he's a man in his early 40s), exact hair color and pattern (if hair is mostly dark with some grey, write "mostly dark hair with scattered grey" — NEVER "silver hair" or "fully grey"), exact beard pattern (if salt-and-pepper, write "salt-and-pepper beard" — not "full silver beard"), skin tone (warm olive, fair, deep brown — name it), eye color, build. The avatar must read as the SAME PERSON the photo shows, just in the avatar's costume/world. Do NOT romanticize, age, idealize, or "improve" the appearance.\n- ` : ''}ULTRA-IMPORTANT FRAMING: this MUST be a FULL BODY shot — head to toe visible, wide framing, the entire figure standing within the frame from feet to top of head, with clear space around the body. NEVER a headshot, NEVER a bust crop, NEVER waist-up. The flux_prompt must explicitly contain the words "full body, head to toe, wide framing, full standing pose, feet visible".
+- ${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? `IDENTITY FIDELITY (CRITICAL — this is YOU, not a fictionalized version): write the user's REAL features into the flux_prompt — exact apparent age (do NOT age them up; a man in his early 40s with some grey is NOT "distinguished elder"), exact hair color and pattern (if mostly dark with some grey, write "mostly dark hair with scattered grey" — NEVER "silver hair"), exact beard pattern (if salt-and-pepper, write "salt-and-pepper beard"), eye color, build. Do NOT mention skin tone explicitly — leave that to the image model so it derives directly from the photo (LLM hints reliably push skin tone in the wrong direction). Do NOT romanticize, age, idealize, or "improve" the appearance.\n- ` : ''}ULTRA-IMPORTANT FRAMING: this MUST be a FULL BODY shot — head to toe visible, wide framing, the entire figure standing within the frame from feet to top of head, with clear space around the body. NEVER a headshot, NEVER a bust crop, NEVER waist-up. The flux_prompt must explicitly contain the words "full body, head to toe, wide framing, full standing pose, feet visible".
 - Candid full body portrait of a ${av.animal} (${av.base}), captured in a natural unposed moment — not a hero pose, not posed for the camera
 - Setting: ${env} — described in plain natural language, like a real place that exists
 - Subtle personality cues only: gaze, posture, micro-expression, the way light falls. Avoid theatrical drama.
@@ -195,9 +195,14 @@ const PULID_ID_WEIGHTS = {
 async function pulidPortrait(prompt, faceBase64, faceMime, avatarKey, idWeightOverride) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
   const idWeight = idWeightOverride ?? PULID_ID_WEIGHTS[avatarKey] ?? 1.0;
-  // Trim the Claude prompt and add portrait framing
-  const tight = prompt.length > 280 ? prompt.slice(0, 280) : prompt;
-  const portraitPrompt = 'cinematic close-up portrait, face and upper body, looking at camera, ' + tight;
+  // Pass the Claude prompt straight through (costume + setting + framing).
+  // The old hardcoded "cinematic close-up portrait" prefix was overriding
+  // Claude's full-body / costume / scene description and reducing every
+  // result to a headshot on plain background. PuLID will still favor
+  // portrait-ish framing internally because of its training, but at
+  // least the costume and scene cues from Claude can land.
+  const tight = prompt.length > 380 ? prompt.slice(0, 380) : prompt;
+  const portraitPrompt = tight;
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
