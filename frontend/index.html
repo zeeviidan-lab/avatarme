@@ -245,12 +245,12 @@
   .btn-pri { flex:2; padding:15px; background:var(--accent); border:none; border-radius:12px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:#050805; }
 
   /* LOADER */
-  .loader { position:absolute; inset:0; background:radial-gradient(ellipse 70% 50% at 50% 35%, rgba(212,163,115,0.08) 0%, transparent 60%), var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
+  .loader { position:absolute; inset:0; background:radial-gradient(ellipse 70% 50% at 50% 35%, rgba(201,96,30,0.10) 0%, transparent 60%), var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
   .loader.on { display:flex; }
-  .pring { position:relative; width:140px; height:140px; margin-bottom:28px; }
+  .pring { position:relative; width:160px; height:160px; margin-bottom:28px; }
   .pring svg { transform:rotate(-90deg); width:100%; height:100%; }
-  .pring .pring-track { fill:none; stroke:rgba(255,255,255,0.06); stroke-width:3; }
-  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:3; stroke-linecap:round; stroke-dasharray:0 999; transition:stroke-dasharray 0.8s cubic-bezier(.4,0,.2,1); filter:drop-shadow(0 0 6px rgba(212,163,115,0.5)); }
+  .pring .pring-track { fill:none; stroke:rgba(20,24,30,0.14); stroke-width:5; }   /* dark-alpha track on bone */
+  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:5; stroke-linecap:round; stroke-dasharray:0 999; filter:drop-shadow(0 0 8px rgba(201,96,30,0.55)); }
   .pring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .pring-secs { font-family:'Bebas Neue',sans-serif; font-size:38px; line-height:1; color:var(--text); letter-spacing:1px; }
   .pring-secs .small { font-size:14px; color:var(--muted); margin-left:2px; letter-spacing:1px; }
@@ -288,8 +288,10 @@
         <svg viewBox="0 0 100 100">
           <defs>
             <linearGradient id="pringGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#d4a373"/>
-              <stop offset="100%" stop-color="#b35c38"/>
+              <!-- Mando theme: rust → deep rust → blue accent. Multi-stop for more visible motion. -->
+              <stop offset="0%"  stop-color="#C9601E"/>
+              <stop offset="60%" stop-color="#7A2F12"/>
+              <stop offset="100%" stop-color="#2B5C8E"/>
             </linearGradient>
           </defs>
           <circle class="pring-track" cx="50" cy="50" r="46"/>
@@ -307,7 +309,7 @@
         <div class="lstep" id="ls3"><div class="lstep-dot"></div><span class="lstep-txt">Generating your avatar</span></div>
         <div class="lstep" id="ls4"><div class="lstep-dot"></div><span class="lstep-txt">Rendering final details</span></div>
       </div>
-      <p id="loader-sub" style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2.5px;margin-top:24px;color:var(--muted)">THIS TAKES ABOUT 30 SECONDS</p>
+      <p id="loader-sub" style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:2.5px;margin-top:24px;color:var(--muted)">THIS TAKES ABOUT 90 SECONDS</p>
     </div>
 
     <!-- SPLASH -->
