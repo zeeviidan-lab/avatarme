@@ -212,7 +212,11 @@ async function pulidPortrait(prompt, faceBase64, faceMime, avatarKey) {
       id_weight: idWeight,
       start_step: 0,
       true_cfg: 1,
-      output_format: 'jpg',
+      // CRITICAL: 'jpg' triggers KeyError in PuLID's predict.py
+      // (PIL.SAVE dict has 'JPEG' not 'JPG' → silent 100% failure
+      // → fell through to bare FLUX = no identity for every result).
+      // 'webp' is the model's tested default and works.
+      output_format: 'webp',
       output_quality: 92,
     } })
   });
