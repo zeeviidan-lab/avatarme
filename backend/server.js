@@ -685,30 +685,35 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
         // 4. CodeFormer: clean up the seam, sharpen
         // Each model does what it's good at instead of fighting one model
         // to do everything.
-        // PROVEN PIPELINE — back to the chain that produced the user's
-        // best-yet result (the salt-pepper-beard street guy):
-        //   1. FLUX body (full body, costume, scene)
-        //   2. face-swap user's original photo → FLUX body
-        //   3. CodeFormer cleanup
-        // Dropped: head composite (kept failing silently when face detection
-        // missed → fell through to bare FLUX with NO identity transfer).
-        // Face-swap is reliable: insightface internally detects faces and
-        // produces SOMETHING recognizable even if only eye/nose/mouth.
-        console.log('Compose pipeline: FLUX body + face-swap original photo + CodeFormer');
+        // DUAL OUTPUT — give the user BOTH:
+        //   imageUrl    = full body shot (FLUX + face-swap from photo) —
+        //                 "you in the avatar's world", framing is right
+        //   portraitUrl = InstantID portrait (max identity) —
+        //                 "actually-you face", no body but identity locks
+        // Run all three in parallel:
+        console.log('Dual pipeline: FLUX body + face-swap + InstantID portrait (parallel)');
         const originalPhotoDataUrl = `data:${imageMime};base64,${imageBase64}`;
-        const fluxBody = await generateImage(claudeResult.flux_prompt);
+        const [fluxBody, idPortrait] = await Promise.all([
+          generateImage(claudeResult.flux_prompt),
+          instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
+        ]);
         if (fluxBody) {
           console.log('Face-swapping original photo → FLUX body');
           const swapped = await faceSwap(fluxBody, originalPhotoDataUrl);
           imageUrl = swapped || fluxBody;
+        } else if (idPortrait) {
+          imageUrl = idPortrait;
         }
+        portraitUrl = idPortrait;  // sidecar — shown as IDENTITY PORTRAIT card on result screen
         // CodeFormer cleanup on the composite (sharpens face, smooths seam)
         if (imageUrl) {
           const restored = await codeFormerRestore(imageUrl);
           if (restored) { console.log('CodeFormer applied to composite'); imageUrl = restored; }
         }
+        // NOTE: portraitUrl was already set above to idPortrait — keep it
+        // so the frontend can show the IDENTITY PORTRAIT card alongside
+        // the full body shot.
       }
-      portraitUrl = null;
     }
 
     // Fallback (or animal/no-face) → regular FLUX
