@@ -471,6 +471,39 @@
           <div class="pk-frame"><img src="portraits/martian.jpg" loading="lazy"/></div>
           <div class="pk-foot"><span class="pk-tag">Alien</span><span class="pk-tag">From Mars</span></div>
         </div>
+
+        <div style="grid-column:1/-1;font-family:'Bebas Neue',sans-serif;letter-spacing:3px;font-size:13px;color:var(--accent);margin:10px 0 -2px">⚔️ FANTASY CLASSES</div>
+
+        <div class="pk-card" style="--c1:#1a2418;--c2:#070a05" onclick="pickAv(this,'elf')">
+          <div class="pk-head"><span class="pk-name">Elf</span><span class="pk-type">RANGER</span></div>
+          <div class="pk-frame"><img src="portraits/elf.jpg" loading="lazy"/></div>
+          <div class="pk-foot"><span class="pk-tag">Forest</span><span class="pk-tag">Bow</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#241a10;--c2:#0c0805" onclick="pickAv(this,'dwarf')">
+          <div class="pk-head"><span class="pk-name">Dwarf</span><span class="pk-type">SMITH</span></div>
+          <div class="pk-frame"><img src="portraits/dwarf.jpg" loading="lazy"/></div>
+          <div class="pk-foot"><span class="pk-tag">Forge</span><span class="pk-tag">Hammer</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#241410;--c2:#0c0604" onclick="pickAv(this,'warrior')">
+          <div class="pk-head"><span class="pk-name">Warrior</span><span class="pk-type">FIGHTER</span></div>
+          <div class="pk-frame"><img src="portraits/warrior.jpg" loading="lazy"/></div>
+          <div class="pk-foot"><span class="pk-tag">Steel</span><span class="pk-tag">Sword</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#181c2c;--c2:#06080f" onclick="pickAv(this,'mage')">
+          <div class="pk-head"><span class="pk-name">Mage</span><span class="pk-type">ARCANE</span></div>
+          <div class="pk-frame"><img src="portraits/mage.jpg" loading="lazy"/></div>
+          <div class="pk-foot"><span class="pk-tag">Magic</span><span class="pk-tag">Staff</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#2c2418;--c2:#0e0a05" onclick="pickAv(this,'priest')">
+          <div class="pk-head"><span class="pk-name">Priest</span><span class="pk-type">HOLY</span></div>
+          <div class="pk-frame"><img src="portraits/priest.jpg" loading="lazy"/></div>
+          <div class="pk-foot"><span class="pk-tag">Light</span><span class="pk-tag">Healer</span></div>
+        </div>
+        <div class="pk-card" style="--c1:#1c2814;--c2:#070b05" onclick="pickAv(this,'goblin')">
+          <div class="pk-head"><span class="pk-name">Goblin</span><span class="pk-type">ROGUE</span></div>
+          <div class="pk-frame"><img src="portraits/goblin.jpg" loading="lazy"/></div>
+          <div class="pk-foot"><span class="pk-tag">Sneak</span><span class="pk-tag">Trickster</span></div>
+        </div>
       </div>
 
       <div style="padding:0 24px 12px">
@@ -547,7 +580,23 @@
         <span onclick="close3D()" style="cursor:pointer;font-size:24px;color:var(--muted)">✕</span>
       </div>
       <div style="flex:1;position:relative" id="viewer3d-body">
-        <model-viewer id="mv" style="width:100%;height:100%;background:radial-gradient(ellipse at 50% 50%, #0c1420 0%, #05080c 70%)" camera-controls touch-action="pan-y" auto-rotate auto-rotate-delay="500" rotation-per-second="20deg" shadow-intensity="1" exposure="1" ar ar-modes="webxr scene-viewer quick-look"></model-viewer>
+        <model-viewer id="mv" style="width:100%;height:100%;background:radial-gradient(ellipse at 50% 50%, #0c1420 0%, #05080c 70%)" touch-action="none" shadow-intensity="1" exposure="1" interaction-prompt="none" ar ar-modes="webxr scene-viewer quick-look"></model-viewer>
+
+        <!-- LIVE CONTROL OVERLAY -->
+        <div id="live3d-controls" style="display:none;position:absolute;inset:0;pointer-events:none;z-index:5">
+          <!-- left joystick -->
+          <div id="lj-base" style="position:absolute;left:20px;bottom:24px;width:120px;height:120px;border-radius:50%;background:rgba(123,179,255,0.08);border:1.5px solid rgba(123,179,255,0.35);pointer-events:auto;touch-action:none;backdrop-filter:blur(6px)">
+            <div id="lj-knob" style="position:absolute;left:50%;top:50%;width:52px;height:52px;border-radius:50%;background:radial-gradient(circle at 35% 30%, #9fc7ff, #4a90e2);box-shadow:0 4px 16px rgba(74,144,226,0.5),inset 0 -3px 8px rgba(0,0,0,0.3);transform:translate(-50%,-50%);transition:transform 0.15s ease-out"></div>
+          </div>
+          <div style="position:absolute;left:20px;bottom:150px;color:#7bb3ff;font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:2px;opacity:0.7">DRAG TO MOVE</div>
+
+          <!-- right action buttons -->
+          <div style="position:absolute;right:20px;bottom:24px;display:flex;flex-direction:column;gap:10px;pointer-events:auto">
+            <button id="b3d-jump" style="width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(228,116,163,0.5);background:rgba(228,116,163,0.18);color:#ffc8de;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1.5px;cursor:pointer;backdrop-filter:blur(6px);touch-action:manipulation">⤴<br/>JUMP</button>
+            <button id="b3d-spin" style="width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(255,209,102,0.5);background:rgba(255,209,102,0.15);color:#ffe39a;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1.5px;cursor:pointer;backdrop-filter:blur(6px);touch-action:manipulation">🌀<br/>SPIN</button>
+            <button id="b3d-reset" style="width:64px;height:64px;border-radius:50%;border:1.5px solid rgba(123,179,255,0.45);background:rgba(123,179,255,0.12);color:#9fc7ff;font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;cursor:pointer;backdrop-filter:blur(6px);touch-action:manipulation">↺<br/>RESET</button>
+          </div>
+        </div>
         <div id="mv-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#05080c;color:#7bb3ff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px">
           <div class="pring" style="margin-bottom:20px">
             <svg viewBox="0 0 100 100">
@@ -659,6 +708,12 @@ const AV_PHOTOS = {
   cartoon_owl:    'portraits/cartoon_owl.jpg',
   cartoon_tiger:  'portraits/cartoon_tiger.jpg',
   cartoon_monkey: 'portraits/cartoon_monkey.jpg',
+  elf:          'portraits/elf.jpg',
+  dwarf:        'portraits/dwarf.jpg',
+  warrior:      'portraits/warrior.jpg',
+  mage:         'portraits/mage.jpg',
+  priest:       'portraits/priest.jpg',
+  goblin:       'portraits/goblin.jpg',
 };
 
 // ── SPLASH COLLAGE ──
@@ -1088,8 +1143,109 @@ function showGLB(url) {
   var mv = document.getElementById('mv');
   mv.src = BACKEND + '/glb?url=' + encodeURIComponent(url);
   document.getElementById('mv-loading').style.display = 'none';
+  // Wait for the model to load, then enable live controls
+  mv.addEventListener('load', initLive3D, { once: true });
 }
-function close3D() { document.getElementById('viewer3d').style.display = 'none'; }
+function close3D() {
+  document.getElementById('viewer3d').style.display = 'none';
+  stopLive3D();
+}
+
+// ── LIVE 3D CONTROL ──
+// Joystick drives yaw (turn left/right) and forward lean.
+// Buttons: jump (raise camera-target Y), spin (continuous fast yaw), reset.
+var live3D = { rafId:0, yaw:0, pitch:0, jumpY:0, jumpV:0, spinUntil:0, joyX:0, joyY:0, dragging:false, knob:null, base:null, baseRect:null };
+function initLive3D() {
+  var ctrls = document.getElementById('live3d-controls');
+  ctrls.style.display = 'block';
+  live3D.yaw = 0; live3D.pitch = 0; live3D.jumpY = 0; live3D.jumpV = 0; live3D.spinUntil = 0;
+  live3D.knob = document.getElementById('lj-knob');
+  live3D.base = document.getElementById('lj-base');
+  attachJoystick();
+  attachActionButtons();
+  // Set a sensible starting camera and disable autorotate
+  var mv = document.getElementById('mv');
+  mv.removeAttribute('auto-rotate');
+  mv.setAttribute('camera-controls','');
+  mv.cameraOrbit = '0deg 80deg auto';
+  if (live3D.rafId) cancelAnimationFrame(live3D.rafId);
+  loop3D();
+}
+function stopLive3D() {
+  if (live3D.rafId) cancelAnimationFrame(live3D.rafId);
+  live3D.rafId = 0;
+  var ctrls = document.getElementById('live3d-controls');
+  if (ctrls) ctrls.style.display = 'none';
+}
+function attachJoystick() {
+  var base = live3D.base, knob = live3D.knob;
+  function onStart(e) {
+    e.preventDefault();
+    live3D.dragging = true;
+    live3D.baseRect = base.getBoundingClientRect();
+    onMove(e);
+  }
+  function onMove(e) {
+    if (!live3D.dragging) return;
+    var t = e.touches ? e.touches[0] : e;
+    var cx = live3D.baseRect.left + live3D.baseRect.width/2;
+    var cy = live3D.baseRect.top + live3D.baseRect.height/2;
+    var dx = t.clientX - cx, dy = t.clientY - cy;
+    var max = live3D.baseRect.width/2 - 26;
+    var dist = Math.hypot(dx, dy);
+    if (dist > max) { dx = dx/dist*max; dy = dy/dist*max; }
+    knob.style.transform = 'translate(calc(-50% + '+dx+'px), calc(-50% + '+dy+'px))';
+    live3D.joyX = dx / max; // -1..1
+    live3D.joyY = dy / max; // -1..1 (down positive)
+  }
+  function onEnd() {
+    live3D.dragging = false;
+    live3D.joyX = 0; live3D.joyY = 0;
+    knob.style.transform = 'translate(-50%, -50%)';
+  }
+  base.addEventListener('touchstart', onStart, { passive:false });
+  window.addEventListener('touchmove', onMove, { passive:false });
+  window.addEventListener('touchend', onEnd);
+  base.addEventListener('mousedown', onStart);
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onEnd);
+}
+function attachActionButtons() {
+  document.getElementById('b3d-jump').onclick = function(){ if (live3D.jumpY < 0.05) live3D.jumpV = 1.6; };
+  document.getElementById('b3d-spin').onclick = function(){ live3D.spinUntil = performance.now() + 1800; };
+  document.getElementById('b3d-reset').onclick = function(){
+    live3D.yaw = 0; live3D.pitch = 0; live3D.jumpY = 0; live3D.jumpV = 0; live3D.spinUntil = 0;
+    var mv = document.getElementById('mv');
+    mv.cameraOrbit = '0deg 80deg auto';
+    mv.orientation = '0deg 0deg 0deg';
+    mv.style.transform = '';
+  };
+}
+function loop3D() {
+  var mv = document.getElementById('mv');
+  if (!mv || !mv.src) { live3D.rafId = 0; return; }
+  // Joystick → yaw + pitch lean (gentle)
+  var yawRate = live3D.joyX * 3.5; // deg per frame
+  if (performance.now() < live3D.spinUntil) yawRate = 9;
+  live3D.yaw = (live3D.yaw + yawRate) % 360;
+  // Pitch lean target from forward/back stick
+  var targetPitch = -live3D.joyY * 18; // up to ±18deg lean
+  live3D.pitch += (targetPitch - live3D.pitch) * 0.18;
+  // Jump physics
+  if (live3D.jumpV !== 0 || live3D.jumpY > 0) {
+    live3D.jumpY += live3D.jumpV * 0.025;
+    live3D.jumpV -= 0.08; // gravity
+    if (live3D.jumpY < 0) { live3D.jumpY = 0; live3D.jumpV = 0; }
+  }
+  // Yaw/pitch → model orientation
+  mv.orientation = '0deg ' + live3D.yaw.toFixed(1) + 'deg ' + live3D.pitch.toFixed(1) + 'deg';
+  // Jump → translate the canvas vertically (cheap, visually convincing)
+  var px = -Math.max(0, live3D.jumpY) * 80; // up to ~130px hop
+  mv.style.transform = 'translateY(' + px.toFixed(1) + 'px)';
+  live3D.rafId = requestAnimationFrame(loop3D);
+}
+
+
 async function save3D() {
   var mv = document.getElementById('mv');
   if (!mv.src) return;

@@ -37,6 +37,16 @@ const AVATARS = {
   cartoon_monkey: { name: 'Animated Monkey', animal: '2D animated TV-series macaque character in Netflix Stranger Things / Arcane style', base: 'painterly cel-shaded flesh-pink face surrounded by warm brown fur, defined ink-line silhouette, large expressive forward-facing eyes with crisp highlights, semi-anthropomorphic stylized face with human-readable proportions, curious clever expression, optional simple casual outfit, looks like a key frame from a high-end animated series', env: 'painted tropical jungle canopy with shafts of golden light, hand-painted depth, restrained color palette, animated TV-series backdrop' },
   yellow_toon: { name: 'Yellow Toon Me', animal: 'flat 2D cartoon character version of the person, in the classic 90s American prime-time animated sitcom visual style', base: 'flat bright yellow skin, simple bold black outlines, large round white eyes with small black pupils, prominent overbite mouth, four fingers per hand, simplified two-dimensional cartoon proportions, hair drawn as a single solid shape matching the person\'s real hairstyle and color, recognizable likeness preserved through hair shape, beard if any, glasses if worn, and clothing color', env: 'generic small American suburban backdrop — quiet residential street with simple flat houses, picket fences, neatly trimmed lawns, blue sky with a few simple white clouds — flat cartoon vector backdrop, bright primary colors, simple shapes (NO real-world place names, NO TV-show locations)' },
   martian:     { name: 'Martian Me',    animal: 'Martian alien version of the person from the planet Mars',                base: 'smooth green or grey-green skin, large oval black or amber alien eyes, slim humanoid build, subtle ridges or markings on the head, sleek minimalist alien jumpsuit, the user\'s recognizable face structure echoed in the alien skull (same overall face shape, brow line, jaw, beard pattern as facial markings/ridges, hair pattern as crest or dorsal ridge if any) — clearly an alien, but unmistakably YOU as an alien', env: 'rust-red Martian desert under a pale orange sky, distant dusty mountains, two small moons (Phobos and Deimos) in the sky, futuristic alien outpost or crashed pod in the distance, fine red dust in the air' },
+
+  // Fantasy / D&D classes — high-end cinematic AAA game render, the user's
+  // identity carried into a fantasy archetype. Routed through PuLID for
+  // strong likeness while the costume/setting stylize the world around them.
+  elf:      { name: 'Elf',      animal: 'high elf ranger version of the person', base: 'graceful elven build with long pointed ears clearly visible, sharp angular cheekbones, smooth skin with subtle pale undertone, long flowing hair in a single braid with leaves woven in, intricate green-and-silver leather forest armor with pauldrons and bracers, longbow slung across the back, quiver of feathered arrows, the user\'s recognizable face structure preserved (same face shape, jaw, brow, eye color, hair color shifted toward elven palette), serene watchful expression', env: 'ancient enchanted forest at golden hour, towering moss-covered trees, soft beams of god-rays through the canopy, glowing motes drifting in the air, distant elven spires barely visible through the mist' },
+  dwarf:    { name: 'Dwarf',    animal: 'mountain dwarf warrior version of the person', base: 'short stocky powerful build, broad shoulders, thick braided beard with metal beard rings (matching the user\'s beard color, or a thick auburn/black/grey braided beard if user is clean-shaven), heavy ornate plate armor with hammered metal panels, fur-lined cloak across one shoulder, two-handed war hammer planted on the ground, the user\'s recognizable face structure preserved (same face shape, brow, eye color, nose), grim determined expression', env: 'underground dwarven forge hall lit by orange glow of molten metal, massive stone columns carved with runes, sparks drifting up from anvils in the background, deep blue shadows' },
+  warrior:  { name: 'Warrior',  animal: 'human battle-hardened warrior version of the person', base: 'tall muscular build, weathered scarred skin, the user\'s actual face features preserved (same face shape, jaw, brow, beard if any, hair color), shoulder-length hair tied back, battle-worn steel plate armor with leather straps and a tattered red cloak, longsword in hand and round shield strapped on the back, intense focused expression', env: 'aftermath of a battle on a rocky highland plateau at dusk, broken banners on the ground, smoke drifting across distant burning siege towers, dramatic stormy sky' },
+  mage:     { name: 'Mage',     animal: 'arcane mage version of the person', base: 'tall lean figure draped in deep midnight-blue robes with silver runic embroidery, wide hood pulled back to reveal the user\'s recognizable face (same face shape, jaw, brow, eye color, beard if any), long staff topped with a softly glowing crystal, glowing rune-circles of pale blue light hovering around one outstretched hand, focused intelligent expression', env: 'ancient stone arcane library tower at night, towering bookshelves disappearing into darkness, floating candles, subtle blue magical light spilling across worn parquet floors, telescope at a tall window showing a starry sky' },
+  priest:   { name: 'Priest',   animal: 'holy paladin priest version of the person', base: 'tall noble bearing in flowing white-and-gold ceremonial robes with embroidered sun motifs, ornate gilded breastplate over the robes, hood lowered to reveal the user\'s recognizable face (same face shape, jaw, brow, hair color, beard if any), one hand holding a glowing golden medallion, the other resting on the pommel of a sheathed mace, calm benevolent expression', env: 'grand cathedral interior at dawn, tall stained-glass windows casting warm coloured light across stone floors, soft golden god-rays, distant choir balcony, gentle dust motes' },
+  goblin:   { name: 'Goblin',   animal: 'mischievous goblin trickster version of the person', base: 'short wiry green-skinned goblin with the user\'s recognizable face features echoed in goblin form (same face shape, brow, jaw, beard pattern as small chin tufts, hair pattern as wild green-grey crest), large pointed ears, sharp cunning eyes, mismatched leather scrap armor with rusty buckles, dagger in one hand and a small stolen coin pouch in the other, sly grin', env: 'lantern-lit goblin warren tunnel, walls of packed earth and tangled roots, glowing fungus, scattered loot and crates, smoke drifting from a small fire, warm amber light' },
 };
 
 const BACKGROUNDS = {
@@ -126,7 +136,7 @@ async function generateImage(fluxPrompt) {
 // one pass. Replaces both the old InstantID path (couldn't do full body)
 // and the FLUX+face-swap path (face too small in full-body shot for
 // face-swap to land accurately).
-const HUMAN_AVATARS = new Set(['yourself','animated','yellow_toon','martian']);
+const HUMAN_AVATARS = new Set(['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin']);
 
 // PuLID-FLUX — identity-preserving FLUX. Strong likeness + full body
 // in one pass at configurable portrait dimensions. id_weight controls
@@ -140,6 +150,14 @@ const PULID_ID_WEIGHTS = {
   animated:    1.0,
   martian:     0.9,
   yellow_toon: 0.8,
+  // Fantasy classes — moderate weight: keep face recognizable but let the
+  // archetype/costume fully express itself
+  elf:         1.0,
+  dwarf:       1.0,
+  warrior:     1.1,
+  mage:        1.0,
+  priest:      1.0,
+  goblin:      0.85,
 };
 
 async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
