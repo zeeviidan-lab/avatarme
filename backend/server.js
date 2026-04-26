@@ -283,12 +283,24 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      const [fullBody, idPortrait] = await Promise.all([
-        generateWithFace(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
-        pulidPortrait(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey, 3.0),
-      ]);
-      imageUrl = fullBody;
-      portraitUrl = idPortrait;
+      // SPECIAL CASE: "yourself" / Just Me — the avatar IS the user.
+      // After 6 rounds of generation tuning hit the face-swap ceiling
+      // (FLUX-invented bone structure + your eyes/nose only), the only
+      // honest implementation is to USE the user's actual photo.
+      // No generation, no swap, no drift — it's literally you.
+      // The 6 attribute traits + character sheet still get generated
+      // by Claude from your photo, so the experience stays personal.
+      if (avatarKey === 'yourself') {
+        imageUrl = `data:${imageMime};base64,${imageBase64}`;
+        portraitUrl = null; // no separate portrait needed — main image IS you
+      } else {
+        const [fullBody, idPortrait] = await Promise.all([
+          generateWithFace(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
+          pulidPortrait(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey, 3.0),
+        ]);
+        imageUrl = fullBody;
+        portraitUrl = idPortrait;
+      }
     }
 
     // Fallback (or animal/no-face) → regular FLUX
