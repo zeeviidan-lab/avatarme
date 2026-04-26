@@ -209,6 +209,27 @@
   .tbar { flex:1; height:3px; background:rgba(255,255,255,0.04); border-radius:99px; overflow:hidden; }
   .tf { height:100%; border-radius:99px; transition:width 1s ease; width:0%; }
   .tvl { font-size:12px; font-weight:600; width:28px; text-align:right; }
+
+  /* CHARACTER SHEET */
+  .csheet { margin:18px 0 8px; padding:18px 16px 16px; border:1px solid rgba(212,163,115,0.25); border-radius:14px; background:linear-gradient(180deg, rgba(212,163,115,0.05) 0%, rgba(0,0,0,0) 70%); position:relative; }
+  .csheet::before { content:'CHARACTER SHEET'; position:absolute; top:-9px; left:14px; padding:1px 9px; background:var(--bg); font-family:'Bebas Neue',sans-serif; font-size:10px; letter-spacing:3px; color:var(--accent); }
+  .cs-tagline { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2.5px; color:var(--accent); text-align:center; margin-bottom:12px; line-height:1.1; }
+  .cs-meta { display:grid; grid-template-columns:repeat(3,1fr); gap:8px 6px; padding:10px 0 12px; border-bottom:1px solid rgba(212,163,115,0.15); margin-bottom:14px; }
+  .cs-meta .cell { text-align:center; }
+  .cs-meta .lbl { font-size:9px; letter-spacing:1.5px; color:var(--muted); font-weight:600; margin-bottom:2px; }
+  .cs-meta .val { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:1px; color:var(--text); }
+  .cs-attrs { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-bottom:16px; }
+  .cs-attr { background:rgba(212,163,115,0.08); border:1px solid rgba(212,163,115,0.2); border-radius:8px; padding:8px 0 6px; text-align:center; }
+  .cs-attr .ak { font-size:9px; letter-spacing:1.5px; color:var(--muted); font-weight:700; }
+  .cs-attr .av { font-family:'Bebas Neue',sans-serif; font-size:22px; line-height:1; color:var(--text); margin:3px 0 1px; }
+  .cs-attr .am { font-size:9px; color:var(--accent); font-weight:600; }
+  .cs-section { font-size:10px; letter-spacing:2px; color:var(--muted); font-weight:600; text-transform:uppercase; margin:14px 0 8px; padding-bottom:5px; border-bottom:1px solid rgba(212,163,115,0.12); }
+  .cs-ability { padding:8px 10px; margin-bottom:6px; background:rgba(255,255,255,0.02); border-left:2px solid var(--accent); border-radius:0 8px 8px 0; }
+  .cs-ability .an { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:1.5px; color:var(--text); margin-bottom:2px; }
+  .cs-ability .ad { font-size:11px; color:var(--muted); line-height:1.4; }
+  .cs-equip { display:flex; flex-wrap:wrap; gap:6px; }
+  .cs-equip span { font-size:11px; padding:5px 10px; background:rgba(212,163,115,0.08); border:1px solid rgba(212,163,115,0.2); border-radius:100px; color:var(--text); }
+
   .result-actions { display:flex; gap:10px; padding:0 24px 24px; margin-top:8px; }
   .btn-sec { flex:1; padding:15px; background:var(--surface2); border:1px solid var(--border); border-radius:12px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:var(--text); }
   .btn-pri { flex:2; padding:15px; background:var(--accent); border:none; border-radius:12px; cursor:pointer; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:#050805; }
@@ -644,6 +665,27 @@
           <span id="rname">—</span><span class="uniq">UNIQUE</span>
         </div>
         <p class="result-desc" id="rdesc">—</p>
+
+        <!-- D&D-style character sheet (populated from Claude character_sheet) -->
+        <div class="csheet" id="csheet" style="display:none">
+          <div class="cs-tagline" id="cs-tagline">—</div>
+          <div class="cs-meta">
+            <div class="cell"><div class="lbl">RACE</div><div class="val" id="cs-race">—</div></div>
+            <div class="cell"><div class="lbl">CLASS</div><div class="val" id="cs-class">—</div></div>
+            <div class="cell"><div class="lbl">LEVEL</div><div class="val" id="cs-level">—</div></div>
+            <div class="cell"><div class="lbl">HEIGHT</div><div class="val" id="cs-height">—</div></div>
+            <div class="cell"><div class="lbl">WEIGHT</div><div class="val" id="cs-weight">—</div></div>
+            <div class="cell"><div class="lbl">AGE</div><div class="val" id="cs-age">—</div></div>
+          </div>
+          <div class="cs-attrs" id="cs-attrs"></div>
+          <div class="cs-section">Abilities</div>
+          <div id="cs-abilities"></div>
+          <div class="cs-section">Equipment</div>
+          <div class="cs-equip" id="cs-equip"></div>
+          <div class="cs-section">Alignment</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:14px;letter-spacing:2px;color:var(--accent);text-align:center;padding:6px 0 2px" id="cs-alignment">—</div>
+        </div>
+
         <div class="trait-map">
           <h4>Trait Map</h4>
           <div class="trow"><span class="tlb">Composure</span><div class="tbar"><div class="tf" id="t1" style="background:var(--accent)"></div></div><span class="tvl" id="tv1">—</span></div>
@@ -1146,6 +1188,8 @@ async function generate() {
       });
     }, 400);
 
+    renderCharacterSheet(result.character_sheet);
+
   } catch(err) {
     loader.classList.remove('on');
     pringComplete();
@@ -1153,6 +1197,52 @@ async function generate() {
     alert('Something went wrong. Please try again.');
     console.error(err);
   }
+}
+
+// ── CHARACTER SHEET ──
+function attrMod(v) { var m = Math.floor((v - 10) / 2); return (m >= 0 ? '+' : '') + m; }
+function renderCharacterSheet(cs) {
+  var box = document.getElementById('csheet');
+  if (!cs) { box.style.display = 'none'; return; }
+  box.style.display = 'block';
+  var setText = function(id, v) { var el = document.getElementById(id); if (el) el.textContent = (v == null || v === '') ? '—' : v; };
+  setText('cs-tagline', cs.tagline);
+  setText('cs-race', cs.race);
+  setText('cs-class', cs.class);
+  setText('cs-level', cs.level);
+  setText('cs-height', cs.height);
+  setText('cs-weight', cs.weight);
+  setText('cs-age', cs.age);
+  setText('cs-alignment', cs.alignment);
+
+  var attrWrap = document.getElementById('cs-attrs');
+  var order = ['STR','DEX','CON','INT','WIS','CHA'];
+  attrWrap.innerHTML = '';
+  var attrs = cs.attributes || {};
+  order.forEach(function(k){
+    var v = attrs[k] != null ? attrs[k] : 10;
+    var d = document.createElement('div');
+    d.className = 'cs-attr';
+    d.innerHTML = '<div class="ak">' + k + '</div><div class="av">' + v + '</div><div class="am">' + attrMod(v) + '</div>';
+    attrWrap.appendChild(d);
+  });
+
+  var abWrap = document.getElementById('cs-abilities');
+  abWrap.innerHTML = '';
+  (cs.abilities || []).forEach(function(a){
+    var d = document.createElement('div');
+    d.className = 'cs-ability';
+    d.innerHTML = '<div class="an">⚡ ' + (a.name || '—') + '</div><div class="ad">' + (a.desc || '') + '</div>';
+    abWrap.appendChild(d);
+  });
+
+  var eqWrap = document.getElementById('cs-equip');
+  eqWrap.innerHTML = '';
+  (cs.equipment || []).forEach(function(item){
+    var s = document.createElement('span');
+    s.textContent = item;
+    eqWrap.appendChild(s);
+  });
 }
 
 // ── 3D GENERATION ──

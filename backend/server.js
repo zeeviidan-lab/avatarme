@@ -84,8 +84,36 @@ Image prompt rules:
 - 2-3 sentences, highly descriptive
 - End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : avatarKey === 'animated' ? 'official animated TV series key frame, Netflix Stranger Things animated style, Flying Bark Productions, Arcane-quality 2D, painterly cel-shading, ink-line silhouettes, painted background, full body' : avatarKey.startsWith('cartoon_') ? 'official animated TV series key frame, Netflix Stranger Things animated style, Flying Bark Productions, Arcane-quality 2D, painterly cel-shading, ink-line silhouettes, painted background, full body' : avatarKey === 'yellow_toon' ? 'classic 90s American animated sitcom style, flat yellow skin, bold black outlines, simple cel cartoon, full body' : avatarKey === 'martian' ? 'cinematic sci-fi alien portrait, clean AAA render, ArtStation quality, full body, ultra detailed' : 'clean AAA game render, soft balanced lighting, gentle shadows, low contrast, subtle rim light, natural exposure, approachable friendly tone, full body, ultra detailed' }"
 
-Respond in JSON only:
-{"description":"2-3 sentence personal description","flux_prompt":"detailed image prompt","traits":{"Composure":80,"Strategy":75,"Instinct":85,"Adaptability":70},"dominant_trait":"one word"}`;
+Respond in JSON only with this EXACT shape:
+{
+  "description": "2-3 sentence personal description",
+  "flux_prompt": "detailed image prompt",
+  "traits": {"Composure":80, "Strategy":75, "Instinct":85, "Adaptability":70},
+  "dominant_trait": "one word",
+  "character_sheet": {
+    "race": "${av.name}",
+    "class": "one short class/role name fitting this avatar (e.g. 'Forest Ranger', 'Battle Mage', 'Mountain Smith', 'Pack Hunter')",
+    "level": 12,
+    "alignment": "one of: Lawful Good, Neutral Good, Chaotic Good, Lawful Neutral, True Neutral, Chaotic Neutral, Lawful Evil, Neutral Evil, Chaotic Evil — pick what fits the user's vibe from the photo + answers",
+    "height": "realistic height for this race (e.g. '5\\'10\\"', '4\\'2\\"', '6\\'4\\"')",
+    "weight": "realistic weight (e.g. '165 lbs', '210 lbs')",
+    "age": "fitting age (e.g. '32', '187 (adult)', 'Ageless')",
+    "attributes": {"STR":14, "DEX":13, "CON":12, "INT":15, "WIS":11, "CHA":13},
+    "abilities": [
+      {"name":"short ability name (2-3 words)","desc":"one sentence describing the ability"},
+      {"name":"...","desc":"..."},
+      {"name":"...","desc":"..."}
+    ],
+    "equipment": ["item 1", "item 2", "item 3", "item 4"],
+    "tagline": "one short epic tagline (under 8 words)"
+  }
+}
+
+Rules for the character_sheet:
+- The 6 attributes (STR/DEX/CON/INT/WIS/CHA) must each be 8–18, sum roughly 75–85, weighted by what the avatar archetype + the user's reaction-game answers + trait ranking suggest. A warrior leans STR/CON, a mage leans INT/WIS, a goblin leans DEX, a wolf leans STR/DEX, a priest leans WIS/CHA, etc.
+- Provide exactly 3 abilities; pick names that match the archetype (a warrior gets things like "Shield Wall", "Last Stand"; a mage gets "Arcane Bolt", "Read the Weave"; a wolf gets "Pack Howl", "Frost Step"; an elf gets "Mark Quarry"; etc.)
+- equipment: 4 items fitting the archetype
+- All values must be plausible for the avatar — a great horned owl doesn't carry a longsword.`;
 
   const messages = imageBase64 ? [{
     role: 'user',
@@ -98,7 +126,7 @@ Respond in JSON only:
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 800, messages })
+    body: JSON.stringify({ model: 'claude-opus-4-5', max_tokens: 1800, messages })
   });
 
   const data = await response.json();
@@ -231,6 +259,7 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     jobs[jobId].description = claudeResult.description;
     jobs[jobId].traits = claudeResult.traits;
     jobs[jobId].dominant_trait = claudeResult.dominant_trait;
+    jobs[jobId].character_sheet = claudeResult.character_sheet || null;
 
     let imageUrl = null;
 
