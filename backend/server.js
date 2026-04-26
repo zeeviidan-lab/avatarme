@@ -337,8 +337,8 @@ const SDXL_WEIGHTS_BY_AVATAR = {
   priest:      'juggernaut-xl-v8',
   goblin:      'juggernaut-xl-v8',
   martian:     'juggernaut-xl-v8',
-  animated:    'anime-art-diffusion-xl',    // 2D cel-shaded TV-series style
-  yellow_toon: 'anime-art-diffusion-xl',    // closest SDXL approximation; flat-cartoon enforced via prompt
+  animated:    'dreamshaper-xl',            // semi-stylized photoreal — closer to Arcane/Stranger Things animated than pure anime
+  yellow_toon: 'pony-diffusion-v6-xl',      // illustration/cartoon base for flat-color toon look
 };
 
 // PhotoMaker — accepts up to 4 face images natively. Multi-angle reference
@@ -383,20 +383,20 @@ async function photoMaker(prompt, faceImages, avatarKey) {
 async function instantId(prompt, faceBase64, faceMime, avatarKey) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
   const tight = prompt.length > 380 ? prompt.slice(0, 380) : prompt;
-  // Stylized avatars need the identity dialed BACK so the cartoon/anime
-  // style can dominate. Otherwise IP-adapter at 0.95 keeps pulling toward
-  // photoreal even on anime SDXL bases. Photoreal avatars keep the
-  // identity cranked.
+  // Stylized avatars need identity dialed back from photoreal max so the
+  // cartoon style can dominate, but NOT so far that the SDXL base invents
+  // its own face. 0.55 was too low (got random glamour models). 0.75 keeps
+  // the user's face recognizable while allowing stylization.
   const isStylized = ['animated','yellow_toon'].includes(avatarKey);
-  const ipAdapterScale = isStylized ? 0.55 : 0.95;
-  const ctrlNetScale = isStylized ? 0.55 : 0.8;
+  const ipAdapterScale = isStylized ? 0.75 : 0.95;
+  const ctrlNetScale = isStylized ? 0.7 : 0.8;
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: INSTANTID_VERSION, input: Object.assign({
       image: faceDataUrl,
       prompt: tight,
-      negative_prompt: '(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, mutated, cross-eyed, ugly, disfigured, multiple faces, blurry, headshot, close-up, cropped, bust crop',
+      negative_prompt: '(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, mutated, cross-eyed, ugly, disfigured, (multiple people:1.5), (two faces:1.5), (split image:1.5), (side by side:1.5), two heads, twins, double, duplicate, blurry, headshot, close-up, cropped, bust crop',
       sdxl_weights: SDXL_WEIGHTS_BY_AVATAR[avatarKey] || 'juggernaut-xl-v8',
       ip_adapter_scale: ipAdapterScale,         // photoreal: 0.95 (skin/shading from photo). stylized: 0.55 (let cartoon style dominate)
       controlnet_conditioning_scale: ctrlNetScale, // photoreal: 0.8. stylized: 0.55
