@@ -224,6 +224,52 @@ const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e0
 const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4';
 const CODEFORMER_VERSION = 'cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2';
 const SDXL_OUTPAINT_VERSION = 'a542ccf352995f3c41f0bcfaef641daa3058bf2b00e08e04feb0295334ab9804';
+const FACE_TO_MANY_VERSION = 'a07f252abbbd832009640b27f063ea52d87d7a23a185ca165bec23b5adc8deaf';
+
+// face-to-many — purpose-built for "real face → stylized version of you."
+// Uses InstantID under the hood for identity preservation, plus a style
+// LoRA + ControlNet for the visual style. Designed exactly for our
+// "animated"/"yellow_toon" avatars where InstantID alone keeps drifting
+// toward photoreal because the IP-adapter fights the cartoon SDXL base.
+//
+// Built-in styles: 3D, Emoji, Video game, Pixels, Clay, Toy
+// We map avatar_key → style:
+//   animated    → "Video game" (stylized AAA character render — closest
+//                  to Arcane/Stranger-Things-animated semi-realism)
+//   yellow_toon → "Toy" (flat cartoon-y volumes — closest to flat-toon look)
+const FACE_TO_MANY_STYLES = {
+  animated:    'Video game',
+  yellow_toon: 'Toy',
+};
+async function faceToMany(prompt, faceUrl, avatarKey) {
+  if (!faceUrl) return null;
+  const style = FACE_TO_MANY_STYLES[avatarKey] || 'Video game';
+  const tight = (prompt || '').slice(0, 380);
+  try {
+    const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ version: FACE_TO_MANY_VERSION, input: {
+        image: faceUrl,
+        style: style,
+        prompt: tight,
+        negative_prompt: 'low quality, blurry, deformed, multiple faces, two people, watermark, text',
+        prompt_strength: 4.5,
+        denoising_strength: 0.65,         // 1.0 = full restyle, 0.0 = unchanged. 0.65 = strong style shift while keeping identity
+        instant_id_strength: 1.0,         // max — push identity HARD (this is the whole point of using face-to-many over plain InstantID)
+        control_depth_strength: 0.8,
+      } })
+    });
+    const prediction = await startRes.json();
+    if (!prediction.id) { console.error('face-to-many start error:', JSON.stringify(prediction)); return null; }
+    console.log('face-to-many started:', prediction.id, 'style:', style);
+    const out = await pollPrediction(prediction.id, 3000, 60, 'face-to-many');
+    return Array.isArray(out) ? out[0] : out;
+  } catch (e) {
+    console.error('faceToMany exception:', e);
+    return null;
+  }
+}
 
 // Upload bytes to Replicate's Files API → get a real HTTPS URL back.
 // Some Replicate models (especially face-swap ones) silently fail when
@@ -699,9 +745,20 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
       const isStylized = ['animated','yellow_toon'].includes(avatarKey);
       if (isStylized) {
-        // Stylized avatars: InstantID alone (no compose, no CodeFormer
-        // — would un-cartoon them).
-        imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+        // Stylized avatars: face-to-many (purpose-built for "real face →
+        // stylized version of you"). Uses InstantID under the hood + a
+        // style LoRA, and identity sticks much better than plain InstantID
+        // with a stylized SDXL base.
+        // Need the photo as a real URL (not data URL) for face-to-many.
+        const photoUrl = await uploadToReplicateFiles(imageBase64, imageMime);
+        if (photoUrl) {
+          imageUrl = await faceToMany(claudeResult.flux_prompt, photoUrl, avatarKey);
+        }
+        // Fallback: plain InstantID if face-to-many failed
+        if (!imageUrl) {
+          console.log('face-to-many failed — falling back to InstantID');
+          imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+        }
       } else {
         // Photoreal avatars: COMPOSE pipeline.
         // 1. FLUX generates full-body shot (correct framing, wrong face)
