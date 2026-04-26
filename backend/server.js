@@ -267,7 +267,7 @@ async function outpaintToFullBody(portraitImageUrl, fluxPrompt) {
       body: JSON.stringify({ version: FLUX_FILL_VERSION, input: {
         image: 'data:image/png;base64,' + padded.toString('base64'),
         mask:  'data:image/png;base64,' + mask.toString('base64'),
-        prompt: 'full body view continuing the figure above naturally — torso, hips, legs, feet visible — ' + tightPrompt,
+        prompt: 'extend the figure above into a complete full-body standing pose — natural standing posture, arms relaxed at sides, feet planted on the ground and visible at the bottom of the frame, torso and hips and legs continuous with the head/shoulders above, matching the same lighting and background style — ' + tightPrompt,
         guidance: 30,
         num_inference_steps: 30,
         output_format: 'webp',
@@ -396,17 +396,16 @@ async function instantId(prompt, faceBase64, faceMime, avatarKey) {
       enhance_nonface_region: true,
       output_format: 'webp',
       output_quality: 92,
-    }, POSE_REF_DATAURL ? {
-      // Pose ControlNet only — extracts clean skeleton from warrior.jpg.
-      // canny/depth are DISABLED because they leaked warrior pixel info
-      // (long hair, side angle, costume edges, distortion) into the result.
-      // Full-body framing handled separately via outpaint step after.
-      pose_image: POSE_REF_DATAURL,
-      enable_pose_controlnet: true,
-      pose_strength: 0.6,                 // default — gentle framing hint, not a hard constraint
+    }, {
+      // Pose/canny/depth ControlNets ALL disabled. Outpaint handles full-body
+      // framing now, so the pose ref is no longer needed for that. And every
+      // pose ref we tried bled style (long hair, side angles, costume) into
+      // the portrait. Cleanest: let InstantID produce a clean front-facing
+      // portrait, let outpaint add the body with a standing-pose prompt.
+      enable_pose_controlnet: false,
       enable_canny_controlnet: false,
       enable_depth_controlnet: false,
-    } : { enable_pose_controlnet: false }) })
+    }) })
   });
   const prediction = await startRes.json();
   if (!prediction.id) { console.error('InstantID start error:', JSON.stringify(prediction)); return null; }
