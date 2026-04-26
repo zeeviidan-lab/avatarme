@@ -236,28 +236,17 @@ async function pulidPortrait(prompt, faceBase64, faceMime, avatarKey, idWeightOv
 // (face too small for ID to lock) and the trade-off face-swap-alone
 // has (user photo lighting/angle varies, source quality unpredictable).
 async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
-  console.log('generateWithFace (identity-first) avatar:', avatarKey);
-  const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
-  // Run PuLID portrait + FLUX full body in parallel
-  const [portraitUrl, fullBodyUrl] = await Promise.all([
-    pulidPortrait(prompt, faceBase64, faceMime, avatarKey),
-    generateImage(prompt),
-  ]);
-  if (!portraitUrl && !fullBodyUrl) return null;
-  if (!fullBodyUrl) { console.log('No full-body — returning PuLID portrait'); return portraitUrl; }
-  // CRITICAL: face-swap source = the user's ORIGINAL photo (ground-truth
-  // identity), NOT PuLID's regenerated portrait (which drifts on age,
-  // hair color, bone structure). PuLID portrait is kept only as a final
-  // fallback if the swap fails.
-  console.log('Face-swapping ORIGINAL user photo → FLUX full-body');
-  const swapped = await faceSwap(fullBodyUrl, faceDataUrl);
-  if (swapped) return swapped;
-  console.log('Original-photo swap failed — trying PuLID portrait as source');
-  if (portraitUrl) {
-    const swappedFromPulid = await faceSwap(fullBodyUrl, portraitUrl);
-    if (swappedFromPulid) return swappedFromPulid;
-  }
-  return portraitUrl || fullBodyUrl;
+  console.log('generateWithFace (PuLID-only, no face-swap) avatar:', avatarKey);
+  // Pure PuLID generation — no face-swap step. The model bakes the
+  // user's identity into the diffusion itself, so hair/beard/jawline/
+  // build all match the input photo (unlike face-swap which only
+  // transfers the inner eye/nose/mouth triangle and leaves FLUX-
+  // invented hair/jawline around it).
+  // Trade-off: PuLID at full-body framing has weaker identity lock
+  // because the face is small in the frame. We use the standard
+  // PuLID id_weight per avatar and let it produce its native
+  // portrait-leaning framing.
+  return pulidPortrait(prompt, faceBase64, faceMime, avatarKey);
 }
 
 // Run the full pipeline in background
@@ -283,12 +272,11 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      const [fullBody, idPortrait] = await Promise.all([
-        generateWithFace(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
-        pulidPortrait(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey, 3.0),
-      ]);
-      imageUrl = fullBody;
-      portraitUrl = idPortrait;
+      // Single PuLID call at MAX id_weight (3.0) — strongest identity
+      // lock the model offers. No face-swap, no FLUX body fallback —
+      // pure identity-preserving diffusion.
+      imageUrl = await pulidPortrait(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey, 3.0);
+      portraitUrl = null;
     }
 
     // Fallback (or animal/no-face) → regular FLUX
