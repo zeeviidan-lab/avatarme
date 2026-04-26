@@ -154,7 +154,7 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
       height: 1280,
       prompt: 'FULL BODY SHOT, head to toe, wide framing, full standing pose, feet visible, the entire figure standing within the frame from feet to top of head with clear space around the body — ' + prompt,
       negative_prompt: 'cropped at waist, cropped at chest, headshot, bust crop, portrait crop, extreme close-up of face, face fills the frame, body cut off, missing feet, missing legs, missing knees, distorted proportions, oversized head, tiny body, deformed body, multiple faces, extra limbs, low quality, blurry, deformed eyes, cross-eyed, asymmetric face, text, watermark',
-      num_steps: 25,
+      num_steps: 20,            // schema max is 20
       guidance_scale: 4,
       id_weight: idWeight,
       true_cfg: 1,
