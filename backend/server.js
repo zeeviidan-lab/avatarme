@@ -99,10 +99,20 @@ Image prompt rules:
 - 2-3 sentences, highly descriptive
 - End with: "${ ['wolf','snow_leopard','monkey','eagle','fox','bear','tiger','owl','yourself'].includes(avatarKey) ? 'shot on 35mm film, natural light, candid documentary style, soft realistic shadows, subtle film grain, full body framing' : avatarKey === 'animated' ? 'official animated TV series key frame, Netflix Stranger Things animated style, Flying Bark Productions, Arcane-quality 2D, painterly cel-shading, ink-line silhouettes, painted background, full body' : avatarKey.startsWith('cartoon_') ? 'official animated TV series key frame, Netflix Stranger Things animated style, Flying Bark Productions, Arcane-quality 2D, painterly cel-shading, ink-line silhouettes, painted background, full body' : avatarKey === 'yellow_toon' ? 'classic 90s American animated sitcom style, flat yellow skin, bold black outlines, simple cel cartoon, full body' : avatarKey === 'martian' ? 'cinematic sci-fi alien portrait, clean AAA render, ArtStation quality, full body, ultra detailed' : 'clean AAA game render, soft balanced lighting, gentle shadows, low contrast, subtle rim light, natural exposure, approachable friendly tone, full body, ultra detailed' }"
 
+${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? `
+SKIN DESCRIPTOR (CONSTRAINED — pick from these enums only, do not free-form):
+- skin_tone_label: ONE OF ["very fair","fair","light olive","olive","tan","light brown","brown","deep brown","very dark brown"]
+- skin_undertone: ONE OF ["warm","cool","neutral"]
+- skin_hex: 6-char hex sample of the dominant cheek/forehead skin color from the photo (e.g. "C49A78"). Sample mid-tone, not shadow or highlight.
+Inject these at the START of the flux_prompt verbatim as: "skin tone: <label>, <undertone> undertone, approximate color #<hex>, preserve the input photo's exact skin tone and shading — do not lighten, do not darken, do not warm-shift, do not cool-shift,". This is REQUIRED for every human-avatar prompt.
+` : ''}
 Respond in JSON only with this EXACT shape:
 {
   "description": "2-3 sentence personal description",
   "flux_prompt": "detailed image prompt",
+  "skin_tone_label": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? 'one of the enums above' : ''}",
+  "skin_undertone": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? 'one of: warm, cool, neutral' : ''}",
+  "skin_hex": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? '6-char hex' : ''}",
   "traits": {"Composure":80, "Strategy":75, "Instinct":85, "Adaptability":70},
   "dominant_trait": "one word",
   "character_sheet": {
@@ -244,8 +254,8 @@ async function instantId(prompt, faceBase64, faceMime, avatarKey) {
       prompt: tight,
       negative_prompt: '(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, mutated, cross-eyed, ugly, disfigured, multiple faces, blurry, headshot, close-up, cropped, bust crop',
       sdxl_weights: 'juggernaut-xl-v8',         // photoreal base
-      ip_adapter_scale: 0.8,                     // face detail preservation
-      controlnet_conditioning_scale: 0.85,       // identity (landmark) lock
+      ip_adapter_scale: 0.95,                    // pull face detail (skin tone, shading) hard from input photo
+      controlnet_conditioning_scale: 0.8,        // identity (landmark) lock — slightly relaxed so IP-adapter dominates skin
       guidance_scale: 5,
       num_inference_steps: 30,
       enhance_nonface_region: true,
