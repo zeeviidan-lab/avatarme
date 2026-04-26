@@ -213,6 +213,22 @@ const PULID_VERSION = '8baa7ef2255075b46f4d91cd238c21d31181b3e6a864463f967960bb0
 const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
 const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4';
 
+// Per-avatar SDXL weights for InstantID. The wrong base ruins the look:
+// juggernaut on `animated` produces photoreal (what user just complained
+// about); anime weights on `yourself` look uncanny.
+const SDXL_WEIGHTS_BY_AVATAR = {
+  yourself:    'juggernaut-xl-v8',          // photoreal
+  warrior:     'juggernaut-xl-v8',          // photoreal AAA character
+  mage:        'juggernaut-xl-v8',
+  elf:         'juggernaut-xl-v8',
+  dwarf:       'juggernaut-xl-v8',
+  priest:      'juggernaut-xl-v8',
+  goblin:      'juggernaut-xl-v8',
+  martian:     'juggernaut-xl-v8',
+  animated:    'anime-art-diffusion-xl',    // 2D cel-shaded TV-series style
+  yellow_toon: 'anime-art-diffusion-xl',    // closest SDXL approximation; flat-cartoon enforced via prompt
+};
+
 // PhotoMaker — accepts up to 4 face images natively. Multi-angle reference
 // dramatically improves identity preservation vs. any single-image model.
 // Trigger word "img" must appear in the prompt for identity to inject.
@@ -255,6 +271,13 @@ async function photoMaker(prompt, faceImages, avatarKey) {
 async function instantId(prompt, faceBase64, faceMime, avatarKey) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
   const tight = prompt.length > 380 ? prompt.slice(0, 380) : prompt;
+  // Stylized avatars need the identity dialed BACK so the cartoon/anime
+  // style can dominate. Otherwise IP-adapter at 0.95 keeps pulling toward
+  // photoreal even on anime SDXL bases. Photoreal avatars keep the
+  // identity cranked.
+  const isStylized = ['animated','yellow_toon'].includes(avatarKey);
+  const ipAdapterScale = isStylized ? 0.55 : 0.95;
+  const ctrlNetScale = isStylized ? 0.55 : 0.8;
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
@@ -262,9 +285,9 @@ async function instantId(prompt, faceBase64, faceMime, avatarKey) {
       image: faceDataUrl,
       prompt: tight,
       negative_prompt: '(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, mutated, cross-eyed, ugly, disfigured, multiple faces, blurry, headshot, close-up, cropped, bust crop',
-      sdxl_weights: 'juggernaut-xl-v8',         // photoreal base
-      ip_adapter_scale: 0.95,                    // pull face detail (skin tone, shading) hard from input photo
-      controlnet_conditioning_scale: 0.8,        // identity (landmark) lock — slightly relaxed so IP-adapter dominates skin
+      sdxl_weights: SDXL_WEIGHTS_BY_AVATAR[avatarKey] || 'juggernaut-xl-v8',
+      ip_adapter_scale: ipAdapterScale,         // photoreal: 0.95 (skin/shading from photo). stylized: 0.55 (let cartoon style dominate)
+      controlnet_conditioning_scale: ctrlNetScale, // photoreal: 0.8. stylized: 0.55
       guidance_scale: 5,
       num_inference_steps: 30,
       enhance_nonface_region: true,
