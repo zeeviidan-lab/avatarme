@@ -688,22 +688,28 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
         // 4. CodeFormer: clean up the seam, sharpen
         // Each model does what it's good at instead of fighting one model
         // to do everything.
-        console.log('Compose pipeline: FLUX body + InstantID portrait + faceswap + CodeFormer');
+        // IDENTITY-FIRST compose: head source = USER'S ORIGINAL PHOTO (not
+        // InstantID's regenerated portrait). InstantID smooths/elongates
+        // faces; the user's photo IS the user, no drift. Falls back to
+        // InstantID portrait if face detection fails on the original.
+        console.log('Compose pipeline: FLUX body + ORIGINAL PHOTO head + CodeFormer');
+        const originalPhotoDataUrl = `data:${imageMime};base64,${imageBase64}`;
         const [fluxBody, idPortrait] = await Promise.all([
           generateImage(claudeResult.flux_prompt),
+          // Still run InstantID in parallel — used only if original-photo
+          // face detection fails (e.g. weird angle, low res, etc.)
           instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
         ]);
-        if (fluxBody && idPortrait) {
-          // FULL HEAD composite (not just face-swap). headComposite cuts
-          // the WHOLE head region — hair, beard, jawline, ears — out of
-          // the InstantID portrait and pastes it over the FLUX body's
-          // head with feathered alpha. Solves "FLUX-grey-beard +
-          // user's-eye-region = doesn't read as user."
-          console.log('Compositing InstantID head → FLUX body (whole head, not just face)');
-          const composed = await headComposite(fluxBody, idPortrait);
+        if (fluxBody) {
+          // PRIMARY: composite from user's original photo (max identity)
+          console.log('Compositing ORIGINAL PHOTO head → FLUX body');
+          let composed = await headComposite(fluxBody, originalPhotoDataUrl);
+          // Fallback: try InstantID portrait if original-photo composite failed
+          if (!composed && idPortrait) {
+            console.log('Original-photo composite failed — trying InstantID portrait as source');
+            composed = await headComposite(fluxBody, idPortrait);
+          }
           imageUrl = composed || fluxBody;
-        } else if (fluxBody) {
-          imageUrl = fluxBody;
         } else if (idPortrait) {
           imageUrl = idPortrait;
         }
