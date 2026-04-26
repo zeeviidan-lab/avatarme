@@ -1191,38 +1191,48 @@ function pickAv(card, name) {
 }
 
 // ── GENERATE ──
-// Progress ring control
+// Progress ring control — rAF-based for smooth motion. Previous setInterval
+// version updated every 250ms but the CSS transition was 0.8s, so each
+// transition got interrupted before completing → ring appeared frozen.
+// rAF runs ~16ms per frame and writes the dasharray directly; no transition
+// needed because we're already updating per frame.
 var PRING_CIRC = 2 * Math.PI * 46; // r=46 => ~289
-var pringTimer = null, pringStart = 0, pringEstSec = 30;
+var pringRAF = 0, pringStart = 0, pringEstSec = 30, pringActiveIds = null;
 function pringStartCounter(estSec, ids) {
   pringEstSec = estSec || 30;
-  pringStart = Date.now();
-  if (pringTimer) clearInterval(pringTimer);
-  var fillId = ids && ids.fill || 'pring-fill';
-  var secsId = ids && ids.secs || 'pring-secs';
-  var pctId  = ids && ids.pct  || 'pring-pct';
-  function tick() {
-    var elapsed = (Date.now() - pringStart) / 1000;
+  pringStart = performance.now();
+  pringActiveIds = ids || null;
+  if (pringRAF) cancelAnimationFrame(pringRAF);
+  var fillId = (ids && ids.fill) || 'pring-fill';
+  var secsId = (ids && ids.secs) || 'pring-secs';
+  var fill = document.getElementById(fillId);
+  // Disable the CSS transition that was fighting per-frame writes.
+  if (fill) fill.style.transition = 'none';
+  function frame(now) {
+    var elapsed = (now - pringStart) / 1000;
     var pct = Math.min(0.97, elapsed / pringEstSec);
-    var fill = document.getElementById(fillId);
-    if (fill) fill.setAttribute('stroke-dasharray', (pct * PRING_CIRC) + ' ' + PRING_CIRC);
+    if (fill) fill.setAttribute('stroke-dasharray', (pct * PRING_CIRC).toFixed(2) + ' ' + PRING_CIRC);
     var secs = document.getElementById(secsId);
     if (secs) secs.textContent = Math.floor(elapsed);
+    pringRAF = requestAnimationFrame(frame);
   }
-  tick();
-  pringTimer = setInterval(tick, 250);
+  pringRAF = requestAnimationFrame(frame);
 }
 function pringSetPct(label, fillId) {
   var el = document.getElementById(fillId || 'pring-pct');
   if (el) el.textContent = label;
 }
 function pringComplete(ids) {
-  var fillId = ids && ids.fill || 'pring-fill';
-  var pctId  = ids && ids.pct  || 'pring-pct';
-  if (pringTimer) clearInterval(pringTimer);
-  pringTimer = null;
+  var fillId = (ids && ids.fill) || 'pring-fill';
+  var pctId  = (ids && ids.pct)  || 'pring-pct';
+  if (pringRAF) cancelAnimationFrame(pringRAF);
+  pringRAF = 0;
   var fill = document.getElementById(fillId);
-  if (fill) fill.setAttribute('stroke-dasharray', PRING_CIRC + ' ' + PRING_CIRC);
+  if (fill) {
+    // Restore a smooth transition just for the final snap to 100%.
+    fill.style.transition = 'stroke-dasharray 0.4s ease-out';
+    fill.setAttribute('stroke-dasharray', PRING_CIRC + ' ' + PRING_CIRC);
+  }
   var pct = document.getElementById(pctId);
   if (pct) pct.textContent = 'DONE';
 }
