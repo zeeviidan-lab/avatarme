@@ -679,6 +679,23 @@
           <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:1.5px;color:var(--accent);line-height:1.1">SPIRIT<br/>PAIRING</div>
         </div>
       </div>
+      <!-- Identity-true PuLID portrait — only shown for human avatars
+           with a face uploaded. Face-swap can't transfer hair/beard/build,
+           so the full-body shot above is "you in the world" but this is
+           the actually-recognizable face. -->
+      <div id="id-portrait-wrap" style="display:none;margin:0 24px 18px;padding:14px;border:1px solid rgba(212,163,115,0.35);border-radius:18px;background:linear-gradient(180deg,rgba(212,163,115,0.06),rgba(0,0,0,0))">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:3px;color:var(--accent)">IDENTITY PORTRAIT</div>
+          <div style="font-size:10px;color:var(--muted);flex:1">PuLID-locked face · this is you</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <img id="id-portrait-img" src="" alt="identity portrait" style="flex:1;width:50%;aspect-ratio:7/9;object-fit:cover;border-radius:12px;border:1px solid var(--border)"/>
+          <div style="flex:1;display:flex;flex-direction:column;gap:8px">
+            <div style="font-size:10px;letter-spacing:1.5px;color:var(--muted)">YOUR PHOTO</div>
+            <img id="id-portrait-original" src="" alt="original" style="width:100%;aspect-ratio:7/9;object-fit:cover;border-radius:12px;border:1px solid var(--border);opacity:0.92"/>
+          </div>
+        </div>
+      </div>
       <div class="result-body">
         <div class="result-name">
           <img id="rav-thumb" src="" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:1.5px solid var(--accent);flex-shrink:0"/>
@@ -1211,6 +1228,15 @@ async function generate() {
     document.getElementById('ravatar-img').src = result.image_url;
     var thumb = document.getElementById('rav-thumb');
     if (thumb) thumb.src = result.image_url;
+    // Identity portrait card — only when backend returned a PuLID portrait
+    var idWrap = document.getElementById('id-portrait-wrap');
+    if (result.portrait_url && uploads.faceDataUrl) {
+      document.getElementById('id-portrait-img').src = result.portrait_url;
+      document.getElementById('id-portrait-original').src = uploads.faceDataUrl;
+      idWrap.style.display = 'block';
+    } else {
+      idWrap.style.display = 'none';
+    }
     var pair = document.getElementById('pair-inset');
     if (ANIMAL_KEYS.has(chosenAv) && uploads.faceDataUrl) {
       document.getElementById('pair-photo').src = uploads.faceDataUrl;

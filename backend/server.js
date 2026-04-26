@@ -192,9 +192,9 @@ const PULID_ID_WEIGHTS = {
 // PuLID portrait pass — face-dominant 1024x1024 (face occupies ~40% of frame)
 // so PuLID's identity injection is at maximum effectiveness. The prompt is
 // reduced to face/upper-body cues; the costume/setting is described briefly.
-async function pulidPortrait(prompt, faceBase64, faceMime, avatarKey) {
+async function pulidPortrait(prompt, faceBase64, faceMime, avatarKey, idWeightOverride) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
-  const idWeight = PULID_ID_WEIGHTS[avatarKey] ?? 1.0;
+  const idWeight = idWeightOverride ?? PULID_ID_WEIGHTS[avatarKey] ?? 1.0;
   // Trim the Claude prompt and add portrait framing
   const tight = prompt.length > 280 ? prompt.slice(0, 280) : prompt;
   const portraitPrompt = 'cinematic close-up portrait, face and upper body, looking at camera, ' + tight;
@@ -273,10 +273,22 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     jobs[jobId].character_sheet = claudeResult.character_sheet || null;
 
     let imageUrl = null;
+    let portraitUrl = null;
 
-    // If face uploaded AND human avatar → use InstantID for true identity preservation
+    // If face uploaded AND human avatar → run TWO outputs in parallel:
+    //   - imageUrl    = full-body "you in the world" (FLUX + face-swap)
+    //   - portraitUrl = identity-true headshot (PuLID at MAX id_weight 3.0)
+    // Face-swap models only transfer eyes/nose/mouth — they can't transfer
+    // hair, beard, jawline, build. So the full-body shot will always read
+    // as "FLUX guy with your nose region". The PuLID portrait gives the
+    // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      imageUrl = await generateWithFace(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+      const [fullBody, idPortrait] = await Promise.all([
+        generateWithFace(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
+        pulidPortrait(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey, 3.0),
+      ]);
+      imageUrl = fullBody;
+      portraitUrl = idPortrait;
     }
 
     // Fallback (or animal/no-face) → regular FLUX
@@ -304,6 +316,7 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
 
     jobs[jobId].status = 'done';
     jobs[jobId].image_url = imageUrl;
+    jobs[jobId].portrait_url = portraitUrl;
     jobs[jobId].avatar_name = AVATARS[avatarKey].name;
   } catch (err) {
     jobs[jobId].status = 'error';
