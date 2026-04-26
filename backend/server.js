@@ -161,27 +161,28 @@ const PULID_ID_WEIGHTS = {
   goblin:      1.5,
 };
 
-async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
+// PuLID portrait pass — face-dominant 1024x1024 (face occupies ~40% of frame)
+// so PuLID's identity injection is at maximum effectiveness. The prompt is
+// reduced to face/upper-body cues; the costume/setting is described briefly.
+async function pulidPortrait(prompt, faceBase64, faceMime, avatarKey) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
   const idWeight = PULID_ID_WEIGHTS[avatarKey] ?? 1.0;
-  // PuLID is sensitive to prompt length — keep it tight and lead with
-  // the SUBJECT (so identity tokens align with the FLUX denoising target),
-  // not framing instructions. Move framing keywords to the tail.
-  const tightPrompt = prompt.length > 380 ? prompt.slice(0, 380) : prompt;
-  const pulidPrompt = tightPrompt + ', full body, head to toe, standing, feet visible, cinematic';
+  // Trim the Claude prompt and add portrait framing
+  const tight = prompt.length > 280 ? prompt.slice(0, 280) : prompt;
+  const portraitPrompt = 'cinematic close-up portrait, face and upper body, looking at camera, ' + tight;
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ version: PULID_VERSION, input: {
       main_face_image: faceDataUrl,
-      width: 768,
-      height: 1280,
-      prompt: pulidPrompt,
-      negative_prompt: 'cropped, headshot, bust crop, missing feet, missing legs, deformed, multiple faces, extra limbs, low quality, blurry, asymmetric face, text, watermark',
+      width: 896,                  // PuLID's tested defaults — best identity
+      height: 1152,
+      prompt: portraitPrompt,
+      negative_prompt: 'multiple faces, extra limbs, deformed, deformed eyes, cross-eyed, low quality, blurry, text, watermark, side profile, looking away',
       num_steps: 20,
       guidance_scale: 4,
       id_weight: idWeight,
-      start_step: 0,            // inject identity from first step → max fidelity
+      start_step: 0,
       true_cfg: 1,
       output_format: 'jpg',
       output_quality: 92,
@@ -189,22 +190,35 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
   });
   const prediction = await startRes.json();
   if (!prediction.id) { console.error('PuLID start error:', JSON.stringify(prediction)); return null; }
-  console.log('PuLID started:', prediction.id, 'avatar:', avatarKey, 'id_weight:', idWeight, 'face_bytes:', faceBase64.length, 'prompt_len:', pulidPrompt.length);
+  console.log('PuLID portrait started:', prediction.id, 'avatar:', avatarKey, 'id_weight:', idWeight, 'face_bytes:', faceBase64.length);
+  return pollPrediction(prediction.id, 3000, 50, 'PuLID portrait');
+}
 
-  for (let i = 0; i < 50; i++) {
-    await new Promise(r => setTimeout(r, 3000));
-    const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
-      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
-    });
-    const result = await pollRes.json();
-    if (result.status === 'succeeded') {
-      console.log('PuLID succeeded');
-      return Array.isArray(result.output) ? result.output[0] : result.output;
-    }
-    if (result.status === 'failed') { console.error('PuLID failed:', result.error); return null; }
-  }
-  console.error('PuLID timed out');
-  return null;
+// Two-pass identity pipeline for HUMAN_AVATARS:
+//   1. PuLID portrait (strong identity, face-dominant)        ~30s
+//   2. FLUX full-body in same costume/setting                  ~10s  (parallel)
+//   3. Face-swap PuLID portrait → FLUX full-body              ~15s
+// Net: face that LOOKS like the user (PuLID) at the right scale
+// (face-swap handles the size mismatch by warping a high-quality source).
+// This solves the trade-off PuLID-alone has at full-body framing
+// (face too small for ID to lock) and the trade-off face-swap-alone
+// has (user photo lighting/angle varies, source quality unpredictable).
+async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
+  console.log('generateWithFace (two-pass) avatar:', avatarKey);
+  const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
+  // Run PuLID portrait + FLUX full body in parallel
+  const [portraitUrl, fullBodyUrl] = await Promise.all([
+    pulidPortrait(prompt, faceBase64, faceMime, avatarKey),
+    generateImage(prompt),
+  ]);
+  if (!portraitUrl && !fullBodyUrl) return null;
+  if (!fullBodyUrl) { console.log('No full-body — returning PuLID portrait'); return portraitUrl; }
+  if (!portraitUrl) { console.log('No PuLID portrait — returning bare FLUX full body'); return fullBodyUrl; }
+  // Face-swap: use the PuLID portrait as the high-quality identity SOURCE,
+  // place it on the FLUX full-body TARGET.
+  console.log('Face-swapping PuLID portrait → FLUX full-body');
+  const swapped = await faceSwap(fullBodyUrl, portraitUrl);
+  return swapped || fullBodyUrl;
 }
 
 // Run the full pipeline in background

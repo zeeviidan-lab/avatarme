@@ -805,17 +805,62 @@ function goTo(id) {
 }
 
 // ── UPLOAD ──
+// Resize big phone photos (often 3-5MB, 4000px wide) before upload.
+// PuLID/face-swap don't need >1024px, and oversize base64 data URIs
+// can silently fail downstream at Replicate. Returns a JPEG File ~150KB.
+function resizeFaceImage(file, maxDim) {
+  return new Promise(function(resolve, reject) {
+    var fr = new FileReader();
+    fr.onload = function(ev) {
+      var img = new Image();
+      img.onload = function() {
+        var scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+        var w = Math.round(img.width * scale);
+        var h = Math.round(img.height * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(function(blob) {
+          if (!blob) { reject(new Error('canvas blob failed')); return; }
+          var resized = new File([blob], 'face.jpg', { type: 'image/jpeg' });
+          var fr2 = new FileReader();
+          fr2.onload = function(e2) { resolve({ file: resized, dataUrl: e2.target.result }); };
+          fr2.readAsDataURL(blob);
+        }, 'image/jpeg', 0.88);
+      };
+      img.onerror = reject;
+      img.src = ev.target.result;
+    };
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
+
 function fileSelected(type, input) {
   if (!input.files || !input.files[0]) return;
   var file = input.files[0];
   var name = file.name.length > 22 ? file.name.substring(0,20)+'…' : file.name;
   if (type === 'face') {
-    uploads.face = file;
-    var fr = new FileReader();
-    fr.onload = function(e){ uploads.faceDataUrl = e.target.result; saveFace(e.target.result); };
-    fr.readAsDataURL(file);
+    document.getElementById('fp-face').textContent = 'Processing…';
+    resizeFaceImage(file, 1024).then(function(out){
+      uploads.face = out.file;
+      uploads.faceDataUrl = out.dataUrl;
+      saveFace(out.dataUrl);
+      document.getElementById('uc-face').classList.add('done');
+      document.getElementById('fp-face').textContent = '✓ ' + name + ' (optimized)';
+    }).catch(function(err){
+      console.error('resize failed, using original', err);
+      uploads.face = file;
+      var fr = new FileReader();
+      fr.onload = function(e){ uploads.faceDataUrl = e.target.result; saveFace(e.target.result); };
+      fr.readAsDataURL(file);
+      document.getElementById('uc-face').classList.add('done');
+      document.getElementById('fp-face').textContent = '✓ ' + name;
+    });
+    return;
   }
-  else uploads[type] = true;
+  uploads[type] = true;
   document.getElementById('uc-' + type).classList.add('done');
   document.getElementById('fp-' + type).textContent = '✓ ' + name;
 }
