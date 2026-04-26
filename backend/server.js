@@ -212,6 +212,37 @@ const HUMAN_AVATARS = new Set(['yourself','animated','yellow_toon','martian','el
 const PULID_VERSION = '8baa7ef2255075b46f4d91cd238c21d31181b3e6a864463f967960bb0112525b';
 const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
 const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4';
+const CODEFORMER_VERSION = 'cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2';
+
+// CodeFormer face restoration — runs as the final step on InstantID output.
+// Sharpens facial features, fixes diffusion artifacts, and pulls overall
+// quality toward photoreal. This is the post-process step every commercial
+// face-swap pipeline (Pippit, Media.io, InsightFaceSwap) uses; we were
+// missing it. codeformer_fidelity 0.7 = favor identity over aggressive
+// reconstruction (preserves what InstantID generated rather than inventing).
+async function codeFormerRestore(imageUrl) {
+  if (!imageUrl) return null;
+  try {
+    const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ version: CODEFORMER_VERSION, input: {
+        image: imageUrl,
+        codeformer_fidelity: 0.7,    // 0=more change, 1=most faithful — 0.7 sharpens without destroying InstantID identity
+        face_upsample: true,
+        background_enhance: true,
+        upscale: 2,
+      } })
+    });
+    const prediction = await startRes.json();
+    if (!prediction.id) { console.error('CodeFormer start error:', JSON.stringify(prediction)); return null; }
+    console.log('CodeFormer restoration started:', prediction.id);
+    return await pollPrediction(prediction.id, 2000, 40, 'CodeFormer');
+  } catch (e) {
+    console.error('CodeFormer exception:', e);
+    return null;
+  }
+}
 
 // Per-avatar SDXL weights for InstantID. The wrong base ruins the look:
 // juggernaut on `animated` produces photoreal (what user just complained
@@ -410,14 +441,25 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      // Primary: InstantID with full-body pose reference. User feedback:
-      // identity quality was good, framing was wrong (portrait only).
-      // Adding the pose_image ref forces head-to-toe framing.
+      // Primary: InstantID with full-body pose reference.
       imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
       // Fallback only: PhotoMaker if InstantID failed AND user gave ≥2 angles.
       if (!imageUrl && faceImages && faceImages.length >= 2) {
         console.log('InstantID failed — trying PhotoMaker with', faceImages.length, 'angles');
         imageUrl = await photoMaker(claudeResult.flux_prompt, faceImages, avatarKey);
+      }
+      // Post-restore with CodeFormer (the missing "secret sauce" of commercial
+      // face-swap pipelines). Skipped for stylized avatars because CodeFormer
+      // is a photoreal restorer — would un-cartoon them.
+      const isStylized = ['animated','yellow_toon'].includes(avatarKey);
+      if (imageUrl && !isStylized) {
+        const restored = await codeFormerRestore(imageUrl);
+        if (restored) {
+          console.log('CodeFormer restoration applied');
+          imageUrl = restored;
+        } else {
+          console.log('CodeFormer restoration failed — keeping InstantID output');
+        }
       }
       portraitUrl = null;
     }
