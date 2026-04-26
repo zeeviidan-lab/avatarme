@@ -405,6 +405,75 @@ async function generate3D(imageUrl) {
   throw new Error('Hunyuan3D timed out');
 }
 
+// ── Image-to-video (wan-2.2-i2v-fast) ──
+const I2V_VERSION = '4eaf2b01d3bf70d8a2e00b219efeb7cb415855ad18b7dacdc4cae664a73a6eea';
+const MOTION_PROMPTS = {
+  walk:  'the subject walks confidently forward toward the camera, natural full-body stride, head and shoulders bobbing slightly, arms swinging, full body in frame, smooth motion, cinematic',
+  run:   'the subject runs energetically toward the camera, arms pumping, legs lifting high, full-body motion, hair and clothing moving with the speed, smooth motion, cinematic',
+  jump:  'the subject jumps up into the air with both arms raised in celebration, full body lifts off the ground, then lands softly, full body in frame, smooth motion, cinematic',
+  dance: 'the subject dances joyfully, hips swaying, arms moving with rhythm, full body grooving, hair and clothing in motion, smooth motion, cinematic',
+  wave:  'the subject smiles warmly and raises one hand to wave at the camera, friendly greeting gesture, gentle natural motion, full body visible, smooth motion, cinematic',
+  spin:  'the subject spins around gracefully on the spot, full 360-degree turn, arms extended slightly, hair and clothing flowing with the rotation, full body in frame, smooth motion, cinematic',
+};
+
+async function generateVideo(imageUrl, motion) {
+  const motionPrompt = MOTION_PROMPTS[motion] || MOTION_PROMPTS.walk;
+  const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: I2V_VERSION, input: {
+      image: imageUrl,
+      prompt: motionPrompt,
+      num_frames: 81,           // ~5s at 16fps
+      frames_per_second: 16,
+      resolution: '480p',
+      go_fast: true,
+    } })
+  });
+  const pred = await startRes.json();
+  if (!pred.id) throw new Error('Video start error: ' + JSON.stringify(pred));
+  console.log('Video started:', pred.id, 'motion:', motion);
+  for (let i = 0; i < 90; i++) {
+    await new Promise(r => setTimeout(r, 3000));
+    const poll = await fetch(`https://api.replicate.com/v1/predictions/${pred.id}`, {
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
+    });
+    const result = await poll.json();
+    if (result.status === 'succeeded') {
+      console.log('Video done');
+      return Array.isArray(result.output) ? result.output[0] : result.output;
+    }
+    if (result.status === 'failed' || result.status === 'canceled') {
+      throw new Error('Video ' + result.status + ': ' + result.error);
+    }
+  }
+  throw new Error('Video timed out');
+}
+
+app.post('/start-video/:id', async (req, res) => {
+  const job = jobs[req.params.id];
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  if (!job.image_url) return res.status(400).json({ error: 'No image yet' });
+  const motion = (req.query.motion || req.body?.motion || 'walk').toString();
+  // Per-motion cache so the user can try several different motions
+  job.videos = job.videos || {};
+  if (job.videos[motion]) return res.json({ video_url: job.videos[motion] });
+  if (job.video_in_flight === motion) return res.json({ status_video: 'generating', motion });
+  job.video_in_flight = motion;
+  (async () => {
+    try {
+      const url = await generateVideo(job.image_url, motion);
+      job.videos[motion] = url;
+      job.video_in_flight = null;
+    } catch (e) {
+      job.video_in_flight = null;
+      job.video_error = e.message;
+      console.error('Video error:', e);
+    }
+  })();
+  res.json({ status_video: 'generating', motion });
+});
+
 app.post('/start-3d/:id', async (req, res) => {
   const job = jobs[req.params.id];
   if (!job) return res.status(404).json({ error: 'Job not found' });
@@ -436,6 +505,22 @@ app.get('/glb', async (req, res) => {
     if (!upstream.ok) return res.status(502).send('upstream error');
     res.setHeader('Content-Type', 'model/gltf-binary');
     res.setHeader('Access-Control-Allow-Origin', '*');
+    const buf = Buffer.from(await upstream.arrayBuffer());
+    res.send(buf);
+  } catch (e) {
+    res.status(500).send('proxy error');
+  }
+});
+
+app.get('/video', async (req, res) => {
+  const url = req.query.url;
+  if (!url || !/^https:\/\/replicate\.delivery\//.test(url)) return res.status(400).send('bad url');
+  try {
+    const upstream = await fetch(url);
+    if (!upstream.ok) return res.status(502).send('upstream error');
+    res.setHeader('Content-Type', upstream.headers.get('content-type') || 'video/mp4');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
     const buf = Buffer.from(await upstream.arrayBuffer());
     res.send(buf);
   } catch (e) {

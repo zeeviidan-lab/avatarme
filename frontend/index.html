@@ -234,6 +234,10 @@
   .loader-bar-fill { height:100%; background:var(--accent); border-radius:99px; width:0%; transition:width 1s ease; box-shadow:0 0 8px var(--accent); }
   .loader p { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; margin-top:16px; color:var(--muted); }
 
+  /* MOTION PICKER */
+  .motion-btn { background:rgba(228,116,163,0.08); border:1.5px solid rgba(228,116,163,0.35); color:#e474a3; padding:18px 12px; border-radius:14px; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; cursor:pointer; transition:all 0.15s; }
+  .motion-btn:active { transform:scale(0.96); background:rgba(228,116,163,0.18); }
+
   /* RESULT REVEAL */
   .result-reveal { animation:revealUp 0.6s ease forwards; }
   @keyframes revealUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
@@ -487,6 +491,57 @@
       <button class="cta" id="bcta" onclick="generate()" disabled>GENERATE MY AVATAR ✦</button>
     </div>
 
+    <!-- MOTION PICKER OVERLAY -->
+    <div id="motion-picker" style="display:none;position:absolute;inset:0;background:rgba(8,5,12,0.92);backdrop-filter:blur(12px);z-index:610;flex-direction:column;align-items:center;justify-content:center;padding:32px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:3px;margin-bottom:8px;color:var(--text)">PICK A MOTION</div>
+      <div style="color:var(--muted);font-size:13px;margin-bottom:32px;text-align:center;max-width:280px;line-height:1.5">Bring your avatar to life. Each motion takes ~30-60 seconds.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:340px">
+        <button class="motion-btn" data-motion="walk"  onclick="startMotion('walk')">🚶 WALK</button>
+        <button class="motion-btn" data-motion="run"   onclick="startMotion('run')">🏃 RUN</button>
+        <button class="motion-btn" data-motion="jump"  onclick="startMotion('jump')">🤸 JUMP</button>
+        <button class="motion-btn" data-motion="dance" onclick="startMotion('dance')">💃 DANCE</button>
+        <button class="motion-btn" data-motion="wave"  onclick="startMotion('wave')">👋 WAVE</button>
+        <button class="motion-btn" data-motion="spin"  onclick="startMotion('spin')">🌀 SPIN</button>
+      </div>
+      <button class="btn-sec" style="margin-top:28px;padding:12px 28px" onclick="closeMotionPicker()">CANCEL</button>
+    </div>
+
+    <!-- VIDEO VIEWER OVERLAY -->
+    <div id="video-viewer" style="display:none;position:absolute;inset:0;background:#05050a;z-index:620;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px;color:#e474a3;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:16px">
+        <span id="video-title">YOUR AVATAR</span>
+        <span onclick="closeVideo()" style="cursor:pointer;font-size:24px;color:var(--muted)">✕</span>
+      </div>
+      <div style="flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:0 12px">
+        <video id="video-el" style="width:100%;max-height:100%;border-radius:14px;background:#000;display:none" autoplay loop muted playsinline controls></video>
+        <div id="video-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e474a3;font-family:'Bebas Neue',sans-serif;letter-spacing:2px">
+          <div class="pring" style="margin-bottom:20px">
+            <svg viewBox="0 0 100 100">
+              <defs>
+                <linearGradient id="pringGradVid" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#e474a3"/>
+                  <stop offset="100%" stop-color="#a8417a"/>
+                </linearGradient>
+              </defs>
+              <circle class="pring-track" cx="50" cy="50" r="46"/>
+              <circle cx="50" cy="50" r="46" fill="none" stroke="url(#pringGradVid)" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 999" id="pringVid-fill" style="transition:stroke-dasharray 0.8s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 0 6px rgba(228,116,163,0.5))"/>
+            </svg>
+            <div class="pring-center">
+              <div class="pring-secs" style="color:#fce6ef"><span id="pringVid-secs">0</span><span class="small" style="color:#e474a3">s</span></div>
+              <div class="pring-pct" style="color:#e474a3" id="pringVid-pct">RENDERING</div>
+            </div>
+          </div>
+          <div style="font-size:16px;margin-bottom:6px" id="video-loading-title">ANIMATING</div>
+          <div style="font-size:11px;color:var(--muted);letter-spacing:1px">~45 SECONDS</div>
+        </div>
+      </div>
+      <div style="padding:16px 20px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn-sec" style="flex:1;min-width:80px" onclick="closeVideo()">BACK</button>
+        <button class="btn-sec" style="flex:1;min-width:90px" onclick="shareVideo()">SHARE</button>
+        <button class="btn-pri" style="flex:1.4;min-width:120px;background:#e474a3;color:#fff" onclick="saveVideo()">SAVE .MP4 💾</button>
+      </div>
+    </div>
+
     <!-- 3D VIEWER OVERLAY -->
     <div id="viewer3d" style="display:none;position:absolute;inset:0;background:#05080c;z-index:600;flex-direction:column">
       <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px;color:#7bb3ff;font-family:'Bebas Neue',sans-serif;letter-spacing:2px;font-size:16px">
@@ -560,6 +615,7 @@
       </div>
       <div class="result-actions" style="margin-top:-8px">
         <button class="btn-sec" id="btn-3d" style="flex:1;background:rgba(74,144,226,0.12);border-color:rgba(74,144,226,0.4);color:#7bb3ff" onclick="make3D()">🧊 MAKE 3D</button>
+        <button class="btn-sec" id="btn-anim" style="flex:1;background:rgba(228,116,163,0.12);border-color:rgba(228,116,163,0.4);color:#e474a3" onclick="openMotionPicker()">🎞️ ANIMATE</button>
       </div>
       <div id="save-confirm" style="display:none;text-align:center;padding:8px 24px 16px;font-size:13px;color:var(--accent)">✓ Saved to your device!</div>
     </div>
@@ -990,6 +1046,82 @@ function share3D() {
   var mv = document.getElementById('mv');
   if (!mv.src) return;
   if (navigator.share) navigator.share({ title: 'My 3D AvatarMe', url: window.location.href });
+  else navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied!'));
+}
+
+// ── MOTION (image-to-video) ──
+function openMotionPicker() {
+  if (!currentJobId) { alert('Generate an avatar first.'); return; }
+  document.getElementById('motion-picker').style.display = 'flex';
+}
+function closeMotionPicker() {
+  document.getElementById('motion-picker').style.display = 'none';
+}
+async function startMotion(motion) {
+  closeMotionPicker();
+  var overlay = document.getElementById('video-viewer');
+  var video = document.getElementById('video-el');
+  var loading = document.getElementById('video-loading');
+  overlay.style.display = 'flex';
+  loading.style.display = 'flex';
+  video.style.display = 'none';
+  video.src = '';
+  document.getElementById('video-loading-title').textContent = motion.toUpperCase() + 'ING…';
+  document.getElementById('video-title').textContent = motion.toUpperCase();
+  pringStartCounter(45, { fill:'pringVid-fill', secs:'pringVid-secs', pct:'pringVid-pct' });
+  try {
+    var kickRes = await fetch(BACKEND + '/start-video/' + currentJobId + '?motion=' + encodeURIComponent(motion), { method: 'POST' });
+    var kick = await kickRes.json();
+    if (kick.video_url) { showVideo(kick.video_url); return; }
+    for (var i = 0; i < 80; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      var poll = await fetch(BACKEND + '/status/' + currentJobId);
+      var data = await poll.json();
+      if (data.videos && data.videos[motion]) { showVideo(data.videos[motion]); return; }
+      if (data.video_error) throw new Error(data.video_error);
+    }
+    throw new Error('Animation timed out');
+  } catch (e) {
+    console.error(e);
+    document.getElementById('video-loading-title').textContent = 'FAILED — TAP BACK';
+    pringComplete({ fill:'pringVid-fill', pct:'pringVid-pct' });
+  }
+}
+function showVideo(url) {
+  var video = document.getElementById('video-el');
+  video.src = BACKEND + '/video?url=' + encodeURIComponent(url);
+  video.style.display = 'block';
+  document.getElementById('video-loading').style.display = 'none';
+  pringComplete({ fill:'pringVid-fill', pct:'pringVid-pct' });
+  video.play().catch(()=>{});
+}
+function closeVideo() {
+  var video = document.getElementById('video-el');
+  video.pause(); video.src = '';
+  document.getElementById('video-viewer').style.display = 'none';
+}
+async function saveVideo() {
+  var video = document.getElementById('video-el');
+  if (!video.src) return;
+  var name = (document.getElementById('rname').textContent || 'AvatarMe').replace(/\s/g,'-');
+  var motion = document.getElementById('video-title').textContent.toLowerCase();
+  var fileName = 'AvatarMe-' + name + '-' + motion + '.mp4';
+  try {
+    var res = await fetch(video.src);
+    var blob = await res.blob();
+    if (navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'video/mp4' })] })) {
+      await navigator.share({ files: [new File([blob], fileName, { type: 'video/mp4' })], title: name + ' — ' + motion });
+    } else {
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = fileName;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  } catch (e) { console.error(e); alert('Save failed.'); }
+}
+function shareVideo() {
+  if (navigator.share) navigator.share({ title: 'My AvatarMe — animated', url: window.location.href });
   else navigator.clipboard.writeText(window.location.href).then(() => alert('Link copied!'));
 }
 
