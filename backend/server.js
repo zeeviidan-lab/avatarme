@@ -214,80 +214,45 @@ const PULID_VERSION = '8baa7ef2255075b46f4d91cd238c21d31181b3e6a864463f967960bb0
 const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
 const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4';
 const CODEFORMER_VERSION = 'cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2';
-const FLUX_FILL_VERSION = 'a053f84125613d83e65328a289e14eb6639e10725c243e8fb0c24128e5573f4c';
+const SDXL_OUTPAINT_VERSION = 'a542ccf352995f3c41f0bcfaef641daa3058bf2b00e08e04feb0295334ab9804';
 
-// Outpaint: extend an InstantID portrait into a full-body shot. We can't
-// force InstantID itself to frame head-to-toe (its face landmarks anchor
-// portrait crops, and pose/canny/depth ControlNets either don't help or
-// bleed reference-image style). Cleaner architecture: let InstantID do
-// what it's great at (identity-locked portrait), then flux-fill-dev
-// extends the canvas downward and paints the body in the same style/lighting.
+// Outpaint: extend the InstantID portrait DOWNWARD into a full-body shot.
+// Switched from flux-fill-dev (general inpainter — needed manual mask, weak
+// at pure extension) to fermatresearch/sdxl-outpainting-lora (purpose-built
+// for outpainting — has native outpaint_up/down/left/right pixel params).
+// No mask building required, no sharp canvas math, and the model knows it
+// needs to extend rather than just fill.
 async function outpaintToFullBody(portraitImageUrl, fluxPrompt) {
   if (!portraitImageUrl) return null;
   try {
-    // 1. Fetch the portrait
-    const r = await fetch(portraitImageUrl);
-    const portraitBuf = Buffer.from(await r.arrayBuffer());
-    const meta = await sharp(portraitBuf).metadata();
-    const W = meta.width, H = meta.height;
-    if (!W || !H) { console.error('Outpaint: bad portrait dims', meta); return null; }
+    const tightPrompt = (fluxPrompt || '').slice(0, 380);
+    const fullBodyPrompt =
+      'full body standing portrait, head to toe, complete figure visible from head to feet, ' +
+      'natural standing pose with arms relaxed at sides, torso hips legs and feet visible, ' +
+      'feet planted on the ground at the bottom of the frame, ' +
+      'matching the lighting and background style of the existing top portion — ' + tightPrompt;
 
-    // 2. Build padded canvas: target 1:2 aspect (much taller than InstantID's
-    // ~2:3 portrait). Previous 2:3 target only added ~30px on a typical
-    // 832x1216 InstantID output — well below the 64px threshold, so outpaint
-    // got skipped or did almost nothing. 1:2 gives ~450px of body canvas.
-    const targetH = Math.round(W * 2.0 / 16) * 16;          // 1:2 aspect — full body room
-    const padBelow = Math.max(0, targetH - H);
-    if (padBelow < 32) {
-      console.log('Outpaint: portrait already tall enough, skipping');
-      return portraitImageUrl;
-    }
-    console.log('Outpaint: padding', W + 'x' + H, '→', W + 'x' + targetH, '(+' + padBelow + 'px below)');
-
-    // 3. Composite: portrait on top, sample the bottom row of the portrait
-    // as the fill color so the seam isn't a sharp white band.
-    const bottomRowColor = await sharp(portraitBuf)
-      .extract({ left: 0, top: H - 4, width: W, height: 4 })
-      .resize(1, 1)
-      .raw().toBuffer();
-    const fillR = bottomRowColor[0], fillG = bottomRowColor[1], fillB = bottomRowColor[2];
-    const padded = await sharp({
-      create: { width: W, height: targetH, channels: 3, background: { r: fillR, g: fillG, b: fillB } }
-    }).composite([{ input: portraitBuf, top: 0, left: 0 }]).png().toBuffer();
-
-    // 4. Mask with FEATHERED boundary. Hard rectangle was producing a visible
-    // seam artifact (the weird orange-stripe band on the shirt). Gaussian
-    // blur on the mask softens the transition so flux-fill blends naturally.
-    const SEAM_HEIGHT = 80;             // overlap zone where InstantID portrait blends into outpaint
-    const keepHeight = Math.max(0, H - SEAM_HEIGHT);
-    const rawMask = await sharp({
-      create: { width: W, height: targetH, channels: 3, background: { r:255, g:255, b:255 } }
-    }).composite([{
-      input: Buffer.from(`<svg width="${W}" height="${targetH}"><rect x="0" y="0" width="${W}" height="${keepHeight}" fill="black"/></svg>`),
-      top: 0, left: 0
-    }]).png().toBuffer();
-    const mask = await sharp(rawMask).blur(20).png().toBuffer();
-
-    // 5. Call flux-fill-dev
-    const tightPrompt = (fluxPrompt || '').slice(0, 400);
     const startRes = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ version: FLUX_FILL_VERSION, input: {
-        image: 'data:image/png;base64,' + padded.toString('base64'),
-        mask:  'data:image/png;base64,' + mask.toString('base64'),
-        prompt: 'extend the figure above into a complete full-body standing pose — natural standing posture, arms relaxed at sides, feet planted on the ground and visible at the bottom of the frame, torso and hips and legs continuous with the head/shoulders above, matching the same lighting and background style — ' + tightPrompt,
-        guidance: 30,
-        num_inference_steps: 30,
-        output_format: 'webp',
-        output_quality: 92,
-        megapixels: 'match_input',     // respect the padded canvas dims so the body fills the full extension
+      body: JSON.stringify({ version: SDXL_OUTPAINT_VERSION, input: {
+        image: portraitImageUrl,
+        prompt: fullBodyPrompt,
+        negative_prompt: 'cropped, headshot, bust crop, floating head, no legs, no body, deformed limbs, extra limbs, multiple people, two faces, blurry, low quality, watermark',
+        outpaint_down: 768,                  // big extension downward — room for torso, hips, legs, feet
+        outpaint_up: 0,
+        outpaint_left: 0,
+        outpaint_right: 0,
+        guidance_scale: 7.5,
+        condition_scale: 0.8,                // how strongly to follow the existing image edges
+        num_outputs: 1,
+        scheduler: 'K_EULER_ANCESTRAL',
       } })
     });
     const prediction = await startRes.json();
     if (!prediction.id) { console.error('Outpaint start error:', JSON.stringify(prediction)); return null; }
-    console.log('Outpaint started:', prediction.id, 'padded:', W + 'x' + targetH);
-    const out = await pollPrediction(prediction.id, 3000, 50, 'Outpaint');
+    console.log('Outpaint (sdxl-outpainting-lora) started:', prediction.id, 'down: 768px');
+    const out = await pollPrediction(prediction.id, 3000, 60, 'Outpaint');
     return Array.isArray(out) ? out[0] : out;
   } catch (e) {
     console.error('Outpaint exception:', e);
