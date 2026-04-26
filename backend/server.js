@@ -325,11 +325,18 @@ async function instantId(prompt, faceBase64, faceMime, avatarKey) {
       output_format: 'webp',
       output_quality: 92,
     }, POSE_REF_DATAURL ? {
-      // Full-body pose reference — openpose extracts a standing skeleton
-      // from this image, InstantID generates the user in that pose.
+      // Full-body framing requires winning the spatial argument against
+      // InstantID's face landmark anchor (which alone produces headshots).
+      // Stacking 3 spatial ControlNets all reading the same full-body
+      // reference: openpose (skeleton) + canny (edges) + depth (3D layout).
+      // Three priors aligned to "standing head-to-toe" outvote face landmarks.
       pose_image: POSE_REF_DATAURL,
       enable_pose_controlnet: true,
-      pose_strength: 0.9,            // was 0.6 — face landmarks were overriding pose; crank to lock full-body framing
+      pose_strength: 1.0,                 // max — openpose skeleton from warrior.jpg
+      enable_canny_controlnet: true,
+      canny_strength: 0.5,                // edge map of the standing figure
+      enable_depth_controlnet: true,
+      depth_strength: 0.6,                // depth map — keeps the body shape proportions
     } : { enable_pose_controlnet: false }) })
   });
   const prediction = await startRes.json();
