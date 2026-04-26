@@ -14,6 +14,21 @@ const upload = multer({ dest: 'uploads/' });
 // In-memory job store
 const jobs = {};
 
+// Cached full-body pose reference for InstantID. Loaded once at startup.
+// Without a pose_image, InstantID anchors layout to the face landmarks
+// → portrait framing only. With a full-body pose ref, openpose extracts
+// the standing skeleton and the model places the user's identity into
+// that pose → head-to-toe framing.
+let POSE_REF_DATAURL = null;
+try {
+  const posePath = path.join(__dirname, '../frontend/portraits/warrior.jpg');
+  const buf = fs.readFileSync(posePath);
+  POSE_REF_DATAURL = 'data:image/jpeg;base64,' + buf.toString('base64');
+  console.log('Loaded full-body pose ref:', posePath, buf.length, 'bytes');
+} catch (e) {
+  console.warn('No pose ref loaded (warrior.jpg missing) — InstantID will frame portrait-only');
+}
+
 // Avatar definitions
 const AVATARS = {
   wolf:         { name: 'Arctic Wolf',  animal: 'arctic wolf',      base: 'thick white and grey fur, piercing blue eyes, powerful jaw, muscular build',           env: 'vast frozen tundra at twilight, aurora borealis rippling across a deep purple sky, snow-dusted pine forest stretching to the horizon, icy breath visible in the cold air' },
@@ -224,10 +239,10 @@ async function instantId(prompt, faceBase64, faceMime, avatarKey) {
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ version: INSTANTID_VERSION, input: {
+    body: JSON.stringify({ version: INSTANTID_VERSION, input: Object.assign({
       image: faceDataUrl,
       prompt: tight,
-      negative_prompt: '(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, mutated, cross-eyed, ugly, disfigured, multiple faces, blurry',
+      negative_prompt: '(lowres, low quality, worst quality:1.2), (text:1.2), watermark, deformed, mutated, cross-eyed, ugly, disfigured, multiple faces, blurry, headshot, close-up, cropped, bust crop',
       sdxl_weights: 'juggernaut-xl-v8',         // photoreal base
       ip_adapter_scale: 0.8,                     // face detail preservation
       controlnet_conditioning_scale: 0.85,       // identity (landmark) lock
@@ -236,7 +251,13 @@ async function instantId(prompt, faceBase64, faceMime, avatarKey) {
       enhance_nonface_region: true,
       output_format: 'webp',
       output_quality: 92,
-    } })
+    }, POSE_REF_DATAURL ? {
+      // Full-body pose reference — openpose extracts a standing skeleton
+      // from this image, InstantID generates the user in that pose.
+      pose_image: POSE_REF_DATAURL,
+      enable_pose_controlnet: true,
+      pose_strength: 0.6,
+    } : { enable_pose_controlnet: false }) })
   });
   const prediction = await startRes.json();
   if (!prediction.id) { console.error('InstantID start error:', JSON.stringify(prediction)); return null; }
@@ -347,18 +368,14 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      // PhotoMaker — accepts up to 4 multi-angle face references for
-      // dramatically stronger identity preservation than any single-image
-      // model. Falls back to InstantID if only 1 photo provided.
-      const faceSet = (faceImages && faceImages.length > 0)
-        ? faceImages
-        : [{ base64: imageBase64, mime: imageMime }];
-      if (faceSet.length >= 2) {
-        imageUrl = await photoMaker(claudeResult.flux_prompt, faceSet, avatarKey);
-      }
-      // Fallback: single-image InstantID
-      if (!imageUrl) {
-        imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+      // Primary: InstantID with full-body pose reference. User feedback:
+      // identity quality was good, framing was wrong (portrait only).
+      // Adding the pose_image ref forces head-to-toe framing.
+      imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+      // Fallback only: PhotoMaker if InstantID failed AND user gave ≥2 angles.
+      if (!imageUrl && faceImages && faceImages.length >= 2) {
+        console.log('InstantID failed — trying PhotoMaker with', faceImages.length, 'angles');
+        imageUrl = await photoMaker(claudeResult.flux_prompt, faceImages, avatarKey);
       }
       portraitUrl = null;
     }
