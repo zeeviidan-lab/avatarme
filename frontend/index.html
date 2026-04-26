@@ -12,24 +12,26 @@
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 <style>
   :root {
-    /* MANDALORIAN / BESKAR theme — bone white + gunmetal + rust amber.
-       Previous D&D dark theme is preserved in git history; this is a
-       full-app vibe flip per user request. Hardcoded dark colors in a
-       few sub-screens (splash overlays, 3D viewer) may need follow-up. */
+    /* MANDALORIAN / BESKAR theme v2 — bone bg, MAX contrast text, multi-accent.
+       v1 was monochromatic (cream + grey + single rust); v2 adds a secondary
+       cool accent (mando-blue), pushes text to near-black for max readability,
+       and deepens the bone tones for better card separation. */
     --bg: #ECE4D2;        /* desert bone — main canvas */
-    --bg2: #E2D9C2;       /* slightly deeper bone */
-    --surface: #F2EBDF;   /* lifted card — slightly lighter than bg */
-    --surface2: #E8DFC7;  /* recessed card */
-    --border: rgba(42,46,51,0.18);
-    --accent: #B85F2E;    /* mando rust amber — single warm signal */
-    --accent2: #8C4520;   /* deeper rust */
-    --accent3: #C7CCD2;   /* polished beskar silver */
+    --bg2: #DDD2B8;       /* deeper bone (was E2D9C2 — bumped contrast) */
+    --surface: #FAF5E9;   /* lifted card — brighter for pop */
+    --surface2: #DCD0B5;  /* recessed card — deeper for more depth */
+    --border: rgba(20,24,30,0.28);  /* darker border — was 0.18 */
+    --accent: #C9601E;    /* rust amber — slightly more saturated */
+    --accent2: #7A2F12;   /* deep rust — for hover/depth states */
+    --accent3: #B7BDC5;   /* polished beskar silver */
+    --signal2: #2B5C8E;   /* NEW: cool counter-accent — mando-blue (Bo-Katan blue) */
+    --signal3: #4A7A4A;   /* NEW: mossy green for positive states */
     --gold: #f0cd6a;
-    --text: #2A2E33;        /* gunmetal — primary inscription color */
-    --muted: #7A8088;       /* beskar deep — secondary */
-    --signal: #B85F2E;      /* alias for accent (Mando rust) */
-    --gunmetal: #2A2E33;
-    --beskar: #C7CCD2;
+    --text: #14181E;        /* near-black — max contrast on bone (was #2A2E33) */
+    --muted: #565C66;       /* darker grey — was 7A8088, more readable */
+    --signal: #C9601E;      /* alias for accent (Mando rust) */
+    --gunmetal: #14181E;    /* near-black for inscriptions */
+    --beskar: #B7BDC5;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; overflow:hidden; }
@@ -1213,13 +1215,26 @@ function pringStartCounter(estSec, ids) {
   if (pringRAF) cancelAnimationFrame(pringRAF);
   var fillId = (ids && ids.fill) || 'pring-fill';
   var secsId = (ids && ids.secs) || 'pring-secs';
+  // Re-resolve the fill element inside the rAF loop in case the DOM
+  // wasn't ready when pringStartCounter fired (loader screen transition
+  // can race the call). This was likely why "Just Me" specifically
+  // appeared frozen — the result returned fast enough that pringComplete
+  // fired before any frames rendered into the late-resolved element.
   var fill = document.getElementById(fillId);
-  // Disable the CSS transition that was fighting per-frame writes.
-  if (fill) fill.style.transition = 'none';
+  if (fill) {
+    fill.style.transition = 'none';
+    // Force initial state to 0 so user sees motion start from empty.
+    fill.setAttribute('stroke-dasharray', '0 ' + PRING_CIRC);
+  }
   function frame(now) {
     var elapsed = (now - pringStart) / 1000;
-    var pct = Math.min(0.97, elapsed / pringEstSec);
-    if (fill) fill.setAttribute('stroke-dasharray', (pct * PRING_CIRC).toFixed(2) + ' ' + PRING_CIRC);
+    // Always show a min 1% so the ring is visibly NON-empty (proves it's alive).
+    var pct = Math.max(0.01, Math.min(0.97, elapsed / pringEstSec));
+    var f = fill || document.getElementById(fillId);
+    if (f) {
+      if (!fill) { f.style.transition = 'none'; fill = f; }
+      f.setAttribute('stroke-dasharray', (pct * PRING_CIRC).toFixed(2) + ' ' + PRING_CIRC);
+    }
     var secs = document.getElementById(secsId);
     if (secs) secs.textContent = Math.floor(elapsed);
     pringRAF = requestAnimationFrame(frame);
