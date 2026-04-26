@@ -104,7 +104,13 @@ SKIN DESCRIPTOR (CONSTRAINED — pick from these enums only, do not free-form):
 - skin_tone_label: ONE OF ["very fair","fair","light olive","olive","tan","light brown","brown","deep brown","very dark brown"]
 - skin_undertone: ONE OF ["warm","cool","neutral"]
 - skin_hex: 6-char hex sample of the dominant cheek/forehead skin color from the photo (e.g. "C49A78"). Sample mid-tone, not shadow or highlight.
-Inject these at the START of the flux_prompt verbatim as: "skin tone: <label>, <undertone> undertone, approximate color #<hex>, preserve the input photo's exact skin tone and shading — do not lighten, do not darken, do not warm-shift, do not cool-shift,". This is REQUIRED for every human-avatar prompt.
+
+FACE SHAPE DESCRIPTOR (CONSTRAINED — pick from these enums only):
+- face_shape: ONE OF ["round","oval","square","rectangular/long","heart","diamond","oblong"]
+- face_width: ONE OF ["narrow","medium","wide"]
+- jaw: ONE OF ["soft round","strong square","pointed","broad"]
+
+Inject all of the above at the START of the flux_prompt verbatim as: "skin tone: <skin_label>, <undertone> undertone, approximate color #<hex>; face shape: <face_shape>, <face_width> width, <jaw> jaw — match the input photo's face proportions exactly, do NOT elongate, do NOT narrow, do NOT idealize; preserve the input photo's exact skin tone and shading — do not lighten, do not darken,". This is REQUIRED for every human-avatar prompt.
 ` : ''}
 Respond in JSON only with this EXACT shape:
 {
@@ -113,6 +119,9 @@ Respond in JSON only with this EXACT shape:
   "skin_tone_label": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? 'one of the enums above' : ''}",
   "skin_undertone": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? 'one of: warm, cool, neutral' : ''}",
   "skin_hex": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? '6-char hex' : ''}",
+  "face_shape": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? 'one of the face_shape enums' : ''}",
+  "face_width": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? 'one of: narrow, medium, wide' : ''}",
+  "jaw": "${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? 'one of the jaw enums' : ''}",
   "traits": {"Composure":80, "Strategy":75, "Instinct":85, "Adaptability":70},
   "dominant_trait": "one word",
   "character_sheet": {
@@ -266,7 +275,7 @@ async function instantId(prompt, faceBase64, faceMime, avatarKey) {
       // from this image, InstantID generates the user in that pose.
       pose_image: POSE_REF_DATAURL,
       enable_pose_controlnet: true,
-      pose_strength: 0.6,
+      pose_strength: 0.9,            // was 0.6 — face landmarks were overriding pose; crank to lock full-body framing
     } : { enable_pose_controlnet: false }) })
   });
   const prediction = await startRes.json();
