@@ -12,17 +12,24 @@
 <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 <style>
   :root {
-    --bg: #06050a;
-    --bg2: #0a0810;
-    --surface: #14111c;
-    --surface2: #1c1828;
-    --border: rgba(255,255,255,0.06);
-    --accent: #d4a373;
-    --accent2: #b35c38;
-    --accent3: #6b5a44;
+    /* MANDALORIAN / BESKAR theme — bone white + gunmetal + rust amber.
+       Previous D&D dark theme is preserved in git history; this is a
+       full-app vibe flip per user request. Hardcoded dark colors in a
+       few sub-screens (splash overlays, 3D viewer) may need follow-up. */
+    --bg: #ECE4D2;        /* desert bone — main canvas */
+    --bg2: #E2D9C2;       /* slightly deeper bone */
+    --surface: #F2EBDF;   /* lifted card — slightly lighter than bg */
+    --surface2: #E8DFC7;  /* recessed card */
+    --border: rgba(42,46,51,0.18);
+    --accent: #B85F2E;    /* mando rust amber — single warm signal */
+    --accent2: #8C4520;   /* deeper rust */
+    --accent3: #C7CCD2;   /* polished beskar silver */
     --gold: #f0cd6a;
-    --text: #ece2d0;
-    --muted: #6a6072;
+    --text: #2A2E33;        /* gunmetal — primary inscription color */
+    --muted: #7A8088;       /* beskar deep — secondary */
+    --signal: #B85F2E;      /* alias for accent (Mando rust) */
+    --gunmetal: #2A2E33;
+    --beskar: #C7CCD2;
   }
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { height:100%; overflow:hidden; }
@@ -45,7 +52,7 @@
   .screen { position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; display:none; flex-direction:column; }
   .screen::-webkit-scrollbar { display:none; }
   .screen.active { display:flex; }
-  .bottom-nav { height:70px; background:rgba(8,12,10,0.97); border-top:1px solid var(--border); display:none; align-items:flex-start; justify-content:space-around; padding-top:10px; flex-shrink:0; }
+  .bottom-nav { height:70px; background:rgba(236,228,210,0.97); border-top:1px solid var(--border); display:none; align-items:flex-start; justify-content:space-around; padding-top:10px; flex-shrink:0; }
   .bottom-nav.visible { display:flex; }
   .nav-item { display:flex; flex-direction:column; align-items:center; gap:3px; cursor:pointer; padding:4px 22px; opacity:0.3; transition:opacity 0.2s; }
   .nav-item.active { opacity:1; }
@@ -63,8 +70,9 @@
     position:relative; padding:0 0 56px;
   }
   .splash-stage { position:absolute; inset:0; overflow:hidden; pointer-events:none; }
-  .splash-stage::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% 55%, rgba(6,5,10,0.55) 0%, rgba(6,5,10,0.85) 45%, var(--bg) 80%); z-index:1; }
-  .splash-stage::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(6,5,10,0.4) 0%, transparent 30%, transparent 70%, rgba(6,5,10,0.9) 100%); z-index:1; }
+  /* Mando theme: bone-colored overlays instead of dark — desert haze vignette */
+  .splash-stage::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% 55%, rgba(236,228,210,0.55) 0%, rgba(236,228,210,0.85) 45%, var(--bg) 80%); z-index:1; }
+  .splash-stage::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(236,228,210,0.4) 0%, transparent 30%, transparent 70%, rgba(236,228,210,0.9) 100%); z-index:1; }
   .splash-collage { position:absolute; inset:-20px; display:grid; grid-template-columns:repeat(4, 1fr); grid-auto-rows:1fr; gap:5px; opacity:0.42; filter:saturate(0.85) contrast(1.1); }
   .splash-collage div { background-size:cover; background-position:center; border-radius:8px; aspect-ratio:1; }
   .splash-collage div:nth-child(3n) { transform:translateY(10px); }
@@ -74,9 +82,9 @@
   .splash-collage div:nth-child(2n+1) { animation:splashDrift 11s ease-in-out infinite reverse; }
   .splash-content { position:relative; z-index:3; display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 32px; width:100%; }
   .splash-mark { font-family:'Bebas Neue',sans-serif; font-size:11px; letter-spacing:5px; color:var(--accent); margin-bottom:14px; }
-  .splash-title { font-family:'Bebas Neue',sans-serif; font-size:78px; letter-spacing:5px; color:var(--text); line-height:0.95; margin-bottom:14px; text-shadow:0 4px 30px rgba(212,163,115,0.25); }
+  .splash-title { font-family:'Bebas Neue',sans-serif; font-size:78px; letter-spacing:5px; color:var(--text); line-height:0.95; margin-bottom:14px; text-shadow:0 4px 30px rgba(184,95,46,0.18); }
   .splash-tag { color:var(--muted); font-size:13px; font-weight:300; letter-spacing:1px; margin-bottom:38px; line-height:1.6; max-width:280px; }
-  .splash-btn { background:linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%); color:#0a0608; border:none; cursor:pointer; padding:20px 80px; border-radius:100px; font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:3px; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 8px 32px rgba(212,163,115,0.35), 0 0 0 1px rgba(255,255,255,0.06) inset; margin-bottom:18px; font-weight:700; }
+  .splash-btn { background:var(--gunmetal); color:var(--bg); border:none; cursor:pointer; padding:20px 80px; border-radius:2px; font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:6px; transition:transform 0.15s,box-shadow 0.15s; box-shadow:0 6px 18px rgba(42,46,51,0.25), inset 0 -3px 0 rgba(0,0,0,0.3); margin-bottom:18px; font-weight:700; }
   .splash-btn:active { transform:scale(0.96); }
   .splash-priv { color:var(--muted); font-size:11px; letter-spacing:1px; }
 
