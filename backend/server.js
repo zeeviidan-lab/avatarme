@@ -232,32 +232,41 @@ async function outpaintToFullBody(portraitImageUrl, fluxPrompt) {
     const W = meta.width, H = meta.height;
     if (!W || !H) { console.error('Outpaint: bad portrait dims', meta); return null; }
 
-    // 2. Build padded canvas: same width, taller (portrait → 2:3 if it isn't already)
-    // Place the original portrait at the TOP, leave the bottom 60% empty for body.
-    // flux-fill needs dims divisible by 16; pad H to a 2:3 ratio of W.
-    const targetH = Math.round(W * 1.5 / 16) * 16;          // 2:3 aspect
+    // 2. Build padded canvas: target 1:2 aspect (much taller than InstantID's
+    // ~2:3 portrait). Previous 2:3 target only added ~30px on a typical
+    // 832x1216 InstantID output — well below the 64px threshold, so outpaint
+    // got skipped or did almost nothing. 1:2 gives ~450px of body canvas.
+    const targetH = Math.round(W * 2.0 / 16) * 16;          // 1:2 aspect — full body room
     const padBelow = Math.max(0, targetH - H);
-    if (padBelow < 64) {
+    if (padBelow < 32) {
       console.log('Outpaint: portrait already tall enough, skipping');
       return portraitImageUrl;
     }
+    console.log('Outpaint: padding', W + 'x' + H, '→', W + 'x' + targetH, '(+' + padBelow + 'px below)');
 
-    // 3. Composite: portrait on top, transparent below (white background)
+    // 3. Composite: portrait on top, sample the bottom row of the portrait
+    // as the fill color so the seam isn't a sharp white band.
+    const bottomRowColor = await sharp(portraitBuf)
+      .extract({ left: 0, top: H - 4, width: W, height: 4 })
+      .resize(1, 1)
+      .raw().toBuffer();
+    const fillR = bottomRowColor[0], fillG = bottomRowColor[1], fillB = bottomRowColor[2];
     const padded = await sharp({
-      create: { width: W, height: targetH, channels: 3, background: { r:255, g:255, b:255 } }
+      create: { width: W, height: targetH, channels: 3, background: { r: fillR, g: fillG, b: fillB } }
     }).composite([{ input: portraitBuf, top: 0, left: 0 }]).png().toBuffer();
 
-    // 4. Mask: BLACK = keep, WHITE = inpaint (flux-fill convention).
-    // Previous version had this inverted — flux regenerated the portrait
-    // (blurring it) and left the empty bottom untouched.
-    // Now: black on top (preserve portrait), white below (paint full body).
-    // Small overlap zone (16px) where mask transitions to help the seam.
-    const mask = await sharp({
-      create: { width: W, height: targetH, channels: 3, background: { r:255, g:255, b:255 } } // base = white = inpaint
+    // 4. Mask with FEATHERED boundary. Hard rectangle was producing a visible
+    // seam artifact (the weird orange-stripe band on the shirt). Gaussian
+    // blur on the mask softens the transition so flux-fill blends naturally.
+    const SEAM_HEIGHT = 80;             // overlap zone where InstantID portrait blends into outpaint
+    const keepHeight = Math.max(0, H - SEAM_HEIGHT);
+    const rawMask = await sharp({
+      create: { width: W, height: targetH, channels: 3, background: { r:255, g:255, b:255 } }
     }).composite([{
-      input: Buffer.from(`<svg width="${W}" height="${targetH}"><rect x="0" y="0" width="${W}" height="${H - 16}" fill="black"/></svg>`),
+      input: Buffer.from(`<svg width="${W}" height="${targetH}"><rect x="0" y="0" width="${W}" height="${keepHeight}" fill="black"/></svg>`),
       top: 0, left: 0
     }]).png().toBuffer();
+    const mask = await sharp(rawMask).blur(20).png().toBuffer();
 
     // 5. Call flux-fill-dev
     const tightPrompt = (fluxPrompt || '').slice(0, 400);
@@ -272,7 +281,7 @@ async function outpaintToFullBody(portraitImageUrl, fluxPrompt) {
         num_inference_steps: 30,
         output_format: 'webp',
         output_quality: 92,
-        megapixels: '1',
+        megapixels: 'match_input',     // respect the padded canvas dims so the body fills the full extension
       } })
     });
     const prediction = await startRes.json();
