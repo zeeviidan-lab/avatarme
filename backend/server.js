@@ -313,8 +313,10 @@ async function headComposite(fluxBodyUrl, idPortraitUrl) {
 
     if (bodyFace && portraitFace) {
       // Detected: expand the face bbox to a HEAD bbox (face + hair + jaw).
-      // Hair extends ~50% above the detected face bbox; jaw/neck extends
-      // ~15% below; ears extend ~20% to either side.
+      // TIGHTER expansion factors than before — previous values were tuned
+      // for InstantID portraits where face fills less of the frame; for
+      // user's original photos (face often fills most of the frame), the
+      // larger expansion produced an oversized head paste.
       const expand = (bb, imgW, imgH, top, bottom, side) => {
         const cx = bb.x + bb.w/2;
         const newW = Math.round(bb.w * (1 + 2 * side));
@@ -328,24 +330,24 @@ async function headComposite(fluxBodyUrl, idPortraitUrl) {
           h: Math.min(newH, imgH - newY),
         };
       };
-      const bodyHead = expand(bodyFace, Wb, Hb, 0.55, 0.20, 0.30);
-      const portraitHead = expand(portraitFace, Wp, Hp, 0.60, 0.25, 0.35);
+      // SOURCE expansion (original photo): tight — just face + small hair
+      // halo + small chin extension. Photo already crops tight around face.
+      const portraitHead = expand(portraitFace, Wp, Hp, 0.30, 0.10, 0.15);
+      // TARGET expansion (FLUX body): match SOURCE ratios so head is
+      // scaled 1:1 onto FLUX's actual face area (no oversizing).
+      const bodyHead = expand(bodyFace, Wb, Hb, 0.30, 0.10, 0.15);
       headTargetW = bodyHead.w; headTargetH = bodyHead.h;
       headTargetX = bodyHead.x; headTargetY = bodyHead.y;
       portraitHeadW = portraitHead.w; portraitHeadH = portraitHead.h;
       portraitHeadX = portraitHead.x; portraitHeadY = portraitHead.y;
-      console.log('headComposite: USING DETECTED bboxes — body head', headTargetW + 'x' + headTargetH, 'at', headTargetX + ',' + headTargetY);
+      console.log('headComposite: USING DETECTED bboxes — body head', headTargetW + 'x' + headTargetH, 'at', headTargetX + ',' + headTargetY, '— source', portraitHeadW + 'x' + portraitHeadH);
     } else {
-      // Fallback: heuristic ratios (used when face detection fails).
-      console.log('headComposite: face detection failed (body=' + !!bodyFace + ', portrait=' + !!portraitFace + ') — using heuristic ratios');
-      headTargetW = Math.round(Wb * 0.50);
-      headTargetH = Math.round(Hb * 0.32);
-      headTargetX = Math.round((Wb - headTargetW) / 2);
-      headTargetY = Math.round(Hb * 0.005);
-      portraitHeadW = Math.round(Wp * 0.92);
-      portraitHeadH = Math.round(Hp * 0.78);
-      portraitHeadX = Math.round((Wp - portraitHeadW) / 2);
-      portraitHeadY = 0;
+      // Fallback: heuristic ratios — but ABORT instead of using them with
+      // the original-photo source (different framing, would produce the
+      // giant-head bug). Better to skip composite and let face-swap chain
+      // handle it instead (or just return FLUX body alone).
+      console.log('headComposite: face detection failed (body=' + !!bodyFace + ', portrait=' + !!portraitFace + ') — skipping composite');
+      return null;
     }
 
     // Extract + resize InstantID head to target dims
@@ -355,30 +357,25 @@ async function headComposite(fluxBodyUrl, idPortraitUrl) {
       .ensureAlpha()
       .png().toBuffer();
 
-    // Build alpha feather: opaque top 70%, fade to transparent at bottom 30%
-    // (so neck/shoulders blend smoothly into FLUX body's torso). Sides get a
-    // small feather too (~6%) so ears/hair don't have hard vertical seams.
-    const featherBottom = Math.round(headTargetH * 0.30);
-    const featherSide = Math.round(headTargetW * 0.06);
+    // OVAL alpha mask centered on the face — radial gradient that's white
+    // (opaque) inside the face oval, fades to black (transparent) at the
+    // edges. Eliminates the visible RECTANGLE that was showing the source
+    // image's white background around the face.
+    // Oval is slightly taller than wide (head proportions); core opaque
+    // region is ~70% of the radius, then fades over the outer 30%.
+    const cx = headTargetW / 2;
+    const cy = headTargetH / 2;
+    const rx = headTargetW / 2;
+    const ry = headTargetH / 2;
     const alphaSvg = `<svg width="${headTargetW}" height="${headTargetH}">
       <defs>
-        <linearGradient id="vfade" x1="0" y1="0" x2="0" y2="1">
+        <radialGradient id="ovalmask" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stop-color="white"/>
-          <stop offset="${Math.round((headTargetH - featherBottom) / headTargetH * 100)}%" stop-color="white"/>
+          <stop offset="65%" stop-color="white"/>
           <stop offset="100%" stop-color="black"/>
-        </linearGradient>
-        <linearGradient id="hfadeL" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="black"/>
-          <stop offset="${Math.round(featherSide / headTargetW * 100)}%" stop-color="white"/>
-        </linearGradient>
-        <linearGradient id="hfadeR" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="${Math.round((headTargetW - featherSide) / headTargetW * 100)}%" stop-color="white"/>
-          <stop offset="100%" stop-color="black"/>
-        </linearGradient>
+        </radialGradient>
       </defs>
-      <rect width="100%" height="100%" fill="url(#vfade)"/>
-      <rect width="100%" height="100%" fill="url(#hfadeL)" style="mix-blend-mode:multiply"/>
-      <rect width="100%" height="100%" fill="url(#hfadeR)" style="mix-blend-mode:multiply"/>
+      <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="url(#ovalmask)"/>
     </svg>`;
     const alphaBuf = await sharp(Buffer.from(alphaSvg)).toColorspace('b-w').raw().toBuffer();
 

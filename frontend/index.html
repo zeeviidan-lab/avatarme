@@ -260,30 +260,22 @@
      stroke-dasharray="X Y" was non-standard and rendering inconsistently. */
   .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:8; stroke-linecap:butt; stroke-dasharray:289; stroke-dashoffset:289; filter:drop-shadow(0 0 4px rgba(201,96,30,0.4)); }
 
-  /* Treadmill walker — clean vertical bounce only. No more side-sway or
-     skew which read as "weird wobbling." Figure stays centered, motion
-     is pure up-down + a little squash-stretch + small rotation lean. */
-  #lwalker.walking { animation:lw-walk 0.6s ease-in-out infinite; }
-  #lwalker.running { animation:lw-run 0.36s ease-in-out infinite; }
-  #lwalker.jumping { animation:lw-jump 1.0s cubic-bezier(.3,0,.4,1) infinite; }
-  #lwalker.standing { animation:lw-stand 2.4s ease-in-out infinite; }
+  /* Walking and running need to look DIFFERENT. Previous version had
+     similar vertical-bounce-only animations which all read as "jumping
+     in place." Walking is now a rhythmic small step (subtle); running
+     is a much bigger forward-lean stride. */
+  #lwalker.walking { animation:lw-walk 0.50s ease-in-out infinite; }
+  #lwalker.running { animation:lw-run  0.30s ease-in-out infinite; }
   @keyframes lw-walk {
-    0%, 100% { transform:translateY(0)    scale(1, 1); }
-    50%      { transform:translateY(-10px) scale(0.97, 1.04); }
+    /* Small rhythmic step — modest bounce, no rotation, reads as walking */
+    0%, 100% { transform:translateY(0); }
+    50%      { transform:translateY(-5px); }
   }
   @keyframes lw-run {
-    0%, 100% { transform:translateY(0)    rotate(-3deg) scale(1, 1); }
-    50%      { transform:translateY(-16px) rotate(3deg) scale(0.94, 1.08); }
-  }
-  @keyframes lw-jump {
-    0%   { transform:translateY(0)    scale(1.08, 0.82); }   /* squat down */
-    35%  { transform:translateY(-44px) scale(0.94, 1.08); }  /* airborne peak */
-    65%  { transform:translateY(0)    scale(1.08, 0.85); }   /* land squat */
-    100% { transform:translateY(0)    scale(1.08, 0.82); }
-  }
-  @keyframes lw-stand {
-    0%, 100% { transform:translateY(0); }
-    50%      { transform:translateY(-2px); }                 /* subtle breathing */
+    /* Big forward-leaning stride — strong bounce + permanent forward tilt
+       + dynamic squash. Reads clearly as running, not jumping. */
+    0%, 100% { transform:translateY(0)    rotate(-8deg) scale(1, 1); }
+    50%      { transform:translateY(-14px) rotate(-12deg) scale(0.95, 1.06); }
   }
   .pring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .pring-secs { font-family:'Bebas Neue',sans-serif; font-size:38px; line-height:1; color:var(--text); letter-spacing:1px; }
@@ -1290,16 +1282,16 @@ function pringSetPct(label, fillId) {
 // ── Treadmill walker — pose cycle during loader wait ──
 // Cycles through walking → running → standing → jumping → walking, in place.
 // Each pose has its own CSS @keyframes animation; we just swap emoji + class.
-// Single silhouette emoji for ALL poses (per UX request — visual identity
-// stays consistent, only the motion changes).
+// Per-pose emojis — 🚶 and 🏃 are designed in PROFILE (side-view) which
+// is what we want for a "treadmill" feel. All get filter:brightness(0)
+// applied so they all read as the same black silhouette regardless of
+// the underlying glyph color.
 var WALKER_POSES = [
-  { emoji:'🧍', cls:'walking',  ms: 3500 },
-  { emoji:'🧍', cls:'running',  ms: 2200 },
-  { emoji:'🧍', cls:'walking',  ms: 3000 },
-  { emoji:'🧍', cls:'jumping',  ms: 1500 },
-  { emoji:'🧍', cls:'standing', ms: 1800 },
-  { emoji:'🧍', cls:'running',  ms: 2500 },
-  { emoji:'🧍', cls:'walking',  ms: 4000 },
+  { emoji:'🚶', cls:'walking',  ms: 3500 },
+  { emoji:'🏃', cls:'running',  ms: 2500 },
+  { emoji:'🚶', cls:'walking',  ms: 3000 },
+  { emoji:'🏃', cls:'running',  ms: 2000 },
+  { emoji:'🚶', cls:'walking',  ms: 4000 },
 ];
 var walkerTimer = 0;
 var walkerIdx = 0;
