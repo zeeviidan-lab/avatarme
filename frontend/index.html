@@ -257,6 +257,32 @@
      Works regardless of rAF/JS state, so user always sees activity. */
   .pring .pring-orbit { fill:url(#pringGrad); transform-origin:50% 50%; animation:pringSpin 1.4s linear infinite; filter:drop-shadow(0 0 6px rgba(201,96,30,0.9)); }
   @keyframes pringSpin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+
+  /* Treadmill walker — per-pose animations. The figure stays in place (no
+     translateX) but its vertical motion + rocking sells the action. */
+  #lwalker.walking { animation:lw-walk 0.7s ease-in-out infinite; }
+  #lwalker.running { animation:lw-run 0.42s ease-in-out infinite; }
+  #lwalker.jumping { animation:lw-jump 1.1s cubic-bezier(.4,0,.4,1) infinite; }
+  #lwalker.standing { animation:lw-stand 3s ease-in-out infinite; }
+  @keyframes lw-walk {
+    0%   { transform:translateY(0)    rotate(-2deg); }
+    50%  { transform:translateY(-6px) rotate(2deg); }
+    100% { transform:translateY(0)    rotate(-2deg); }
+  }
+  @keyframes lw-run {
+    0%   { transform:translateY(0)    rotate(-4deg) skewX(-3deg); }
+    50%  { transform:translateY(-10px) rotate(4deg) skewX(3deg); }
+    100% { transform:translateY(0)    rotate(-4deg) skewX(-3deg); }
+  }
+  @keyframes lw-jump {
+    0%, 70% { transform:translateY(0) scale(1, 0.95); }
+    35%     { transform:translateY(-32px) scale(0.95, 1.05); }
+    100%    { transform:translateY(0) scale(1, 0.95); }
+  }
+  @keyframes lw-stand {
+    0%, 100% { transform:translateY(0) rotate(0deg); }
+    50%      { transform:translateY(-1.5px) rotate(0.5deg); }
+  }
   .pring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .pring-secs { font-family:'Bebas Neue',sans-serif; font-size:38px; line-height:1; color:var(--text); letter-spacing:1px; }
   .pring-secs .small { font-size:14px; color:var(--muted); margin-left:2px; letter-spacing:1px; }
@@ -310,6 +336,11 @@
           <div class="pring-secs" style="display:none"><span id="pring-secs">0</span><span class="small">s</span></div>
           <div class="pring-pct" id="pring-pct" style="font-size:14px;letter-spacing:3px">STARTING</div>
         </div>
+      </div>
+      <!-- Treadmill walker — shadow figure cycles walk→run→jump→stand in place,
+           gives the wait kinetic personality. Updated by walkerCycle() in JS. -->
+      <div id="lwalker-wrap" style="height:64px;display:flex;align-items:flex-end;justify-content:center;margin:6px 0 14px;perspective:200px">
+        <div id="lwalker" style="font-size:48px;line-height:1;filter:grayscale(0.7) brightness(0.4) contrast(1.2);opacity:0.55;transform-origin:50% 100%;transition:filter 0.4s">🚶</div>
       </div>
       <div class="loader-steps">
         <div class="lstep" id="ls1"><div class="lstep-dot"></div><span class="lstep-txt">Reading your personality</span></div>
@@ -1255,11 +1286,46 @@ function pringSetPct(label, fillId) {
   var el = document.getElementById(fillId || 'pring-pct');
   if (el) el.textContent = label;
 }
+// ── Treadmill walker — pose cycle during loader wait ──
+// Cycles through walking → running → standing → jumping → walking, in place.
+// Each pose has its own CSS @keyframes animation; we just swap emoji + class.
+var WALKER_POSES = [
+  { emoji:'🚶', cls:'walking',  ms: 3500 },
+  { emoji:'🏃', cls:'running',  ms: 2200 },
+  { emoji:'🚶', cls:'walking',  ms: 3000 },
+  { emoji:'🤸', cls:'jumping',  ms: 1800 },  /* cartwheel doubles as a "trick" pose */
+  { emoji:'🧍', cls:'standing', ms: 1500 },
+  { emoji:'🏃', cls:'running',  ms: 2500 },
+  { emoji:'🚶', cls:'walking',  ms: 4000 },
+];
+var walkerTimer = 0;
+var walkerIdx = 0;
+function walkerStart() {
+  walkerStop();
+  walkerIdx = 0;
+  walkerStep();
+}
+function walkerStep() {
+  var el = document.getElementById('lwalker');
+  if (!el) return;
+  var p = WALKER_POSES[walkerIdx % WALKER_POSES.length];
+  el.textContent = p.emoji;
+  el.className = p.cls;
+  walkerIdx++;
+  walkerTimer = setTimeout(walkerStep, p.ms);
+}
+function walkerStop() {
+  if (walkerTimer) { clearTimeout(walkerTimer); walkerTimer = 0; }
+  var el = document.getElementById('lwalker');
+  if (el) el.className = '';
+}
+
 function pringComplete(ids) {
   var fillId = (ids && ids.fill) || 'pring-fill';
   var pctId  = (ids && ids.pct)  || 'pring-pct';
   if (pringRAF) cancelAnimationFrame(pringRAF);
   pringRAF = 0;
+  walkerStop();
   var fill = document.getElementById(fillId);
   if (fill) {
     // Restore a smooth transition just for the final snap to 100%.
@@ -1304,6 +1370,7 @@ async function generate() {
   // Pipeline now: Claude analysis + InstantID + CodeFormer + outpaint
   // = ~75-90s. Bumped from 35 (which capped the ring at 97% halfway through).
   pringStartCounter(85);
+  walkerStart();   // start the cycling treadmill figure
   setLoaderStep(1, 10);
   startTicks();
 
