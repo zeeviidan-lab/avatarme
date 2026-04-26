@@ -455,7 +455,7 @@ async function codeFormerRestore(imageUrl) {
       headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ version: CODEFORMER_VERSION, input: {
         image: imageUrl,
-        codeformer_fidelity: 0.85,   // bumped from 0.7 — closer to 1.0 = more faithful to input pixels (less aggressive smoothing). Was over-rebuilding faces and contributing to identity drift.
+        codeformer_fidelity: 0.95,   // near max — preserve nearly all input pixels. We need to LOCK IN the face-swap result, not regenerate it.
         face_upsample: true,
         background_enhance: true,
         upscale: 2,
@@ -685,30 +685,22 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
         // 4. CodeFormer: clean up the seam, sharpen
         // Each model does what it's good at instead of fighting one model
         // to do everything.
-        // IDENTITY-FIRST compose: head source = USER'S ORIGINAL PHOTO (not
-        // InstantID's regenerated portrait). InstantID smooths/elongates
-        // faces; the user's photo IS the user, no drift. Falls back to
-        // InstantID portrait if face detection fails on the original.
-        console.log('Compose pipeline: FLUX body + ORIGINAL PHOTO head + CodeFormer');
+        // PROVEN PIPELINE — back to the chain that produced the user's
+        // best-yet result (the salt-pepper-beard street guy):
+        //   1. FLUX body (full body, costume, scene)
+        //   2. face-swap user's original photo → FLUX body
+        //   3. CodeFormer cleanup
+        // Dropped: head composite (kept failing silently when face detection
+        // missed → fell through to bare FLUX with NO identity transfer).
+        // Face-swap is reliable: insightface internally detects faces and
+        // produces SOMETHING recognizable even if only eye/nose/mouth.
+        console.log('Compose pipeline: FLUX body + face-swap original photo + CodeFormer');
         const originalPhotoDataUrl = `data:${imageMime};base64,${imageBase64}`;
-        const [fluxBody, idPortrait] = await Promise.all([
-          generateImage(claudeResult.flux_prompt),
-          // Still run InstantID in parallel — used only if original-photo
-          // face detection fails (e.g. weird angle, low res, etc.)
-          instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
-        ]);
+        const fluxBody = await generateImage(claudeResult.flux_prompt);
         if (fluxBody) {
-          // PRIMARY: composite from user's original photo (max identity)
-          console.log('Compositing ORIGINAL PHOTO head → FLUX body');
-          let composed = await headComposite(fluxBody, originalPhotoDataUrl);
-          // Fallback: try InstantID portrait if original-photo composite failed
-          if (!composed && idPortrait) {
-            console.log('Original-photo composite failed — trying InstantID portrait as source');
-            composed = await headComposite(fluxBody, idPortrait);
-          }
-          imageUrl = composed || fluxBody;
-        } else if (idPortrait) {
-          imageUrl = idPortrait;
+          console.log('Face-swapping original photo → FLUX body');
+          const swapped = await faceSwap(fluxBody, originalPhotoDataUrl);
+          imageUrl = swapped || fluxBody;
         }
         // CodeFormer cleanup on the composite (sharpens face, smooths seam)
         if (imageUrl) {
