@@ -177,6 +177,41 @@ const HUMAN_AVATARS = new Set(['yourself','animated','yellow_toon','martian','el
 // (highest fidelity). 4 = more editability but weaker identity.
 const PULID_VERSION = '8baa7ef2255075b46f4d91cd238c21d31181b3e6a864463f967960bb0112525b';
 const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
+const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4';
+
+// PhotoMaker — accepts up to 4 face images natively. Multi-angle reference
+// dramatically improves identity preservation vs. any single-image model.
+// Trigger word "img" must appear in the prompt for identity to inject.
+async function photoMaker(prompt, faceImages, avatarKey) {
+  // faceImages: array of { base64, mime } — up to 4
+  if (!faceImages || faceImages.length === 0) return null;
+  const tight = prompt.length > 380 ? prompt.slice(0, 380) : prompt;
+  // Inject "img" trigger after the first noun referring to the person.
+  // Simplest: append at the end, PhotoMaker is permissive about position.
+  const triggered = tight.includes(' img ') ? tight : (tight + ' man img');
+  const input = {
+    prompt: triggered,
+    num_steps: 40,
+    style_name: '(No style)',
+    num_outputs: 1,
+    guidance_scale: 5,
+    style_strength_ratio: 20,
+    negative_prompt: 'asymmetry, deformed, multiple faces, blurry, low quality, watermark, text, extra limbs',
+  };
+  faceImages.slice(0, 4).forEach((f, i) => {
+    const key = i === 0 ? 'input_image' : `input_image${i + 1}`;
+    input[key] = `data:${f.mime};base64,${f.base64}`;
+  });
+  const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+    method: 'POST',
+    headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ version: PHOTOMAKER_VERSION, input })
+  });
+  const prediction = await startRes.json();
+  if (!prediction.id) { console.error('PhotoMaker start error:', JSON.stringify(prediction)); return null; }
+  console.log('PhotoMaker started:', prediction.id, 'avatar:', avatarKey, 'face_count:', faceImages.length);
+  return pollPrediction(prediction.id, 3000, 60, 'PhotoMaker');
+}
 
 // InstantID — different identity preservation architecture than PuLID.
 // Uses an IdentityNet (face landmarks) + IPAdapter (face features) on
@@ -287,7 +322,10 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
 }
 
 // Run the full pipeline in background
-async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey) {
+// faceImages: optional array of { base64, mime } — up to 4 multi-angle photos.
+// imageBase64/imageMime: legacy single-photo path (still used for Claude
+// vision analysis and animal face-swap).
+async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey, faceImages) {
   try {
     jobs[jobId].status = 'analyzing';
     const claudeResult = await analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey);
@@ -309,11 +347,19 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      // InstantID — different identity model than PuLID. Generally
-      // more robust on faces with heavy facial hair (where PuLID's
-      // encoder struggles). Uses face landmarks (ControlNet) + face
-      // features (IPAdapter) on SDXL juggernaut for photoreal output.
-      imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+      // PhotoMaker — accepts up to 4 multi-angle face references for
+      // dramatically stronger identity preservation than any single-image
+      // model. Falls back to InstantID if only 1 photo provided.
+      const faceSet = (faceImages && faceImages.length > 0)
+        ? faceImages
+        : [{ base64: imageBase64, mime: imageMime }];
+      if (faceSet.length >= 2) {
+        imageUrl = await photoMaker(claudeResult.flux_prompt, faceSet, avatarKey);
+      }
+      // Fallback: single-image InstantID
+      if (!imageUrl) {
+        imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
+      }
       portraitUrl = null;
     }
 
@@ -352,7 +398,10 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
 }
 
 // POST /start — kick off job, return immediately
-app.post('/start', upload.single('face'), (req, res) => {
+// Accepts either:
+//   - single 'face' field (legacy)
+//   - 'faces' array (multi-angle, up to 4) — preferred for human avatars
+app.post('/start', upload.fields([{ name: 'face', maxCount: 1 }, { name: 'faces', maxCount: 4 }]), (req, res) => {
   const jobId = Date.now().toString(36) + Math.random().toString(36).slice(2);
   const avatarKey = req.body.avatar || 'wolf';
   const bgKey = req.body.bg || 'auto';
@@ -360,14 +409,31 @@ app.post('/start', upload.single('face'), (req, res) => {
   const rankOrder = req.body.q2 || '';
 
   let imageBase64 = null, imageMime = null;
-  if (req.file) {
-    imageBase64 = fs.readFileSync(req.file.path).toString('base64');
-    imageMime = req.file.mimetype;
-    fs.unlinkSync(req.file.path);
+  let faceImages = [];
+
+  // Multi-angle (preferred for PhotoMaker)
+  const facesField = (req.files && req.files.faces) || [];
+  for (const f of facesField) {
+    faceImages.push({ base64: fs.readFileSync(f.path).toString('base64'), mime: f.mimetype });
+    fs.unlinkSync(f.path);
+  }
+
+  // Legacy single-photo + Claude-vision primary
+  const singleField = (req.files && req.files.face) || [];
+  if (singleField[0]) {
+    imageBase64 = fs.readFileSync(singleField[0].path).toString('base64');
+    imageMime = singleField[0].mimetype;
+    fs.unlinkSync(singleField[0].path);
+  }
+
+  // If only multi-angle were sent, use the first as the Claude-vision photo
+  if (!imageBase64 && faceImages.length > 0) {
+    imageBase64 = faceImages[0].base64;
+    imageMime = faceImages[0].mime;
   }
 
   jobs[jobId] = { status: 'starting' };
-  runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey);
+  runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey, faceImages);
 
   res.json({ jobId });
 });

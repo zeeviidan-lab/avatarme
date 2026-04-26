@@ -324,17 +324,46 @@
         <input type="file" id="input-face-lib" accept="image/*" style="display:none" onchange="fileSelected('face',this)"/>
         <input type="file" id="input-body" accept="image/*" style="display:none" onchange="fileSelected('body',this)"/>
         <input type="file" id="input-voice" accept="audio/*" capture="microphone" style="display:none" onchange="fileSelected('voice',this)"/>
+        <!-- Per-slot capture inputs for multi-angle. capture="user" opens front cam directly. -->
+        <input type="file" id="input-angle-0" accept="image/*" capture="user" style="display:none" onchange="angleSelected(0,this)"/>
+        <input type="file" id="input-angle-1" accept="image/*" capture="user" style="display:none" onchange="angleSelected(1,this)"/>
+        <input type="file" id="input-angle-2" accept="image/*" capture="user" style="display:none" onchange="angleSelected(2,this)"/>
+        <input type="file" id="input-angle-3" accept="image/*" capture="user" style="display:none" onchange="angleSelected(3,this)"/>
 
         <div id="saved-faces" style="display:none"></div>
 
         <div class="ucard" id="uc-face">
           <div class="uicon">📸</div>
-          <div class="utxt"><h3>Face Photo</h3><p id="fp-face">Most accurate result</p></div>
+          <div class="utxt"><h3>Face Capture</h3><p id="fp-face">4 angles → much better identity</p></div>
           <div class="uchk">✓</div>
         </div>
+
+        <!-- MULTI-ANGLE FACE CAPTURE (4 slots, fed to PhotoMaker for stronger identity) -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <button id="angle-btn-0" onclick="document.getElementById('input-angle-0').click()" style="aspect-ratio:1;padding:0;background:var(--surface2);border:1px dashed var(--border);border-radius:14px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;position:relative">
+            <div class="angle-icon" style="font-size:28px">😐</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:var(--accent)">FRONT</div>
+            <div style="font-size:10px;color:var(--muted)">Look straight</div>
+          </button>
+          <button id="angle-btn-1" onclick="document.getElementById('input-angle-1').click()" style="aspect-ratio:1;padding:0;background:var(--surface2);border:1px dashed var(--border);border-radius:14px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;position:relative">
+            <div class="angle-icon" style="font-size:28px">↩️</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:var(--accent)">LEFT ¾</div>
+            <div style="font-size:10px;color:var(--muted)">Turn slightly left</div>
+          </button>
+          <button id="angle-btn-2" onclick="document.getElementById('input-angle-2').click()" style="aspect-ratio:1;padding:0;background:var(--surface2);border:1px dashed var(--border);border-radius:14px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;position:relative">
+            <div class="angle-icon" style="font-size:28px">↪️</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:var(--accent)">RIGHT ¾</div>
+            <div style="font-size:10px;color:var(--muted)">Turn slightly right</div>
+          </button>
+          <button id="angle-btn-3" onclick="document.getElementById('input-angle-3').click()" style="aspect-ratio:1;padding:0;background:var(--surface2);border:1px dashed var(--border);border-radius:14px;color:var(--text);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;overflow:hidden;position:relative">
+            <div class="angle-icon" style="font-size:28px">⬆️</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:var(--accent)">SLIGHT UP</div>
+            <div style="font-size:10px;color:var(--muted)">Tilt chin up</div>
+          </button>
+        </div>
+        <div id="angle-status" style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:6px">0 of 4 angles · 2+ for multi-angle, single still works</div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
-          <button onclick="document.getElementById('input-face-cam').click()" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-weight:500;cursor:pointer">📷 Take Photo</button>
-          <button onclick="document.getElementById('input-face-lib').click()" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-weight:500;cursor:pointer">🖼️ From Library</button>
+          <button onclick="document.getElementById('input-face-lib').click()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:10px;color:var(--muted);font-size:11px;cursor:pointer">🖼️ Or pick a single photo from library</button>
         </div>
         <!-- USER ID — real personal data, persisted to localStorage -->
         <div class="userid" style="margin-top:14px;padding:14px 14px 12px;border:1px solid rgba(212,163,115,0.3);border-radius:14px;background:linear-gradient(180deg, rgba(212,163,115,0.06) 0%, rgba(0,0,0,0) 70%);position:relative">
@@ -756,7 +785,51 @@
 
 <script>
 const BACKEND = window.location.origin;
-var uploads = { face: null, body: false, voice: false };
+var uploads = { face: null, body: false, voice: false, faces: [null,null,null,null] };
+
+// Multi-angle face capture — one per slot. resizeFaceImage already
+// downsizes to ~1024px JPEG, then we store both the File (for upload)
+// and the dataURL (for thumbnail). When ≥2 are present, backend uses
+// PhotoMaker; otherwise the first non-null is used for InstantID.
+function angleSelected(idx, input) {
+  var file = input.files && input.files[0];
+  if (!file) return;
+  var btn = document.getElementById('angle-btn-' + idx);
+  btn.style.opacity = '0.5';
+  resizeFaceImage(file, 1024).then(function(out) {
+    uploads.faces[idx] = { file: out.file, dataUrl: out.dataUrl };
+    btn.style.opacity = '1';
+    btn.style.borderStyle = 'solid';
+    btn.style.borderColor = 'var(--accent)';
+    btn.innerHTML = '<img src="' + out.dataUrl + '" style="width:100%;height:100%;object-fit:cover;border-radius:13px"/>'
+                  + '<div style="position:absolute;bottom:6px;left:6px;right:6px;background:rgba(8,12,10,0.78);font-family:Bebas Neue,sans-serif;font-size:10px;letter-spacing:2px;color:var(--accent);padding:2px 6px;border-radius:6px;text-align:center">'
+                  + ['FRONT','LEFT ¾','RIGHT ¾','SLIGHT UP'][idx]
+                  + '</div>';
+    // Also seed the legacy single-photo path with the first captured angle,
+    // so Claude vision and the result-screen original-photo card still work.
+    if (idx === 0 || !uploads.face) {
+      uploads.face = out.file;
+      uploads.faceDataUrl = out.dataUrl;
+      saveFace(out.dataUrl);
+      document.getElementById('fp-face').textContent = '✓ Multi-angle capture';
+    }
+    renderAngleStatus();
+  }).catch(function(e){
+    btn.style.opacity = '1';
+    console.error('Angle capture failed', e);
+  });
+}
+
+function renderAngleStatus() {
+  var n = uploads.faces.filter(function(f){ return f; }).length;
+  var s = document.getElementById('angle-status');
+  if (!s) return;
+  if (n === 0) s.textContent = '0 of 4 angles · 2+ for multi-angle, single still works';
+  else if (n < 2) s.textContent = n + ' of 4 · capture 1 more for multi-angle identity';
+  else if (n < 4) s.textContent = '✓ ' + n + ' of 4 · multi-angle active (more = stronger)';
+  else s.textContent = '✓✓ ALL 4 ANGLES — strongest identity lock';
+  s.style.color = n >= 2 ? 'var(--accent)' : 'var(--muted)';
+}
 var gameAnswers = [];
 var rankOrder = [];
 var chosenAv = null;
@@ -1195,6 +1268,10 @@ async function generate() {
     formData.append('avatar', chosenAv);
     formData.append('bg', chosenBg);
     if (uploads.face) formData.append('face', uploads.face);
+    // Multi-angle face captures (PhotoMaker uses up to 4)
+    uploads.faces.forEach(function(f) {
+      if (f && f.file) formData.append('faces', f.file);
+    });
 
     // Start job
     var startRes = await fetch(BACKEND + '/start', { method: 'POST', body: formData });
