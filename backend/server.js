@@ -176,7 +176,16 @@ async function generateImage(fluxPrompt) {
   const startRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: { prompt: 'FULL BODY SHOT, head to toe, wide framing, feet visible, entire figure within the frame, NATURAL CANDID POSE — relaxed unposed stance like a real street photograph, weight on one leg, hands free or in pockets naturally, slight casual asymmetry, NOT a stiff portrait pose, NOT hands behind back, NOT military stance — ' + fluxPrompt, aspect_ratio: '2:3', output_format: 'jpg', output_quality: 95 } })
+    body: JSON.stringify({ input: {
+      prompt: 'FULL BODY SHOT, head to toe, wide framing, feet visible, entire figure within the frame, ' +
+              'NATURAL CANDID POSE — caught mid-step or just paused, ASYMMETRIC: one hand in pocket OR one hand at side OR holding phone, the OTHER hand doing something different, weight shifted to one hip, slight body twist, ' +
+              'OUTDOOR STREET SETTING: real city sidewalk visible behind, buildings or shopfronts in background, daylight, depth of field — NOT studio backdrop, NOT plain background, NOT seamless gray, ' +
+              'wearing proper sneakers or boots — NOT sandals — ' +
+              fluxPrompt,
+      aspect_ratio: '2:3',
+      output_format: 'jpg',
+      output_quality: 95,
+    } })
   });
 
   const prediction = await startRes.json();

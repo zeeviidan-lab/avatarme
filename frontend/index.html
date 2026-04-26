@@ -248,15 +248,17 @@
   .loader { position:absolute; inset:0; background:radial-gradient(ellipse 70% 50% at 50% 35%, rgba(201,96,30,0.10) 0%, transparent 60%), var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
   .loader.on { display:flex; }
   .pring { position:relative; width:170px; height:170px; margin-bottom:28px; background:radial-gradient(circle, rgba(20,24,30,0.04) 60%, transparent 75%); border-radius:50%; }
-  .pring svg { width:100%; height:100%; }
+  /* Rotation on the SVG ELEMENT (not individual circles) — browsers
+     handle CSS transforms on SVG primitives inconsistently. Putting it
+     on the parent SVG works reliably across all browsers. */
+  .pring svg { width:100%; height:100%; transform:rotate(-90deg); }
   /* Static dark track — the always-visible base ring */
-  .pring .pring-track { fill:none; stroke:rgba(20,24,30,0.35); stroke-width:7; transform:rotate(-90deg); transform-origin:50% 50%; }
-  /* Filled progress arc (driven by JS rAF) */
-  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:7; stroke-linecap:round; stroke-dasharray:0 999; filter:drop-shadow(0 0 10px rgba(201,96,30,0.7)); transform:rotate(-90deg); transform-origin:50% 50%; }
-  /* GUARANTEED motion — a small dot orbits the ring on a CSS @keyframes loop.
-     Works regardless of rAF/JS state, so user always sees activity. */
-  .pring .pring-orbit { fill:url(#pringGrad); transform-origin:50% 50%; animation:pringSpin 1.4s linear infinite; filter:drop-shadow(0 0 6px rgba(201,96,30,0.9)); }
-  @keyframes pringSpin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
+  .pring .pring-track { fill:none; stroke:rgba(20,24,30,0.35); stroke-width:7; }
+  /* Filled progress arc — grows from 12 o'clock (after -90deg parent rotation) clockwise */
+  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:7; stroke-linecap:round; stroke-dasharray:0 999; filter:drop-shadow(0 0 10px rgba(201,96,30,0.7)); }
+  /* Orbit dot REMOVED. The colored fill IS the progress indicator —
+     having an orbiting dot in addition was causing confusion (looked
+     like the dot was the progress, but it just circles forever). */
 
   /* Treadmill walker — per-pose animations. The figure stays in place (no
      translateX) but its vertical motion + rocking sells the action. */
@@ -328,8 +330,6 @@
           </defs>
           <circle class="pring-track" cx="50" cy="50" r="46"/>
           <circle class="pring-fill" id="pring-fill" cx="50" cy="50" r="46"/>
-          <!-- Orbiting dot — guaranteed motion via CSS keyframes, independent of JS state -->
-          <circle class="pring-orbit" cx="50" cy="4" r="4"/>
         </svg>
         <div class="pring-center">
           <!-- Seconds counter hidden per UX feedback — ring fill + label is enough -->
