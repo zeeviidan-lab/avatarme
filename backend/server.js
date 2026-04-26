@@ -4,6 +4,7 @@ const multer = require('multer');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const sharp = require('sharp');
 
 const app = express();
 app.use(cors());
@@ -213,6 +214,74 @@ const PULID_VERSION = '8baa7ef2255075b46f4d91cd238c21d31181b3e6a864463f967960bb0
 const INSTANTID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
 const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da31802a9570fe4';
 const CODEFORMER_VERSION = 'cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2';
+const FLUX_FILL_VERSION = 'a053f84125613d83e65328a289e14eb6639e10725c243e8fb0c24128e5573f4c';
+
+// Outpaint: extend an InstantID portrait into a full-body shot. We can't
+// force InstantID itself to frame head-to-toe (its face landmarks anchor
+// portrait crops, and pose/canny/depth ControlNets either don't help or
+// bleed reference-image style). Cleaner architecture: let InstantID do
+// what it's great at (identity-locked portrait), then flux-fill-dev
+// extends the canvas downward and paints the body in the same style/lighting.
+async function outpaintToFullBody(portraitImageUrl, fluxPrompt) {
+  if (!portraitImageUrl) return null;
+  try {
+    // 1. Fetch the portrait
+    const r = await fetch(portraitImageUrl);
+    const portraitBuf = Buffer.from(await r.arrayBuffer());
+    const meta = await sharp(portraitBuf).metadata();
+    const W = meta.width, H = meta.height;
+    if (!W || !H) { console.error('Outpaint: bad portrait dims', meta); return null; }
+
+    // 2. Build padded canvas: same width, taller (portrait → 2:3 if it isn't already)
+    // Place the original portrait at the TOP, leave the bottom 60% empty for body.
+    // flux-fill needs dims divisible by 16; pad H to a 2:3 ratio of W.
+    const targetH = Math.round(W * 1.5 / 16) * 16;          // 2:3 aspect
+    const padBelow = Math.max(0, targetH - H);
+    if (padBelow < 64) {
+      console.log('Outpaint: portrait already tall enough, skipping');
+      return portraitImageUrl;
+    }
+
+    // 3. Composite: portrait on top, transparent below (white background)
+    const padded = await sharp({
+      create: { width: W, height: targetH, channels: 3, background: { r:255, g:255, b:255 } }
+    }).composite([{ input: portraitBuf, top: 0, left: 0 }]).png().toBuffer();
+
+    // 4. Mask: white where original is (keep), black where to inpaint (paint body)
+    // flux-fill convention: BLACK areas get inpainted.
+    const mask = await sharp({
+      create: { width: W, height: targetH, channels: 3, background: { r:0, g:0, b:0 } }
+    }).composite([{
+      input: Buffer.from(`<svg width="${W}" height="${targetH}"><rect x="0" y="0" width="${W}" height="${H - 16}" fill="white"/></svg>`),
+      top: 0, left: 0
+    }]).png().toBuffer();
+
+    // 5. Call flux-fill-dev
+    const tightPrompt = (fluxPrompt || '').slice(0, 400);
+    const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ version: FLUX_FILL_VERSION, input: {
+        image: 'data:image/png;base64,' + padded.toString('base64'),
+        mask:  'data:image/png;base64,' + mask.toString('base64'),
+        prompt: 'full body view continuing the figure above naturally — torso, hips, legs, feet visible — ' + tightPrompt,
+        guidance: 30,
+        num_inference_steps: 30,
+        output_format: 'webp',
+        output_quality: 92,
+        megapixels: '1',
+      } })
+    });
+    const prediction = await startRes.json();
+    if (!prediction.id) { console.error('Outpaint start error:', JSON.stringify(prediction)); return null; }
+    console.log('Outpaint started:', prediction.id, 'padded:', W + 'x' + targetH);
+    const out = await pollPrediction(prediction.id, 3000, 50, 'Outpaint');
+    return Array.isArray(out) ? out[0] : out;
+  } catch (e) {
+    console.error('Outpaint exception:', e);
+    return null;
+  }
+}
 
 // CodeFormer face restoration — runs as the final step on InstantID output.
 // Sharpens facial features, fixes diffusion artifacts, and pulls overall
@@ -452,18 +521,18 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
         console.log('InstantID failed — trying PhotoMaker with', faceImages.length, 'angles');
         imageUrl = await photoMaker(claudeResult.flux_prompt, faceImages, avatarKey);
       }
-      // Post-restore with CodeFormer (the missing "secret sauce" of commercial
-      // face-swap pipelines). Skipped for stylized avatars because CodeFormer
-      // is a photoreal restorer — would un-cartoon them.
+      // Post-restore with CodeFormer (sharpens face, fixes diffusion artifacts).
+      // Skipped for stylized avatars because CodeFormer is a photoreal restorer.
       const isStylized = ['animated','yellow_toon'].includes(avatarKey);
       if (imageUrl && !isStylized) {
         const restored = await codeFormerRestore(imageUrl);
-        if (restored) {
-          console.log('CodeFormer restoration applied');
-          imageUrl = restored;
-        } else {
-          console.log('CodeFormer restoration failed — keeping InstantID output');
-        }
+        if (restored) { console.log('CodeFormer restoration applied'); imageUrl = restored; }
+      }
+      // Outpaint: extend the identity-locked portrait downward into a
+      // full-body shot. flux-fill-dev paints the body in matching style.
+      if (imageUrl && !isStylized) {
+        const fullBody = await outpaintToFullBody(imageUrl, claudeResult.flux_prompt);
+        if (fullBody) { console.log('Outpaint to full body applied'); imageUrl = fullBody; }
       }
       portraitUrl = null;
     }

@@ -286,8 +286,9 @@
           <circle class="pring-fill" id="pring-fill" cx="50" cy="50" r="46"/>
         </svg>
         <div class="pring-center">
-          <div class="pring-secs"><span id="pring-secs">0</span><span class="small">s</span></div>
-          <div class="pring-pct" id="pring-pct">STARTING</div>
+          <!-- Seconds counter hidden per UX feedback — ring fill + label is enough -->
+          <div class="pring-secs" style="display:none"><span id="pring-secs">0</span><span class="small">s</span></div>
+          <div class="pring-pct" id="pring-pct" style="font-size:14px;letter-spacing:3px">STARTING</div>
         </div>
       </div>
       <div class="loader-steps">
@@ -1257,7 +1258,9 @@ async function generate() {
   if (!chosenAv) return;
   var loader = document.getElementById('loader');
   loader.classList.add('on');
-  pringStartCounter(35);
+  // Pipeline now: Claude analysis + InstantID + CodeFormer + outpaint
+  // = ~75-90s. Bumped from 35 (which capped the ring at 97% halfway through).
+  pringStartCounter(85);
   setLoaderStep(1, 10);
   startTicks();
 

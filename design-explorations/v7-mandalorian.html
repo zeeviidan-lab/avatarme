@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AvatarMe — v7 Mandalorian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bone:#ECE4D2;          /* desert bone — main canvas */
+    --bone2:#E2D9C2;         /* slightly deeper */
+    --beskar:#C7CCD2;        /* polished metal */
+    --beskar-deep:#9298A0;   /* shadow side of metal */
+    --gunmetal:#2A2E33;      /* dark inscriptions */
+    --signal:#B85F2E;        /* mando rust amber — single warm accent */
+    --signal-soft:rgba(184,95,46,0.12);
+    --line:rgba(42,46,51,0.18);
+    --line-soft:rgba(42,46,51,0.08);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{background:var(--bone);color:var(--gunmetal);font-family:'Barlow Condensed',sans-serif;font-weight:500;letter-spacing:0.02em;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 70% 40% at 50% 0%, rgba(184,95,46,0.06), transparent 60%),
+      repeating-linear-gradient(0deg, transparent 0 3px, rgba(42,46,51,0.012) 3px 4px),
+      var(--bone);
+  }
+  .mono{font-family:'JetBrains Mono',monospace;letter-spacing:0;}
+  .upper{text-transform:uppercase;}
+
+  /* ── Wrapper: phone-sized like the main app ── */
+  .phone{max-width:430px;margin:0 auto;min-height:100vh;position:relative;overflow:hidden;}
+
+  /* ── Top status bar (techy chrome) ── */
+  .topbar{
+    display:flex;align-items:center;gap:8px;
+    padding:10px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;
+    color:var(--beskar-deep);letter-spacing:1.5px;
+    border-bottom:1px solid var(--line-soft);
+  }
+  .topbar .dot{width:6px;height:6px;border-radius:50%;background:var(--signal);box-shadow:0 0 6px var(--signal);}
+  .topbar .grow{flex:1;}
+
+  /* ── Helmet glyph (visor T) — pure CSS ── */
+  .helmet{
+    width:88px;height:96px;margin:32px auto 18px;position:relative;
+    background:
+      linear-gradient(180deg,var(--beskar) 0%, var(--beskar-deep) 100%);
+    border-radius:50% 50% 44% 44% / 60% 60% 40% 40%;
+    box-shadow:
+      inset 0 -10px 20px rgba(0,0,0,0.18),
+      inset 0 6px 12px rgba(255,255,255,0.4),
+      0 12px 30px rgba(42,46,51,0.18);
+  }
+  .helmet::before{
+    /* horizontal visor bar */
+    content:'';position:absolute;left:14%;right:14%;top:38%;height:11px;
+    background:var(--gunmetal);border-radius:3px;
+  }
+  .helmet::after{
+    /* vertical visor stem */
+    content:'';position:absolute;left:50%;top:38%;width:11px;bottom:18%;margin-left:-5.5px;
+    background:var(--gunmetal);border-radius:3px;
+  }
+
+  /* ── Headline ── */
+  h1{
+    text-align:center;font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    font-size:54px;line-height:0.92;letter-spacing:0.04em;
+    color:var(--gunmetal);text-transform:uppercase;
+    margin-top:6px;
+  }
+  h1 .sub{display:block;font-size:13px;letter-spacing:6px;color:var(--signal);margin-top:8px;font-weight:500;}
+
+  .creed{
+    text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;
+    color:var(--beskar-deep);margin:14px 24px 0;letter-spacing:1px;line-height:1.6;
+  }
+  .creed em{font-style:normal;color:var(--signal);}
+
+  /* ── CTA button ── */
+  .cta{
+    display:block;margin:30px 24px 8px;padding:18px 0;text-align:center;
+    background:var(--gunmetal);color:var(--bone);
+    border:none;border-radius:2px;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;
+    font-size:18px;letter-spacing:6px;text-transform:uppercase;
+    cursor:pointer;position:relative;
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,0.3);
+  }
+  .cta::before, .cta::after{
+    content:'';position:absolute;top:50%;width:18px;height:1px;background:var(--bone);opacity:0.5;
+  }
+  .cta::before{left:24px;}
+  .cta::after{right:24px;}
+
+  .ghost{
+    display:block;margin:0 24px 0;padding:14px 0;text-align:center;
+    background:transparent;color:var(--gunmetal);
+    border:1px solid var(--line);border-radius:2px;
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;
+    cursor:pointer;
+  }
+
+  /* ── Avatar bank (beskar plate cards) ── */
+  .section-label{
+    display:flex;align-items:center;gap:10px;
+    margin:32px 24px 14px;font-family:'JetBrains Mono',monospace;font-size:10px;
+    color:var(--beskar-deep);letter-spacing:3px;text-transform:uppercase;
+  }
+  .section-label::before, .section-label::after{
+    content:'';flex:1;height:1px;background:var(--line);
+  }
+
+  .bank{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 24px;}
+  .plate{
+    aspect-ratio:3/4;background:var(--bone2);border:1px solid var(--line);border-radius:3px;
+    position:relative;overflow:hidden;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4), 0 1px 0 rgba(42,46,51,0.06);
+  }
+  /* Rivets — 4 corners */
+  .plate::before, .plate::after,
+  .plate .rivet-l, .plate .rivet-r{
+    content:'';position:absolute;width:5px;height:5px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, var(--bone), var(--beskar-deep));
+    box-shadow:0 1px 1px rgba(0,0,0,0.15);
+  }
+  .plate::before{top:5px;left:5px;}
+  .plate::after{top:5px;right:5px;}
+  .plate .rivet-l{bottom:5px;left:5px;}
+  .plate .rivet-r{bottom:5px;right:5px;}
+
+  .plate .img{
+    position:absolute;inset:14px;background:#888;border-radius:2px;
+    filter:grayscale(0.15) contrast(1.05);
+  }
+  .plate .img img{width:100%;height:100%;object-fit:cover;display:block;}
+  .plate .label{
+    position:absolute;left:14px;bottom:14px;right:14px;
+    background:rgba(42,46,51,0.92);color:var(--bone);
+    font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;
+    padding:6px 8px;display:flex;align-items:center;gap:6px;
+  }
+  .plate .label .tag{color:var(--signal);font-weight:500;}
+
+  /* ── Footer creed ── */
+  .footcreed{
+    text-align:center;padding:18px 24px 28px;
+    font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:4px;
+    color:var(--beskar-deep);text-transform:uppercase;
+    border-top:1px solid var(--line-soft);
+  }
+  .footcreed .way{color:var(--signal);font-weight:500;}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="topbar">
+      <span class="dot"></span>
+      <span>FORGE-04 · ONLINE</span>
+      <span class="grow"></span>
+      <span>SIG 100%</span>
+    </div>
+
+    <div class="helmet"></div>
+
+    <h1>
+      Avatar<span style="color:var(--signal)">·</span>Me
+      <span class="sub">— FORGE YOUR LIKENESS —</span>
+    </h1>
+
+    <div class="creed">
+      Every warrior wears a face only the forge knows.<br/>
+      <em>This is the way.</em>
+    </div>
+
+    <button class="cta">Begin Forging</button>
+    <button class="ghost">Choose existing template</button>
+
+    <div class="section-label">Avatar Foundry · 18 Templates</div>
+    <div class="bank">
+      <div class="plate">
+        <span class="rivet-l"></span><span class="rivet-r"></span>
+        <div class="img"><img src="../frontend/portraits/warrior.jpg" alt=""/></div>
+        <div class="label"><span class="tag">01</span><span>WARRIOR</span></div>
+      </div>
+      <div class="plate">
+        <span class="rivet-l"></span><span class="rivet-r"></span>
+        <div class="img"><img src="../frontend/portraits/mage.jpg" alt=""/></div>
+        <div class="label"><span class="tag">02</span><span>MAGE</span></div>
+      </div>
+      <div class="plate">
+        <span class="rivet-l"></span><span class="rivet-r"></span>
+        <div class="img"><img src="../frontend/portraits/wolf.jpg" alt=""/></div>
+        <div class="label"><span class="tag">03</span><span>WOLF</span></div>
+      </div>
+      <div class="plate">
+        <span class="rivet-l"></span><span class="rivet-r"></span>
+        <div class="img"><img src="../frontend/portraits/martian.jpg" alt=""/></div>
+        <div class="label"><span class="tag">04</span><span>NOMAD</span></div>
+      </div>
+      <div class="plate">
+        <span class="rivet-l"></span><span class="rivet-r"></span>
+        <div class="img"><img src="../frontend/portraits/elf.jpg" alt=""/></div>
+        <div class="label"><span class="tag">05</span><span>ELF</span></div>
+      </div>
+      <div class="plate">
+        <span class="rivet-l"></span><span class="rivet-r"></span>
+        <div class="img"><img src="../frontend/portraits/eagle.jpg" alt=""/></div>
+        <div class="label"><span class="tag">06</span><span>EAGLE</span></div>
+      </div>
+    </div>
+
+    <div class="footcreed">
+      <span class="way">↳ THIS IS THE WAY ↲</span>
+    </div>
+  </div>
+</body>
+</html>
