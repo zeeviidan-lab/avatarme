@@ -121,69 +121,64 @@ async function generateImage(fluxPrompt) {
   throw new Error('Timed out');
 }
 
-// HUMAN_AVATARS used to route through InstantID for identity preservation,
-// but InstantID cannot produce full-body output (no dimension controls,
-// face-IP-adapter dominates composition). All avatars now go FLUX-first
-// (guaranteed full body via aspect_ratio:'2:3') and use face-swap for
-// identity. See FACESWAP_SUPPORTED below.
-const HUMAN_AVATARS = new Set();
+// Human avatars route through PuLID-FLUX: identity-preserving FLUX gen
+// at portrait dimensions (768×1280) — strong identity AND full body in
+// one pass. Replaces both the old InstantID path (couldn't do full body)
+// and the FLUX+face-swap path (face too small in full-body shot for
+// face-swap to land accurately).
+const HUMAN_AVATARS = new Set(['yourself','animated','yellow_toon','martian']);
 
-// InstantID — generates image WITH the user's face identity preserved.
-// Per-avatar weights: yourself needs high identity, iconic characters
-// need the character look to dominate (small facial echo only).
-const INSTANT_ID_WEIGHTS = {
-  yourself: { ip: 0.8, cn: 0.42 },
-  // animated: 2D series style needs strong face recognition (the whole
-  // point is "you, animated") but enough room for the stylized look
-  animated: { ip: 0.7, cn: 0.32 },
-  martian:  { ip: 0.6, cn: 0.32 },
-  yellow_toon: { ip: 0.6, cn: 0.28 },
+// PuLID-FLUX — identity-preserving FLUX. Strong likeness + full body
+// in one pass at configurable portrait dimensions. id_weight controls
+// how strongly identity overrides the prompt's stylization:
+//   yourself: highest (just be them)
+//   animated/martian: medium (let the style stylize the face)
+//   yellow_toon: lower still (flat 2D needs to dominate face geometry)
+const PULID_VERSION = '8baa7ef2255075b46f4d91cd238c21d31181b3e6a864463f967960bb0112525b';
+const PULID_ID_WEIGHTS = {
+  yourself:    1.2,
+  animated:    1.0,
+  martian:     0.9,
+  yellow_toon: 0.8,
 };
-const ICONIC_WEIGHTS = { ip: 0.55, cn: 0.32 };
 
 async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
-  const INSTANT_ID_VERSION = '2e4785a4d80dadf580077b2244c8d7c05d8e3faac04a04c02d8e099dd2876789';
-  const w = INSTANT_ID_WEIGHTS[avatarKey] || ICONIC_WEIGHTS;
+  const idWeight = PULID_ID_WEIGHTS[avatarKey] ?? 1.0;
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ version: INSTANT_ID_VERSION, input: {
-      image: faceDataUrl,
-      // CRITICAL: InstantID's enable_pose_controlnet defaults to true
-      // and auto-derives pose from the input selfie (a head-and-shoulders
-      // crop) — which forces a face-crop output regardless of prompt.
-      // Disable it so the prompt's full-body framing actually wins.
-      enable_pose_controlnet: false,
-      pose_strength: 0,
-      prompt: 'FULL BODY SHOT, head to toe, wide framing, full standing pose, feet visible, the entire figure standing within the frame from feet to top of head with clear space around the body — ' + prompt + ', soft balanced three-point lighting, gentle key light with soft fill, neutral natural shadows, anatomically correct proportions, well-balanced face, symmetric features',
-      negative_prompt: 'cropped at waist, cropped at chest, headshot, bust crop, portrait crop, extreme close-up of face, face fills the frame, body cut off, missing feet, missing legs, missing knees, distorted proportions, oversized head, tiny body, deformed body, asymmetric face, wonky eyes, crossed eyes, harsh under-light, harsh top-light, dramatic split lighting, blown highlights on face, blocked-up shadows on face, harsh wrinkles, deep facial lines, emphasized skin texture, uneven blotchy skin, heavy pores, exaggerated features, low quality, blurry, deformed, ugly, bad anatomy, multiple faces, extra limbs, realistic human face overriding the character, plain everyday clothing where iconic outfit should be',
-      num_inference_steps: 40,
-      guidance_scale: 5,
-      ip_adapter_scale: w.ip,
-      controlnet_conditioning_scale: w.cn,
-      enhance_nonface_region: true,
+    body: JSON.stringify({ version: PULID_VERSION, input: {
+      main_face_image: faceDataUrl,
+      width: 768,
+      height: 1280,
+      prompt: 'FULL BODY SHOT, head to toe, wide framing, full standing pose, feet visible, the entire figure standing within the frame from feet to top of head with clear space around the body — ' + prompt,
+      negative_prompt: 'cropped at waist, cropped at chest, headshot, bust crop, portrait crop, extreme close-up of face, face fills the frame, body cut off, missing feet, missing legs, missing knees, distorted proportions, oversized head, tiny body, deformed body, multiple faces, extra limbs, low quality, blurry, deformed eyes, cross-eyed, asymmetric face, text, watermark',
+      num_steps: 25,
+      guidance_scale: 4,
+      id_weight: idWeight,
+      true_cfg: 1,
       output_format: 'jpg',
-      output_quality: 95,
+      output_quality: 92,
     } })
   });
   const prediction = await startRes.json();
-  if (!prediction.id) { console.error('InstantID start error:', JSON.stringify(prediction)); return null; }
-  console.log('InstantID started:', prediction.id);
+  if (!prediction.id) { console.error('PuLID start error:', JSON.stringify(prediction)); return null; }
+  console.log('PuLID started:', prediction.id, 'id_weight:', idWeight);
 
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 50; i++) {
     await new Promise(r => setTimeout(r, 3000));
     const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
       headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` }
     });
     const result = await pollRes.json();
     if (result.status === 'succeeded') {
-      console.log('InstantID succeeded');
+      console.log('PuLID succeeded');
       return Array.isArray(result.output) ? result.output[0] : result.output;
     }
-    if (result.status === 'failed') { console.error('InstantID failed:', result.error); return null; }
+    if (result.status === 'failed') { console.error('PuLID failed:', result.error); return null; }
   }
-  console.error('InstantID timed out');
+  console.error('PuLID timed out');
   return null;
 }
 
@@ -273,11 +268,11 @@ app.get('/status/:id', (req, res) => {
 // on canids/birds — those keep the spirit-pairing UX instead.
 const FACESWAP_VERSION = '9a4298548422074c3f57258c5d544497314ae4112df80d116f0d2109e843d20d';
 const FACESWAP_FALLBACK_VERSION = 'cff87316e31787df12002c9e20a78a017a36cb31fde9862d8dedd15ab29b7288'; // xiankgx/face-swap
-// Every avatar with a humanoid/face-readable target gets face-swap when
-// the user uploaded a selfie. Real wildlife animals (wolf/eagle/etc.)
-// stay out — their faces have no human landmarks for InsightFace.
+// Face-swap pipeline (FLUX → swap user's face on top). Used for animal
+// targets with human-readable faces (cartoons, macaque). Human avatars
+// are NOT here — they go through PuLID-FLUX which bakes in identity
+// directly. Real wildlife (wolf/eagle/etc.) stay out — no human landmarks.
 const FACESWAP_SUPPORTED = new Set([
-  'yourself','animated','yellow_toon','martian',
   'monkey',
   'cartoon_wolf','cartoon_fox','cartoon_bear','cartoon_owl','cartoon_tiger','cartoon_monkey',
 ]);
