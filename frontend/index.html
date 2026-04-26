@@ -254,11 +254,11 @@
   .pring svg { width:100%; height:100%; transform:rotate(-90deg); }
   /* Static dark track — the always-visible base ring */
   .pring .pring-track { fill:none; stroke:rgba(20,24,30,0.35); stroke-width:7; }
-  /* Filled progress arc — grows from 12 o'clock (after -90deg parent rotation) clockwise */
-  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:7; stroke-linecap:round; stroke-dasharray:0 999; filter:drop-shadow(0 0 10px rgba(201,96,30,0.7)); }
-  /* Orbit dot REMOVED. The colored fill IS the progress indicator —
-     having an orbiting dot in addition was causing confusion (looked
-     like the dot was the progress, but it just circles forever). */
+  /* Filled progress arc — STANDARD pattern: dasharray=circumference,
+     dashoffset animates from circumference (hidden) → 0 (full circle).
+     This is the canonical SVG ring pattern; the previous attempt with
+     stroke-dasharray="X Y" was non-standard and rendering inconsistently. */
+  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:8; stroke-linecap:butt; stroke-dasharray:289; stroke-dashoffset:289; filter:drop-shadow(0 0 4px rgba(201,96,30,0.4)); }
 
   /* Treadmill walker — per-pose animations. The figure stays in place (no
      translateX) but its vertical motion + rocking sells the action. */
@@ -1256,25 +1256,24 @@ function pringStartCounter(estSec, ids) {
   if (pringRAF) cancelAnimationFrame(pringRAF);
   var fillId = (ids && ids.fill) || 'pring-fill';
   var secsId = (ids && ids.secs) || 'pring-secs';
-  // Re-resolve the fill element inside the rAF loop in case the DOM
-  // wasn't ready when pringStartCounter fired (loader screen transition
-  // can race the call). This was likely why "Just Me" specifically
-  // appeared frozen — the result returned fast enough that pringComplete
-  // fired before any frames rendered into the late-resolved element.
   var fill = document.getElementById(fillId);
   if (fill) {
     fill.style.transition = 'none';
-    // Force initial state to 0 so user sees motion start from empty.
-    fill.setAttribute('stroke-dasharray', '0 ' + PRING_CIRC);
+    // STANDARD progress-ring pattern: stroke-dasharray = circumference (full),
+    // stroke-dashoffset animates from circumference (empty) → 0 (full).
+    fill.setAttribute('stroke-dasharray', PRING_CIRC.toFixed(2));
+    fill.setAttribute('stroke-dashoffset', PRING_CIRC.toFixed(2));
   }
   function frame(now) {
     var elapsed = (now - pringStart) / 1000;
-    // Always show a min 1% so the ring is visibly NON-empty (proves it's alive).
     var pct = Math.max(0.01, Math.min(0.97, elapsed / pringEstSec));
     var f = fill || document.getElementById(fillId);
     if (f) {
-      if (!fill) { f.style.transition = 'none'; fill = f; }
-      f.setAttribute('stroke-dasharray', (pct * PRING_CIRC).toFixed(2) + ' ' + PRING_CIRC);
+      if (!fill) { f.style.transition = 'none'; f.setAttribute('stroke-dasharray', PRING_CIRC.toFixed(2)); fill = f; }
+      // dashoffset = how much of the dasharray is "hidden" at the start.
+      // pct=0 → offset=PRING_CIRC (whole stroke hidden, ring empty)
+      // pct=1 → offset=0 (no hiding, ring full)
+      f.setAttribute('stroke-dashoffset', ((1 - pct) * PRING_CIRC).toFixed(2));
     }
     var secs = document.getElementById(secsId);
     if (secs) secs.textContent = Math.floor(elapsed);
@@ -1328,9 +1327,9 @@ function pringComplete(ids) {
   walkerStop();
   var fill = document.getElementById(fillId);
   if (fill) {
-    // Restore a smooth transition just for the final snap to 100%.
-    fill.style.transition = 'stroke-dasharray 0.4s ease-out';
-    fill.setAttribute('stroke-dasharray', PRING_CIRC + ' ' + PRING_CIRC);
+    // Final snap to 100%: dashoffset 0 = full ring shown.
+    fill.style.transition = 'stroke-dashoffset 0.4s ease-out';
+    fill.setAttribute('stroke-dashoffset', '0');
   }
   var pct = document.getElementById(pctId);
   if (pct) pct.textContent = 'DONE';
