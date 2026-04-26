@@ -74,7 +74,7 @@ ${imageBase64 ? 'Face photo: provided (analyze expression, energy, features)' : 
 2. A highly detailed FLUX image prompt for a unique full body photorealistic ${av.animal} character
 
 Image prompt rules:
-- ULTRA-IMPORTANT FRAMING: this MUST be a FULL BODY shot — head to toe visible, wide framing, the entire figure standing within the frame from feet to top of head, with clear space around the body. NEVER a headshot, NEVER a bust crop, NEVER waist-up. The flux_prompt must explicitly contain the words "full body, head to toe, wide framing, full standing pose, feet visible".
+- ${imageBase64 && ['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin'].includes(avatarKey) ? `IDENTITY FIDELITY (CRITICAL — this is YOU, not a fictionalized older version of you): study the photo and write the user's REAL features into the flux_prompt — exact apparent age (do NOT age them up; a man in his early 40s with some grey is NOT "distinguished elder" — he's a man in his early 40s), exact hair color and pattern (if hair is mostly dark with some grey, write "mostly dark hair with scattered grey" — NEVER "silver hair" or "fully grey"), exact beard pattern (if salt-and-pepper, write "salt-and-pepper beard" — not "full silver beard"), skin tone (warm olive, fair, deep brown — name it), eye color, build. The avatar must read as the SAME PERSON the photo shows, just in the avatar's costume/world. Do NOT romanticize, age, idealize, or "improve" the appearance.\n- ` : ''}ULTRA-IMPORTANT FRAMING: this MUST be a FULL BODY shot — head to toe visible, wide framing, the entire figure standing within the frame from feet to top of head, with clear space around the body. NEVER a headshot, NEVER a bust crop, NEVER waist-up. The flux_prompt must explicitly contain the words "full body, head to toe, wide framing, full standing pose, feet visible".
 - Candid full body portrait of a ${av.animal} (${av.base}), captured in a natural unposed moment — not a hero pose, not posed for the camera
 - Setting: ${env} — described in plain natural language, like a real place that exists
 - Subtle personality cues only: gaze, posture, micro-expression, the way light falls. Avoid theatrical drama.
@@ -236,7 +236,7 @@ async function pulidPortrait(prompt, faceBase64, faceMime, avatarKey) {
 // (face too small for ID to lock) and the trade-off face-swap-alone
 // has (user photo lighting/angle varies, source quality unpredictable).
 async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
-  console.log('generateWithFace (two-pass) avatar:', avatarKey);
+  console.log('generateWithFace (identity-first) avatar:', avatarKey);
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
   // Run PuLID portrait + FLUX full body in parallel
   const [portraitUrl, fullBodyUrl] = await Promise.all([
@@ -245,12 +245,19 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
   ]);
   if (!portraitUrl && !fullBodyUrl) return null;
   if (!fullBodyUrl) { console.log('No full-body — returning PuLID portrait'); return portraitUrl; }
-  if (!portraitUrl) { console.log('No PuLID portrait — returning bare FLUX full body'); return fullBodyUrl; }
-  // Face-swap: use the PuLID portrait as the high-quality identity SOURCE,
-  // place it on the FLUX full-body TARGET.
-  console.log('Face-swapping PuLID portrait → FLUX full-body');
-  const swapped = await faceSwap(fullBodyUrl, portraitUrl);
-  return swapped || fullBodyUrl;
+  // CRITICAL: face-swap source = the user's ORIGINAL photo (ground-truth
+  // identity), NOT PuLID's regenerated portrait (which drifts on age,
+  // hair color, bone structure). PuLID portrait is kept only as a final
+  // fallback if the swap fails.
+  console.log('Face-swapping ORIGINAL user photo → FLUX full-body');
+  const swapped = await faceSwap(fullBodyUrl, faceDataUrl);
+  if (swapped) return swapped;
+  console.log('Original-photo swap failed — trying PuLID portrait as source');
+  if (portraitUrl) {
+    const swappedFromPulid = await faceSwap(fullBodyUrl, portraitUrl);
+    if (swappedFromPulid) return swappedFromPulid;
+  }
+  return portraitUrl || fullBodyUrl;
 }
 
 // Run the full pipeline in background
