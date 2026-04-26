@@ -248,10 +248,15 @@
   .loader { position:absolute; inset:0; background:radial-gradient(ellipse 70% 50% at 50% 35%, rgba(201,96,30,0.10) 0%, transparent 60%), var(--bg); display:none; align-items:center; justify-content:center; flex-direction:column; gap:0; z-index:500; padding:40px; }
   .loader.on { display:flex; }
   .pring { position:relative; width:170px; height:170px; margin-bottom:28px; background:radial-gradient(circle, rgba(20,24,30,0.04) 60%, transparent 75%); border-radius:50%; }
-  .pring svg { transform:rotate(-90deg); width:100%; height:100%; }
-  /* MUST be visible on bone bg. Track = solid dark gunmetal at meaningful alpha + thick stroke. */
-  .pring .pring-track { fill:none; stroke:rgba(20,24,30,0.35); stroke-width:7; }
-  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:7; stroke-linecap:round; stroke-dasharray:0 999; filter:drop-shadow(0 0 10px rgba(201,96,30,0.7)); }
+  .pring svg { width:100%; height:100%; }
+  /* Static dark track — the always-visible base ring */
+  .pring .pring-track { fill:none; stroke:rgba(20,24,30,0.35); stroke-width:7; transform:rotate(-90deg); transform-origin:50% 50%; }
+  /* Filled progress arc (driven by JS rAF) */
+  .pring .pring-fill { fill:none; stroke:url(#pringGrad); stroke-width:7; stroke-linecap:round; stroke-dasharray:0 999; filter:drop-shadow(0 0 10px rgba(201,96,30,0.7)); transform:rotate(-90deg); transform-origin:50% 50%; }
+  /* GUARANTEED motion — a small dot orbits the ring on a CSS @keyframes loop.
+     Works regardless of rAF/JS state, so user always sees activity. */
+  .pring .pring-orbit { fill:url(#pringGrad); transform-origin:50% 50%; animation:pringSpin 1.4s linear infinite; filter:drop-shadow(0 0 6px rgba(201,96,30,0.9)); }
+  @keyframes pringSpin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
   .pring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
   .pring-secs { font-family:'Bebas Neue',sans-serif; font-size:38px; line-height:1; color:var(--text); letter-spacing:1px; }
   .pring-secs .small { font-size:14px; color:var(--muted); margin-left:2px; letter-spacing:1px; }
@@ -297,6 +302,8 @@
           </defs>
           <circle class="pring-track" cx="50" cy="50" r="46"/>
           <circle class="pring-fill" id="pring-fill" cx="50" cy="50" r="46"/>
+          <!-- Orbiting dot — guaranteed motion via CSS keyframes, independent of JS state -->
+          <circle class="pring-orbit" cx="50" cy="4" r="4"/>
         </svg>
         <div class="pring-center">
           <!-- Seconds counter hidden per UX feedback — ring fill + label is enough -->

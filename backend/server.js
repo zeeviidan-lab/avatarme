@@ -176,7 +176,7 @@ async function generateImage(fluxPrompt) {
   const startRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: { prompt: 'FULL BODY SHOT, head to toe, wide framing, full standing pose, feet visible, entire figure within the frame — ' + fluxPrompt, aspect_ratio: '2:3', output_format: 'jpg', output_quality: 95 } })
+    body: JSON.stringify({ input: { prompt: 'FULL BODY SHOT, head to toe, wide framing, feet visible, entire figure within the frame, NATURAL CANDID POSE — relaxed unposed stance like a real street photograph, weight on one leg, hands free or in pockets naturally, slight casual asymmetry, NOT a stiff portrait pose, NOT hands behind back, NOT military stance — ' + fluxPrompt, aspect_ratio: '2:3', output_format: 'jpg', output_quality: 95 } })
   });
 
   const prediction = await startRes.json();
@@ -244,17 +244,20 @@ async function headComposite(fluxBodyUrl, idPortraitUrl) {
     const Wp = pMeta.width, Hp = pMeta.height;
     if (!Wb || !Hb || !Wp || !Hp) { console.error('headComposite: bad dims'); return null; }
 
-    // Region in FLUX body where head should land
-    const headTargetW = Math.round(Wb * 0.42);
-    const headTargetH = Math.round(Hb * 0.26);
+    // Region in FLUX body where head should land. Tuned WIDER + TALLER
+    // than v1 because previous result still showed FLUX's hair (hair area
+    // outside the composite region). Now covers full hair envelope.
+    const headTargetW = Math.round(Wb * 0.50);   // was 0.42 — wider for hair sides
+    const headTargetH = Math.round(Hb * 0.32);   // was 0.26 — taller for hair top + neck blend
     const headTargetX = Math.round((Wb - headTargetW) / 2);
-    const headTargetY = Math.round(Hb * 0.01);   // 1% from top — leave a sliver for hair top
+    const headTargetY = Math.round(Hb * 0.005);  // start almost at top
 
-    // Region in InstantID portrait to extract (head + hair + bit of shoulders)
-    const portraitHeadW = Math.round(Wp * 0.78);
-    const portraitHeadH = Math.round(Hp * 0.66);
+    // Region in InstantID portrait to extract — TALLER to ensure we capture
+    // hair crown all the way to chin, not just the central face triangle.
+    const portraitHeadW = Math.round(Wp * 0.92);  // was 0.78 — wider for sideburns/ears
+    const portraitHeadH = Math.round(Hp * 0.78);  // was 0.66 — taller for full hair
     const portraitHeadX = Math.round((Wp - portraitHeadW) / 2);
-    const portraitHeadY = Math.round(Hp * 0.02);
+    const portraitHeadY = 0;                       // start at top of portrait
 
     // Extract + resize InstantID head to target dims
     const headPNG = await sharp(portraitBuf)
