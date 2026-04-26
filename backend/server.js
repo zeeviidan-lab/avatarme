@@ -272,10 +272,11 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
-      // Single PuLID call at MAX id_weight (3.0) — strongest identity
-      // lock the model offers. No face-swap, no FLUX body fallback —
-      // pure identity-preserving diffusion.
-      imageUrl = await pulidPortrait(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey, 3.0);
+      // Pure PuLID at the per-avatar tuned id_weight from
+      // PULID_ID_WEIGHTS (yourself=2.4 is already near the practical
+      // ceiling). id_weight 3.0 overdrives the model — produces blurred
+      // eye-less output. No face-swap.
+      imageUrl = await pulidPortrait(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
       portraitUrl = null;
     }
 
