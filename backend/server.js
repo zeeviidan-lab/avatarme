@@ -139,30 +139,36 @@ async function generateImage(fluxPrompt) {
 const HUMAN_AVATARS = new Set(['yourself','animated','yellow_toon','martian','elf','dwarf','warrior','mage','priest','goblin']);
 
 // PuLID-FLUX — identity-preserving FLUX. Strong likeness + full body
-// in one pass at configurable portrait dimensions. id_weight controls
-// how strongly identity overrides the prompt's stylization:
-//   yourself: highest (just be them)
-//   animated/martian: medium (let the style stylize the face)
-//   yellow_toon: lower still (flat 2D needs to dominate face geometry)
+// in one pass at configurable portrait dimensions.
+//
+// id_weight: PuLID schema range is 0.0–3.0 (NOT 0–1). Earlier values
+// were drastically under-tuned (~1.0) → identity dilution. Realistic
+// range for a recognizable likeness is 1.5–2.5.
+//
+// start_step: 0 = ID injected from the very first denoising step
+// (highest fidelity). 4 = more editability but weaker identity.
 const PULID_VERSION = '8baa7ef2255075b46f4d91cd238c21d31181b3e6a864463f967960bb0112525b';
 const PULID_ID_WEIGHTS = {
-  yourself:    1.2,
-  animated:    1.0,
-  martian:     0.9,
-  yellow_toon: 0.8,
-  // Fantasy classes — moderate weight: keep face recognizable but let the
-  // archetype/costume fully express itself
-  elf:         1.0,
-  dwarf:       1.0,
-  warrior:     1.1,
-  mage:        1.0,
-  priest:      1.0,
-  goblin:      0.85,
+  yourself:    2.4,   // pure photo of YOU — push identity hardest
+  animated:    1.8,   // 2D animated style needs some headroom
+  yellow_toon: 1.3,   // flat cartoon must dominate face geometry
+  martian:     1.7,   // alien skin/eyes still need ID to read through
+  elf:         1.9,
+  dwarf:       1.9,
+  warrior:     2.1,
+  mage:        1.9,
+  priest:      1.9,
+  goblin:      1.5,
 };
 
 async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
   const faceDataUrl = `data:${faceMime};base64,${faceBase64}`;
   const idWeight = PULID_ID_WEIGHTS[avatarKey] ?? 1.0;
+  // PuLID is sensitive to prompt length — keep it tight and lead with
+  // the SUBJECT (so identity tokens align with the FLUX denoising target),
+  // not framing instructions. Move framing keywords to the tail.
+  const tightPrompt = prompt.length > 380 ? prompt.slice(0, 380) : prompt;
+  const pulidPrompt = tightPrompt + ', full body, head to toe, standing, feet visible, cinematic';
   const startRes = await fetch('https://api.replicate.com/v1/predictions', {
     method: 'POST',
     headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
@@ -170,11 +176,12 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
       main_face_image: faceDataUrl,
       width: 768,
       height: 1280,
-      prompt: 'FULL BODY SHOT, head to toe, wide framing, full standing pose, feet visible, the entire figure standing within the frame from feet to top of head with clear space around the body — ' + prompt,
-      negative_prompt: 'cropped at waist, cropped at chest, headshot, bust crop, portrait crop, extreme close-up of face, face fills the frame, body cut off, missing feet, missing legs, missing knees, distorted proportions, oversized head, tiny body, deformed body, multiple faces, extra limbs, low quality, blurry, deformed eyes, cross-eyed, asymmetric face, text, watermark',
-      num_steps: 20,            // schema max is 20
+      prompt: pulidPrompt,
+      negative_prompt: 'cropped, headshot, bust crop, missing feet, missing legs, deformed, multiple faces, extra limbs, low quality, blurry, asymmetric face, text, watermark',
+      num_steps: 20,
       guidance_scale: 4,
       id_weight: idWeight,
+      start_step: 0,            // inject identity from first step → max fidelity
       true_cfg: 1,
       output_format: 'jpg',
       output_quality: 92,
@@ -182,7 +189,7 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
   });
   const prediction = await startRes.json();
   if (!prediction.id) { console.error('PuLID start error:', JSON.stringify(prediction)); return null; }
-  console.log('PuLID started:', prediction.id, 'id_weight:', idWeight);
+  console.log('PuLID started:', prediction.id, 'avatar:', avatarKey, 'id_weight:', idWeight, 'face_bytes:', faceBase64.length, 'prompt_len:', pulidPrompt.length);
 
   for (let i = 0; i < 50; i++) {
     await new Promise(r => setTimeout(r, 3000));
