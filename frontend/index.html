@@ -336,7 +336,27 @@
           <button onclick="document.getElementById('input-face-cam').click()" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-weight:500;cursor:pointer">📷 Take Photo</button>
           <button onclick="document.getElementById('input-face-lib').click()" style="flex:1;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:13px;font-weight:500;cursor:pointer">🖼️ From Library</button>
         </div>
-        <div class="ucard" id="uc-body" onclick="document.getElementById('input-body').click()">
+        <!-- USER ID — real personal data, persisted to localStorage -->
+        <div class="userid" style="margin-top:14px;padding:14px 14px 12px;border:1px solid rgba(212,163,115,0.3);border-radius:14px;background:linear-gradient(180deg, rgba(212,163,115,0.06) 0%, rgba(0,0,0,0) 70%);position:relative">
+          <div style="position:absolute;top:-9px;left:14px;padding:1px 9px;background:var(--bg);font-family:'Bebas Neue',sans-serif;font-size:10px;letter-spacing:3px;color:var(--accent)">YOUR ID</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.4">Real you. Used as the baseline for your avatar's stats.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <input id="up-name" type="text" placeholder="Name (optional)" oninput="saveProfile()" style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;grid-column:1/-1"/>
+            <select id="up-gender" onchange="saveProfile()" style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px">
+              <option value="">Gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Non-binary">Non-binary</option>
+              <option value="Prefer not to say">Prefer not to say</option>
+            </select>
+            <input id="up-age" type="number" min="1" max="120" placeholder="Age" oninput="saveProfile()" style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px"/>
+            <input id="up-height" type="text" placeholder="Height (e.g. 175cm)" oninput="saveProfile()" style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px"/>
+            <input id="up-weight" type="text" placeholder="Weight (e.g. 75kg)" oninput="saveProfile()" style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px"/>
+          </div>
+          <div id="up-status" style="margin-top:8px;font-size:10px;letter-spacing:1.5px;color:var(--accent);min-height:12px"></div>
+        </div>
+
+        <div class="ucard" id="uc-body" style="margin-top:14px" onclick="document.getElementById('input-body').click()">
           <div class="uicon">🧍</div>
           <div class="utxt"><h3>Body Photo</h3><p id="fp-body">Optional</p></div>
           <div class="uchk">✓</div>
@@ -773,6 +793,33 @@ function buildSplashCollage() {
   }
   c.innerHTML = tiles.map(function(k){ return '<div style="background-image:url(\''+AV_PHOTOS[k]+'\')"></div>'; }).join('');
   c.dataset.built = '1';
+}
+
+// ── USER PROFILE (real ID data) ──
+var PROFILE_KEY = 'avatarme_user_profile';
+function loadProfile() {
+  try { return JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveProfile() {
+  var p = {
+    name:   document.getElementById('up-name').value.trim(),
+    gender: document.getElementById('up-gender').value,
+    age:    document.getElementById('up-age').value.trim(),
+    height: document.getElementById('up-height').value.trim(),
+    weight: document.getElementById('up-weight').value.trim(),
+  };
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); } catch(e) {}
+  var filled = ['gender','age','height','weight'].filter(function(k){ return p[k]; }).length;
+  document.getElementById('up-status').textContent = filled === 4 ? '✓ ID COMPLETE' : (filled ? '◌ ' + filled + '/4 FIELDS' : '');
+}
+function restoreProfile() {
+  var p = loadProfile();
+  if (!p) return;
+  ['name','gender','age','height','weight'].forEach(function(k){
+    var el = document.getElementById('up-' + k);
+    if (el && p[k]) el.value = p[k];
+  });
+  saveProfile(); // refresh status badge
 }
 
 // ── SAVED FACE PHOTOS ──
