@@ -474,7 +474,7 @@
 
         <div class="ucard" id="uc-body" style="margin-top:14px" onclick="document.getElementById('input-body').click()">
           <div class="uicon">🧍</div>
-          <div class="utxt"><h3>Body Photo</h3><p id="fp-body">Optional</p></div>
+          <div class="utxt"><h3>Body Photo</h3><p id="fp-body">Optional · upload for full-body movable 3D avatar</p></div>
           <div class="uchk">✓</div>
         </div>
         <div class="ucard" id="uc-voice" onclick="document.getElementById('input-voice').click()">
@@ -1126,6 +1126,22 @@ function fileSelected(type, input) {
     });
     return;
   }
+  if (type === 'body') {
+    // Store the actual file (was just `true`) so we can ship it to the
+    // backend as the img2img init for "yourself" avatar.
+    document.getElementById('fp-body').textContent = 'Processing…';
+    resizeFaceImage(file, 1280).then(function(out){
+      uploads.body = out.file;
+      document.getElementById('uc-body').classList.add('done');
+      document.getElementById('fp-body').textContent = '✓ ' + name + ' (full body for movable avatar)';
+    }).catch(function(err){
+      console.error('body resize failed, using original', err);
+      uploads.body = file;
+      document.getElementById('uc-body').classList.add('done');
+      document.getElementById('fp-body').textContent = '✓ ' + name;
+    });
+    return;
+  }
   uploads[type] = true;
   document.getElementById('uc-' + type).classList.add('done');
   document.getElementById('fp-' + type).textContent = '✓ ' + name;
@@ -1420,6 +1436,9 @@ async function generate() {
     uploads.faces.forEach(function(f) {
       if (f && f.file) formData.append('faces', f.file);
     });
+    // Body photo (if uploaded) — used as img2img init for "yourself" avatar
+    // so the result has a real body for the 3D model to be movable.
+    if (uploads.body && uploads.body.size) formData.append('body', uploads.body);
 
     // Start job
     var startRes = await fetch(BACKEND + '/start', { method: 'POST', body: formData });

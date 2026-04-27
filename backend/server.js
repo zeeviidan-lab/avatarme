@@ -754,7 +754,7 @@ async function generateWithFace(prompt, faceBase64, faceMime, avatarKey) {
 // faceImages: optional array of { base64, mime } — up to 4 multi-angle photos.
 // imageBase64/imageMime: legacy single-photo path (still used for Claude
 // vision analysis and animal face-swap).
-async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey, faceImages) {
+async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey, faceImages, bodyBase64, bodyMime) {
   try {
     jobs[jobId].status = 'analyzing';
     const claudeResult = await analyzeAndBuildPrompt(imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey);
@@ -787,12 +787,21 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
 
       const isStylized = ['animated','yellow_toon'].includes(avatarKey);
       if (avatarKey === 'yourself') {
-        // YOURSELF avatar: img2img on the user's actual photo. Identity
-        // GUARANTEED — diffusion starts from the user's face, no model
-        // has to transfer anything. Light prompt-driven restyling.
-        // Trade-off: pose/framing locked to the user's input photo.
-        console.log('yourself: img2img on user photo (identity guaranteed)');
-        imageUrl = await fluxImg2Img(claudeResult.flux_prompt, photoUrl, 0.45);
+        // YOURSELF avatar: img2img init. Prefer the BODY photo if user
+        // uploaded one (full-body output → 3D model has a real body that's
+        // movable in the viewer). Fall back to face photo (portrait
+        // result, head-only 3D).
+        let initUrl = photoUrl;     // default = face photo URL
+        let initLabel = 'face photo (portrait result)';
+        if (bodyBase64 && bodyMime) {
+          // Cache + serve the body photo at its own public URL.
+          const bodyJobId = jobId + '_body';
+          cachePhotoForJob(bodyJobId, bodyBase64, bodyMime);
+          initUrl = publicPhotoUrl(bodyJobId);
+          initLabel = 'BODY photo (movable full-body avatar)';
+        }
+        console.log('yourself: img2img init =', initLabel);
+        imageUrl = await fluxImg2Img(claudeResult.flux_prompt, initUrl, 0.45);
         // No CodeFormer, no face-swap, no compose — img2img output is final.
       } else if (isStylized) {
         // Stylized avatars: face-to-many with photo URL.
@@ -872,7 +881,7 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
 // Accepts either:
 //   - single 'face' field (legacy)
 //   - 'faces' array (multi-angle, up to 4) — preferred for human avatars
-app.post('/start', upload.fields([{ name: 'face', maxCount: 1 }, { name: 'faces', maxCount: 4 }]), (req, res) => {
+app.post('/start', upload.fields([{ name: 'face', maxCount: 1 }, { name: 'faces', maxCount: 4 }, { name: 'body', maxCount: 1 }]), (req, res) => {
   const jobId = Date.now().toString(36) + Math.random().toString(36).slice(2);
   const avatarKey = req.body.avatar || 'wolf';
   const bgKey = req.body.bg || 'auto';
@@ -903,8 +912,18 @@ app.post('/start', upload.fields([{ name: 'face', maxCount: 1 }, { name: 'faces'
     imageMime = faceImages[0].mime;
   }
 
+  // Body photo (optional) — used as the img2img init for "yourself" avatar
+  // so the result has a real body and is movable in 3D.
+  let bodyBase64 = null, bodyMime = null;
+  const bodyField = (req.files && req.files.body) || [];
+  if (bodyField[0]) {
+    bodyBase64 = fs.readFileSync(bodyField[0].path).toString('base64');
+    bodyMime = bodyField[0].mimetype;
+    fs.unlinkSync(bodyField[0].path);
+  }
+
   jobs[jobId] = { status: 'starting' };
-  runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey, faceImages);
+  runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, avatarKey, bgKey, faceImages, bodyBase64, bodyMime);
 
   res.json({ jobId });
 });
