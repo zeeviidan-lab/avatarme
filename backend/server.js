@@ -965,13 +965,19 @@ async function faceSwapCdingram(targetImageUrl, sourceFaceDataUrl) {
 }
 
 async function faceSwap(targetImageUrl, sourceFaceDataUrl) {
-  const primary = await faceSwapLucataco(targetImageUrl, sourceFaceDataUrl);
-  if (primary) return primary;
-  console.log('Lucataco failed — trying xiankgx');
-  const second = await faceSwapXiankgx(targetImageUrl, sourceFaceDataUrl);
-  if (second) return second;
-  console.log('Xiankgx failed — trying cdingram');
-  return faceSwapCdingram(targetImageUrl, sourceFaceDataUrl);
+  // Reordered: cdingram first (generally highest-quality, best identity
+  // transfer on faces with heavy facial hair). Then lucataco (insightface),
+  // then xiankgx as last fallback.
+  const primary = await faceSwapCdingram(targetImageUrl, sourceFaceDataUrl);
+  if (primary) { console.log('faceSwap: cdingram succeeded'); return primary; }
+  console.log('faceSwap: cdingram failed — trying lucataco');
+  const second = await faceSwapLucataco(targetImageUrl, sourceFaceDataUrl);
+  if (second) { console.log('faceSwap: lucataco succeeded'); return second; }
+  console.log('faceSwap: lucataco failed — trying xiankgx');
+  const third = await faceSwapXiankgx(targetImageUrl, sourceFaceDataUrl);
+  if (third) { console.log('faceSwap: xiankgx succeeded'); return third; }
+  console.log('faceSwap: ALL THREE failed — returning null (caller falls back to bare FLUX)');
+  return null;
 }
 
 const HUNYUAN3D_VERSION = '0602bae6db1ce420f2690339bf2feb47e18c0c722a1f02e9db9abd774abaff5d';
