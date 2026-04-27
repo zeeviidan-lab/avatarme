@@ -787,22 +787,29 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
 
       const isStylized = ['animated','yellow_toon'].includes(avatarKey);
       if (avatarKey === 'yourself') {
-        // YOURSELF avatar: img2img init. Prefer the BODY photo if user
-        // uploaded one (full-body output → 3D model has a real body that's
-        // movable in the viewer). Fall back to face photo (portrait
-        // result, head-only 3D).
-        let initUrl = photoUrl;     // default = face photo URL
+        // YOURSELF avatar: img2img init + face-swap polish.
+        // 1. img2img with the body photo (or face photo) as init — gets
+        //    the right body/framing, restyles lighting/scene/clothing
+        // 2. face-swap the user's CLEAN FACE PHOTO onto the result —
+        //    locks identity tighter than img2img alone (which drifts
+        //    facial features at any non-trivial prompt_strength)
+        let initUrl = photoUrl;
         let initLabel = 'face photo (portrait result)';
         if (bodyBase64 && bodyMime) {
-          // Cache + serve the body photo at its own public URL.
           const bodyJobId = jobId + '_body';
           cachePhotoForJob(bodyJobId, bodyBase64, bodyMime);
           initUrl = publicPhotoUrl(bodyJobId);
           initLabel = 'BODY photo (movable full-body avatar)';
         }
         console.log('yourself: img2img init =', initLabel);
-        imageUrl = await fluxImg2Img(claudeResult.flux_prompt, initUrl, 0.45);
-        // No CodeFormer, no face-swap, no compose — img2img output is final.
+        const restyled = await fluxImg2Img(claudeResult.flux_prompt, initUrl, 0.30);
+        if (restyled) {
+          console.log('yourself: face-swap polish — clean face photo → restyled body');
+          // The CLEAN face photo as the source (not the body photo, which
+          // has the face small in the frame), restyled body as target.
+          const swapped = await faceSwap(restyled, photoUrl);
+          imageUrl = swapped || restyled;
+        }
       } else if (isStylized) {
         // Stylized avatars: face-to-many with photo URL.
         imageUrl = await faceToMany(claudeResult.flux_prompt, photoUrl, avatarKey);
