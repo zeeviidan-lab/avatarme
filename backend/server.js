@@ -271,31 +271,29 @@ async function faceToMany(prompt, faceUrl, avatarKey) {
   }
 }
 
-// Upload bytes to Replicate's Files API → get a real HTTPS URL back.
-// Some Replicate models (especially face-swap ones) silently fail when
-// fed gigantic base64 data URLs — they need a real fetchable URL.
-// Returns { url, expires_at } or null on failure.
-async function uploadToReplicateFiles(base64, mime) {
-  try {
-    const buf = Buffer.from(base64, 'base64');
-    const form = new FormData();
-    form.append('content', new Blob([buf], { type: mime }), 'face.jpg');
-    form.append('type', mime);
-    const r = await fetch('https://api.replicate.com/v1/files', {
-      method: 'POST',
-      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}` },
-      body: form,
-    });
-    const data = await r.json();
-    const url = data && data.urls && (data.urls.get || data.urls.download);
-    if (!url) { console.error('Replicate Files upload failed:', JSON.stringify(data)); return null; }
-    console.log('Uploaded face to Replicate Files:', url);
-    return url;
-  } catch (e) {
-    console.error('uploadToReplicateFiles exception:', e);
-    return null;
-  }
+// Serve the user's photo from OUR OWN backend at a public URL so Replicate
+// face-swap (and other) models can fetch it without authentication.
+// Why not Replicate's Files API? Their URLs require the API token to fetch,
+// so face-swap models hit 401 and silently fail (returning unchanged target).
+// In-memory cache keyed by job ID; cleaned up after job finishes (via TTL).
+const photoCache = new Map();   // jobId -> { buf, mime, ts }
+const PHOTO_TTL_MS = 30 * 60 * 1000; // 30 min — well past pipeline duration
+function cachePhotoForJob(jobId, base64, mime) {
+  const buf = Buffer.from(base64, 'base64');
+  photoCache.set(jobId, { buf, mime, ts: Date.now() });
+  return jobId;
 }
+function publicPhotoUrl(jobId) {
+  // Public URL Replicate models can fetch with no auth.
+  // PUBLIC_BASE_URL must be set on the deployed env (e.g. https://avatarme.onrender.com)
+  const base = process.env.PUBLIC_BASE_URL || 'https://avatarme.onrender.com';
+  return `${base}/face/${jobId}.jpg`;
+}
+// GC stale entries
+setInterval(() => {
+  const cutoff = Date.now() - PHOTO_TTL_MS;
+  for (const [k, v] of photoCache) if (v.ts < cutoff) photoCache.delete(k);
+}, 5 * 60 * 1000);
 const MEDIAPIPE_FACE_VERSION = 'b52b4833a810a8b8d835d6339b72536d63590918b185588be2def78a89e7ca7b';
 
 // Face detection via mediapipe — returns the face region as a transparent
@@ -743,18 +741,19 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
     // as "FLUX guy with your nose region". The PuLID portrait gives the
     // user an actually-recognizable face. We show both on the result screen.
     if (imageBase64 && HUMAN_AVATARS.has(avatarKey)) {
+      // Cache the user's photo for the duration of the job and get a
+      // PUBLIC URL Replicate models can fetch with no auth. This is the
+      // critical fix for face-swap silent failures (Replicate Files API
+      // URLs require auth; face-swap fetched anonymously → 401 → silent
+      // unchanged-target return).
+      cachePhotoForJob(jobId, imageBase64, imageMime);
+      const photoUrl = publicPhotoUrl(jobId);
+      console.log('Public photo URL for this job:', photoUrl);
+
       const isStylized = ['animated','yellow_toon'].includes(avatarKey);
       if (isStylized) {
-        // Stylized avatars: face-to-many (purpose-built for "real face →
-        // stylized version of you"). Uses InstantID under the hood + a
-        // style LoRA, and identity sticks much better than plain InstantID
-        // with a stylized SDXL base.
-        // Need the photo as a real URL (not data URL) for face-to-many.
-        const photoUrl = await uploadToReplicateFiles(imageBase64, imageMime);
-        if (photoUrl) {
-          imageUrl = await faceToMany(claudeResult.flux_prompt, photoUrl, avatarKey);
-        }
-        // Fallback: plain InstantID if face-to-many failed
+        // Stylized avatars: face-to-many with photo URL.
+        imageUrl = await faceToMany(claudeResult.flux_prompt, photoUrl, avatarKey);
         if (!imageUrl) {
           console.log('face-to-many failed — falling back to InstantID');
           imageUrl = await instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey);
@@ -768,23 +767,14 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
         // 4. CodeFormer: clean up the seam, sharpen
         // Each model does what it's good at instead of fighting one model
         // to do everything.
-        console.log('Dual pipeline: upload face → FLUX body + face-swap + InstantID portrait');
-        // Upload user's photo to Replicate Files first → get real URL.
-        // Face-swap models reliably handle URLs but silently fail on
-        // megabyte-sized data URLs. This was the missing piece.
-        // Run upload + FLUX + InstantID all in parallel.
-        const originalPhotoDataUrl = `data:${imageMime};base64,${imageBase64}`;
-        const [photoUrl, fluxBody, idPortrait] = await Promise.all([
-          uploadToReplicateFiles(imageBase64, imageMime),
+        console.log('Dual pipeline: FLUX body + face-swap (PUBLIC URL) + InstantID');
+        const [fluxBody, idPortrait] = await Promise.all([
           generateImage(claudeResult.flux_prompt),
           instantId(claudeResult.flux_prompt, imageBase64, imageMime, avatarKey),
         ]);
         if (fluxBody) {
-          // Use the uploaded URL if available (way more reliable for
-          // face-swap), fall back to data URL if upload failed.
-          const sourceForSwap = photoUrl || originalPhotoDataUrl;
-          console.log('Face-swapping → FLUX body, source =', photoUrl ? 'uploaded URL' : 'data URL fallback');
-          const swapped = await faceSwap(fluxBody, sourceForSwap);
+          console.log('Face-swapping → FLUX body, source = public photo URL');
+          const swapped = await faceSwap(fluxBody, photoUrl);
           imageUrl = swapped || fluxBody;
         } else if (idPortrait) {
           imageUrl = idPortrait;
@@ -1161,6 +1151,17 @@ app.get('/download', async (req, res) => {
 });
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
+// PUBLIC photo route — serves user-uploaded face from in-memory cache so
+// Replicate face-swap (and other) models can fetch via plain HTTPS, no auth.
+// Path includes the jobId so users can't enumerate other people's photos.
+app.get('/face/:jobId.jpg', (req, res) => {
+  const entry = photoCache.get(req.params.jobId);
+  if (!entry) return res.status(404).send('expired');
+  res.set('Content-Type', entry.mime || 'image/jpeg');
+  res.set('Cache-Control', 'public, max-age=1800');
+  res.send(entry.buf);
+});
 app.use(express.static(path.join(__dirname, '../frontend')));
 
 const PORT = 3001;
