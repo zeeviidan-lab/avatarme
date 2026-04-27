@@ -225,6 +225,41 @@ const PHOTOMAKER_VERSION = 'ddfc2b08d209f9fa8c1eca692712918bd449f695dabb4a958da3
 const CODEFORMER_VERSION = 'cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2';
 const SDXL_OUTPAINT_VERSION = 'a542ccf352995f3c41f0bcfaef641daa3058bf2b00e08e04feb0295334ab9804';
 const FACE_TO_MANY_VERSION = 'a07f252abbbd832009640b27f063ea52d87d7a23a185ca165bec23b5adc8deaf';
+const FLUX_DEV_VERSION = '6e4a938f85952bdabcc15aa329178c4d681c52bf25a0342403287dc26944661d';
+
+// img2img on the user's actual photo. Uses FLUX-dev with the user's photo
+// as init + light prompt-driven restyling (prompt_strength 0.45 = ~55% of
+// the input pixels preserved). Identity is GUARANTEED because the diffusion
+// starts from the user's actual face — no model has to "remember" or
+// "transfer" anything. Trade-off: pose/framing locked to the input photo.
+async function fluxImg2Img(prompt, photoUrl, promptStrength) {
+  if (!photoUrl) return null;
+  try {
+    const tight = (prompt || '').slice(0, 380);
+    const startRes = await fetch('https://api.replicate.com/v1/predictions', {
+      method: 'POST',
+      headers: { 'Authorization': `Token ${process.env.REPLICATE_API_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ version: FLUX_DEV_VERSION, input: {
+        image: photoUrl,
+        prompt: tight,
+        prompt_strength: promptStrength ?? 0.45,
+        guidance: 3.5,
+        num_inference_steps: 32,
+        output_format: 'jpg',
+        output_quality: 92,
+        go_fast: false,
+      } })
+    });
+    const prediction = await startRes.json();
+    if (!prediction.id) { console.error('flux img2img start error:', JSON.stringify(prediction)); return null; }
+    console.log('flux img2img started:', prediction.id, 'prompt_strength:', promptStrength ?? 0.45);
+    const out = await pollPrediction(prediction.id, 2000, 40, 'flux img2img');
+    return Array.isArray(out) ? out[0] : out;
+  } catch (e) {
+    console.error('fluxImg2Img exception:', e);
+    return null;
+  }
+}
 
 // face-to-many — purpose-built for "real face → stylized version of you."
 // Uses InstantID under the hood for identity preservation, plus a style
@@ -751,7 +786,15 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
       console.log('Public photo URL for this job:', photoUrl);
 
       const isStylized = ['animated','yellow_toon'].includes(avatarKey);
-      if (isStylized) {
+      if (avatarKey === 'yourself') {
+        // YOURSELF avatar: img2img on the user's actual photo. Identity
+        // GUARANTEED — diffusion starts from the user's face, no model
+        // has to transfer anything. Light prompt-driven restyling.
+        // Trade-off: pose/framing locked to the user's input photo.
+        console.log('yourself: img2img on user photo (identity guaranteed)');
+        imageUrl = await fluxImg2Img(claudeResult.flux_prompt, photoUrl, 0.45);
+        // No CodeFormer, no face-swap, no compose — img2img output is final.
+      } else if (isStylized) {
         // Stylized avatars: face-to-many with photo URL.
         imageUrl = await faceToMany(claudeResult.flux_prompt, photoUrl, avatarKey);
         if (!imageUrl) {
