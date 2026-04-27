@@ -787,12 +787,14 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
 
       const isStylized = ['animated','yellow_toon'].includes(avatarKey);
       if (avatarKey === 'yourself') {
-        // YOURSELF avatar: img2img init + face-swap polish.
-        // 1. img2img with the body photo (or face photo) as init — gets
-        //    the right body/framing, restyles lighting/scene/clothing
-        // 2. face-swap the user's CLEAN FACE PHOTO onto the result —
-        //    locks identity tighter than img2img alone (which drifts
-        //    facial features at any non-trivial prompt_strength)
+        // YOURSELF avatar: minimal-restyling img2img + face restoration.
+        // After multiple iterations: face-swap was unreliable (silent
+        // failures), high prompt_strength drifted face. Going for the
+        // minimal-change approach:
+        //   1. img2img at prompt_strength 0.20 — barely restyles, mostly
+        //      preserves input. Polishes lighting/colors only.
+        //   2. CodeFormer at max fidelity 0.95 — sharpens face details
+        //      without regenerating them. Preserves what's there.
         let initUrl = photoUrl;
         let initLabel = 'face photo (portrait result)';
         if (bodyBase64 && bodyMime) {
@@ -801,14 +803,11 @@ async function runJob(jobId, imageBase64, imageMime, gameAnswers, rankOrder, ava
           initUrl = publicPhotoUrl(bodyJobId);
           initLabel = 'BODY photo (movable full-body avatar)';
         }
-        console.log('yourself: img2img init =', initLabel);
-        const restyled = await fluxImg2Img(claudeResult.flux_prompt, initUrl, 0.30);
+        console.log('yourself: img2img init =', initLabel, 'prompt_strength=0.20');
+        const restyled = await fluxImg2Img(claudeResult.flux_prompt, initUrl, 0.20);
         if (restyled) {
-          console.log('yourself: face-swap polish — clean face photo → restyled body');
-          // The CLEAN face photo as the source (not the body photo, which
-          // has the face small in the frame), restyled body as target.
-          const swapped = await faceSwap(restyled, photoUrl);
-          imageUrl = swapped || restyled;
+          const restored = await codeFormerRestore(restyled);
+          imageUrl = restored || restyled;
         }
       } else if (isStylized) {
         // Stylized avatars: face-to-many with photo URL.
